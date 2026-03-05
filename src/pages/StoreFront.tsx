@@ -92,11 +92,11 @@ export default function StoreFront() {
   const bestSellers = useMemo(() => [...products].sort((a, b) => (b.sales_count || 0) - (a.sales_count || 0)).slice(0, 4), [products]);
   
 
-  const addToCart = (product: any) => {
+  const addToCart = (product: any, size?: string, color?: string) => {
     setCart(prev => {
-      const existing = prev.find(i => i.product.id === product.id && !i.selectedSize && !i.selectedColor);
-      if (existing) return prev.map(i => i.product.id === product.id && !i.selectedSize && !i.selectedColor ? { ...i, quantity: i.quantity + 1 } : i);
-      return [...prev, { product, quantity: 1 }];
+      const existing = prev.find(i => i.product.id === product.id && i.selectedSize === size && i.selectedColor === color);
+      if (existing) return prev.map(i => i.product.id === product.id && i.selectedSize === size && i.selectedColor === color ? { ...i, quantity: i.quantity + 1 } : i);
+      return [...prev, { product, quantity: 1, selectedSize: size, selectedColor: color }];
     });
     toast({ title: "تم الإضافة للسلة", description: product.name });
   };
