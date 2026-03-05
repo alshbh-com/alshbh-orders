@@ -445,8 +445,24 @@ export default function StoreFront() {
               <Label>ملاحظات (اختياري)</Label>
               <Input value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} placeholder="أي ملاحظات على الطلب..." />
             </div>
+            {/* Coupon */}
+            <div className="space-y-2">
+              <Label>كوبون خصم (اختياري)</Label>
+              <div className="flex gap-2">
+                <Input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="ادخل كود الخصم" dir="ltr" className="flex-1" />
+                <Button variant="outline" onClick={applyCoupon} disabled={applyingCoupon}>
+                  {applyingCoupon ? "..." : "تطبيق"}
+                </Button>
+              </div>
+              {appliedCoupon && (
+                <p className="text-xs text-green-600">✅ كوبون {appliedCoupon.code} — خصم {appliedCoupon.discount_type === 'percentage' ? `${appliedCoupon.discount_value}%` : `${appliedCoupon.discount_value} جنيه`}</p>
+              )}
+            </div>
             <div className="border-t border-border pt-3 space-y-1 text-sm">
               <div className="flex justify-between"><span>المنتجات</span><span>{cartSubtotal} جنيه</span></div>
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-green-600"><span>الخصم</span><span>-{discountAmount} جنيه</span></div>
+              )}
               <div className="flex justify-between"><span>التوصيل</span><span>{shippingCost} جنيه</span></div>
               <div className="flex justify-between font-bold text-base border-t pt-2">
                 <span>الإجمالي</span>
