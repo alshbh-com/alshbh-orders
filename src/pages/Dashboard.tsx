@@ -110,6 +110,7 @@ export default function Dashboard() {
       setCategories(categoriesRes.data || []);
       setTransactions(transRes.data || []);
       setTemplates(templatesRes.data || []);
+      setNotifications(notifRes.data || []);
     }
     setLoading(false);
   };
