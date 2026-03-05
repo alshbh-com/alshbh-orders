@@ -439,6 +439,44 @@ export default function StoreFront() {
   );
 }
 
+function ComplaintForm({ storeId, storeName, whatsappNumber }: { storeId: string; storeName: string; whatsappNumber?: string }) {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const { toast } = useToast();
+
+  const submit = async () => {
+    if (!name || !message) return;
+    setSending(true);
+    const { error } = await supabase.from("complaints").insert({
+      name, phone: phone || null, message: `[متجر: ${storeName}] ${message}`,
+    });
+    if (error) toast({ title: "حصل مشكلة", variant: "destructive" });
+    else { setSent(true); toast({ title: "تم إرسال شكواك ✅" }); }
+    setSending(false);
+  };
+
+  if (sent) return <p className="text-sm text-green-600 mt-3">تم الإرسال بنجاح — هنتواصل معاك قريب 🙏</p>;
+
+  return (
+    <div className="mt-3 space-y-3">
+      <Input value={name} onChange={e => setName(e.target.value)} placeholder="اسمك" />
+      <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="رقم موبايلك (اختياري)" dir="ltr" />
+      <Textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="اكتب شكواك أو استفسارك..." />
+      <div className="flex gap-2">
+        <Button size="sm" onClick={submit} disabled={sending}>{sending ? "جاري الإرسال..." : "ابعت"}</Button>
+        {whatsappNumber && (
+          <a href={`https://wa.me/${whatsappNumber}`} target="_blank">
+            <Button size="sm" variant="outline"><MessageCircle className="h-4 w-4 ml-1" />واتساب</Button>
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ProductCard({ product, avgRating, onClick, onAddToCart }: {
   product: any; avgRating: string | null; onClick: () => void; onAddToCart: () => void;
 }) {
