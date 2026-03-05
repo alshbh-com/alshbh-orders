@@ -292,17 +292,6 @@ export default function StoreFront() {
         </section>
       )}
 
-      {/* New Products */}
-      {newProducts.length > 0 && !searchQuery && !selectedCategory && (
-        <section className="container mb-6">
-          <h2 className="text-xl font-bold mb-3">🆕 منتجات جديدة</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {newProducts.map(p => (
-              <ProductCard key={p.id} product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} onAddToCart={() => addToCart(p)} />
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* Best sellers */}
       {bestSellers.length > 0 && bestSellers[0].sales_count > 0 && !searchQuery && !selectedCategory && (
