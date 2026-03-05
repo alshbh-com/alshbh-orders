@@ -158,8 +158,15 @@ export default function StoreFront() {
         customer_notes: customerNotes || null,
         total_price: cartTotal,
         shipping_cost: shippingCost,
+        coupon_code: appliedCoupon?.code || null,
+        discount_amount: discountAmount,
       }).select().single();
       if (error) throw error;
+
+      // Update coupon used_count
+      if (appliedCoupon) {
+        await supabase.from("coupons").update({ used_count: appliedCoupon.used_count + 1 }).eq("id", appliedCoupon.id);
+      }
 
       const items = cart.map(i => ({
         order_id: order.id,
