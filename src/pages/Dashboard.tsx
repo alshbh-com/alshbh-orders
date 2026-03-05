@@ -199,7 +199,7 @@ export default function Dashboard() {
   };
 
   const updateOrderStatus = async (orderId: string, status: string) => {
-    const { error } = await supabase.from("orders").update({ status }).eq("id", orderId);
+    const { error } = await supabase.from("orders").update({ status: status as "new" | "processing" | "delivered" | "cancelled" }).eq("id", orderId);
     if (!error) {
       toast({ title: "تم تحديث حالة الطلب" });
       fetchData();

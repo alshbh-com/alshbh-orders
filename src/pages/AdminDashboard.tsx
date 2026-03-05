@@ -159,7 +159,7 @@ export default function AdminDashboard() {
   };
 
   const updateOrderStatus = async (orderId: string, status: string) => {
-    await supabase.from("orders").update({ status }).eq("id", orderId);
+    await supabase.from("orders").update({ status: status as "new" | "processing" | "delivered" | "cancelled" }).eq("id", orderId);
     fetchAll();
   };
 
