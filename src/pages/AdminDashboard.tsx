@@ -94,9 +94,9 @@ export default function AdminDashboard() {
     if (role === "none") {
       if (existing) await supabase.from("user_roles").delete().eq("id", existing.id);
     } else if (existing) {
-      await supabase.from("user_roles").update({ role }).eq("id", existing.id);
+      await supabase.from("user_roles").update({ role: role as "admin" | "merchant" }).eq("id", existing.id);
     } else {
-      await supabase.from("user_roles").insert({ user_id: userId, role });
+      await supabase.from("user_roles").insert({ user_id: userId, role: role as "admin" | "merchant" });
     }
     toast({ title: "تم تحديث الدور" });
     fetchAll();
