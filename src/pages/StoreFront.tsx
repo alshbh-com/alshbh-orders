@@ -421,8 +421,15 @@ export default function StoreFront() {
         </DialogContent>
       </Dialog>
 
+      {/* Complaint / Contact section */}
+      <section className="container pb-6">
+        <details className="border border-border rounded-xl p-4">
+          <summary className="font-semibold cursor-pointer">📩 عندك شكوى أو استفسار؟</summary>
+          <ComplaintForm storeId={store.id} storeName={store.store_name} whatsappNumber={store.whatsapp_number} />
+        </details>
+      </section>
+
       <AlshbhWatermark />
-    </div>
   );
 }
 
