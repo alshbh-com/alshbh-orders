@@ -435,6 +435,7 @@ export default function StoreFront() {
       )}
 
       <AlshbhWatermark />
+    </div>
   );
 }
 
