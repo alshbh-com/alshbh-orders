@@ -10,16 +10,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Package, ShoppingCart, Coins, Store, Settings, Plus, Trash2, Edit, Eye,
-  Upload, X, Check, Clock, Truck, XCircle, Image as ImageIcon, Palette
+  Package, ShoppingCart, Coins, Store, Plus, Trash2, Edit, Eye,
+  X, Check, Clock, Truck, XCircle, Image as ImageIcon, Search
 } from "lucide-react";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger
-} from "@/components/ui/dialog";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
-} from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+
+const SIZES = ["S", "M", "L", "XL", "XXL"];
+const COLORS = ["أسود", "أبيض", "أحمر", "أزرق", "أخضر", "رمادي"];
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -31,12 +31,15 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [orderFilter, setOrderFilter] = useState("all");
+  const [orderSearch, setOrderSearch] = useState("");
 
   // Create store form
   const [showCreateStore, setShowCreateStore] = useState(false);
   const [storeName, setStoreName] = useState("");
   const [storeSlug, setStoreSlug] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [storeShippingCost, setStoreShippingCost] = useState("70");
 
   // Product form
   const [showProductForm, setShowProductForm] = useState(false);
@@ -44,10 +47,15 @@ export default function Dashboard() {
   const [productName, setProductName] = useState("");
   const [productDesc, setProductDesc] = useState("");
   const [productPrice, setProductPrice] = useState("");
+  const [productDiscountPrice, setProductDiscountPrice] = useState("");
   const [productCategory, setProductCategory] = useState("");
+  const [productStock, setProductStock] = useState("");
   const [productImage, setProductImage] = useState<File | null>(null);
   const [productImagePreview, setProductImagePreview] = useState("");
   const [additionalImages, setAdditionalImages] = useState<File[]>([]);
+  const [productSizes, setProductSizes] = useState<string[]>([]);
+  const [productColors, setProductColors] = useState<string[]>([]);
+  const [productFeatured, setProductFeatured] = useState(false);
   const [savingProduct, setSavingProduct] = useState(false);
 
   // Category form
@@ -59,19 +67,17 @@ export default function Dashboard() {
   const [editTheme, setEditTheme] = useState("");
   const [editPrimaryColor, setEditPrimaryColor] = useState("");
   const [editSecondaryColor, setEditSecondaryColor] = useState("");
+  const [editShippingCost, setEditShippingCost] = useState("");
   const [savingSettings, setSavingSettings] = useState(false);
 
-  useEffect(() => {
-    if (user) fetchData();
-  }, [user]);
+  // Order detail
+  const [showOrderDetail, setShowOrderDetail] = useState<any>(null);
+
+  useEffect(() => { if (user) fetchData(); }, [user]);
 
   const fetchData = async () => {
     setLoading(true);
-    const { data: storeData } = await supabase
-      .from("stores")
-      .select("*")
-      .eq("owner_id", user!.id)
-      .maybeSingle();
+    const { data: storeData } = await supabase.from("stores").select("*").eq("owner_id", user!.id).maybeSingle();
 
     if (storeData) {
       setStore(storeData);
@@ -80,6 +86,7 @@ export default function Dashboard() {
       setEditTheme(storeData.theme || "restaurants");
       setEditPrimaryColor(storeData.primary_color || "#D97706");
       setEditSecondaryColor(storeData.secondary_color || "#F59E0B");
+      setEditShippingCost(String(storeData.shipping_cost || 70));
 
       const [productsRes, ordersRes, categoriesRes, transRes, templatesRes] = await Promise.all([
         supabase.from("products").select("*").eq("store_id", storeData.id).order("created_at", { ascending: false }),
@@ -101,10 +108,9 @@ export default function Dashboard() {
     if (!storeName || !storeSlug) return;
     const slug = storeSlug.toLowerCase().replace(/[^a-z0-9-]/g, "-");
     const { error } = await supabase.from("stores").insert({
-      owner_id: user!.id,
-      store_name: storeName,
-      store_slug: slug,
+      owner_id: user!.id, store_name: storeName, store_slug: slug,
       whatsapp_number: whatsappNumber,
+      shipping_cost: parseFloat(storeShippingCost) || 70,
     });
     if (error) {
       toast({ title: "حصل مشكلة", description: error.message, variant: "destructive" });
@@ -120,8 +126,7 @@ export default function Dashboard() {
     const name = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const { error } = await supabase.storage.from("product-images").upload(name, file);
     if (error) throw error;
-    const { data } = supabase.storage.from("product-images").getPublicUrl(name);
-    return data.publicUrl;
+    return supabase.storage.from("product-images").getPublicUrl(name).data.publicUrl;
   };
 
   const saveProduct = async () => {
@@ -129,17 +134,14 @@ export default function Dashboard() {
     setSavingProduct(true);
     try {
       let imageUrl = editingProduct?.main_image_url || null;
-      if (productImage) {
-        imageUrl = await uploadImage(productImage, store.id);
-      }
+      if (productImage) imageUrl = await uploadImage(productImage, store.id);
 
-      const productData = {
-        store_id: store.id,
-        name: productName,
-        description: productDesc || null,
-        price: parseFloat(productPrice),
-        category_id: productCategory || null,
-        main_image_url: imageUrl,
+      const productData: any = {
+        store_id: store.id, name: productName, description: productDesc || null,
+        price: parseFloat(productPrice), category_id: productCategory || null,
+        main_image_url: imageUrl, is_featured: productFeatured,
+        stock: productStock ? parseInt(productStock) : null,
+        discount_price: productDiscountPrice ? parseFloat(productDiscountPrice) : null,
       };
 
       let productId = editingProduct?.id;
@@ -159,6 +161,21 @@ export default function Dashboard() {
         await supabase.from("product_images").insert({ product_id: productId, image_url: url });
       }
 
+      // Save variants (sizes × colors)
+      if (productSizes.length > 0 || productColors.length > 0) {
+        // Delete old variants
+        await supabase.from("product_variants").delete().eq("product_id", productId);
+        const variants: any[] = [];
+        const sizes = productSizes.length > 0 ? productSizes : [null];
+        const colors = productColors.length > 0 ? productColors : [null];
+        for (const size of sizes) {
+          for (const color of colors) {
+            variants.push({ product_id: productId, size, color, stock: 0 });
+          }
+        }
+        if (variants.length > 0) await supabase.from("product_variants").insert(variants);
+      }
+
       toast({ title: editingProduct ? "تم تعديل المنتج" : "تم إضافة المنتج" });
       resetProductForm();
       fetchData();
@@ -169,79 +186,72 @@ export default function Dashboard() {
   };
 
   const deleteProduct = async (id: string) => {
-    const { error } = await supabase.from("products").delete().eq("id", id);
-    if (!error) {
-      toast({ title: "تم حذف المنتج" });
-      fetchData();
-    }
+    await supabase.from("products").delete().eq("id", id);
+    toast({ title: "تم حذف المنتج" });
+    fetchData();
+  };
+
+  const toggleFeatured = async (id: string, current: boolean) => {
+    await supabase.from("products").update({ is_featured: !current }).eq("id", id);
+    fetchData();
   };
 
   const resetProductForm = () => {
-    setShowProductForm(false);
-    setEditingProduct(null);
-    setProductName("");
-    setProductDesc("");
-    setProductPrice("");
-    setProductCategory("");
-    setProductImage(null);
-    setProductImagePreview("");
-    setAdditionalImages([]);
+    setShowProductForm(false); setEditingProduct(null);
+    setProductName(""); setProductDesc(""); setProductPrice("");
+    setProductDiscountPrice(""); setProductCategory(""); setProductStock("");
+    setProductImage(null); setProductImagePreview(""); setAdditionalImages([]);
+    setProductSizes([]); setProductColors([]); setProductFeatured(false);
   };
 
-  const startEditProduct = (p: any) => {
-    setEditingProduct(p);
-    setProductName(p.name);
-    setProductDesc(p.description || "");
-    setProductPrice(String(p.price));
-    setProductCategory(p.category_id || "");
-    setProductImagePreview(p.main_image_url || "");
+  const startEditProduct = async (p: any) => {
+    setEditingProduct(p); setProductName(p.name);
+    setProductDesc(p.description || ""); setProductPrice(String(p.price));
+    setProductDiscountPrice(p.discount_price ? String(p.discount_price) : "");
+    setProductCategory(p.category_id || ""); setProductStock(p.stock !== null ? String(p.stock) : "");
+    setProductImagePreview(p.main_image_url || ""); setProductFeatured(p.is_featured || false);
+
+    // Load variants
+    const { data: variants } = await supabase.from("product_variants").select("*").eq("product_id", p.id);
+    const sizes = [...new Set((variants || []).map(v => v.size).filter(Boolean))] as string[];
+    const colors = [...new Set((variants || []).map(v => v.color).filter(Boolean))] as string[];
+    setProductSizes(sizes);
+    setProductColors(colors);
     setShowProductForm(true);
   };
 
   const updateOrderStatus = async (orderId: string, status: string) => {
-    const { error } = await supabase.from("orders").update({ status: status as "new" | "processing" | "delivered" | "cancelled" }).eq("id", orderId);
-    if (!error) {
-      toast({ title: "تم تحديث حالة الطلب" });
-      fetchData();
-    }
+    await supabase.from("orders").update({ status: status as any }).eq("id", orderId);
+    toast({ title: "تم تحديث حالة الطلب" });
+    fetchData();
   };
 
   const addCategory = async () => {
     if (!newCategory || !store) return;
-    const { error } = await supabase.from("categories").insert({ store_id: store.id, name: newCategory });
-    if (!error) {
-      setNewCategory("");
-      fetchData();
-    }
+    await supabase.from("categories").insert({ store_id: store.id, name: newCategory });
+    setNewCategory(""); fetchData();
   };
 
   const deleteCategory = async (id: string) => {
-    await supabase.from("categories").delete().eq("id", id);
-    fetchData();
+    await supabase.from("categories").delete().eq("id", id); fetchData();
   };
 
   const saveStoreSettings = async () => {
     if (!store) return;
     setSavingSettings(true);
     const { error } = await supabase.from("stores").update({
-      store_name: editStoreName,
-      whatsapp_number: editWhatsapp,
-      theme: editTheme,
-      primary_color: editPrimaryColor,
-      secondary_color: editSecondaryColor,
+      store_name: editStoreName, whatsapp_number: editWhatsapp,
+      theme: editTheme, primary_color: editPrimaryColor,
+      secondary_color: editSecondaryColor, shipping_cost: parseFloat(editShippingCost) || 70,
     }).eq("id", store.id);
     if (!error) toast({ title: "تم حفظ الإعدادات" });
     else toast({ title: "حصل مشكلة", description: error.message, variant: "destructive" });
-    setSavingSettings(false);
-    fetchData();
+    setSavingSettings(false); fetchData();
   };
 
   const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setProductImage(file);
-      setProductImagePreview(URL.createObjectURL(file));
-    }
+    if (file) { setProductImage(file); setProductImagePreview(URL.createObjectURL(file)); }
   };
 
   const whatsappUrl = "https://wa.me/201061067966?text=" + encodeURIComponent("أريد شحن نقاط لمنصة ALSHBH");
@@ -253,17 +263,18 @@ export default function Dashboard() {
     cancelled: { label: "ملغي", color: "bg-red-100 text-red-700", icon: XCircle },
   };
 
+  const filteredOrders = orders.filter(o => {
+    if (orderFilter !== "all" && o.status !== orderFilter) return false;
+    if (orderSearch && !o.customer_name.includes(orderSearch) && !o.customer_phone.includes(orderSearch)) return false;
+    return true;
+  });
+
+  const totalSales = orders.filter(o => o.status === "delivered").reduce((s, o) => s + Number(o.total_price), 0);
+
   if (loading) {
-    return (
-      <Layout>
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        </div>
-      </Layout>
-    );
+    return <Layout><div className="flex min-h-[60vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div></Layout>;
   }
 
-  // No store - show create store form
   if (!store) {
     return (
       <Layout>
@@ -288,7 +299,12 @@ export default function Dashboard() {
                 <Label>رقم الواتساب</Label>
                 <Input value={whatsappNumber} onChange={(e) => setWhatsappNumber(e.target.value)} placeholder="201xxxxxxxxx" dir="ltr" />
               </div>
+              <div className="space-y-2">
+                <Label>سعر التوصيل (جنيه)</Label>
+                <Input type="number" value={storeShippingCost} onChange={(e) => setStoreShippingCost(e.target.value)} placeholder="70" dir="ltr" />
+              </div>
               <Button className="w-full" onClick={createStore}>إنشاء المتجر</Button>
+              <p className="text-xs text-center text-muted-foreground">⚠️ المتجر مش هيتفعل إلا لما يكون معاك نقاط</p>
             </CardContent>
           </Card>
         </div>
@@ -305,9 +321,8 @@ export default function Dashboard() {
             <p className="text-muted-foreground">إدارة متجرك ومنتجاتك وطلباتك</p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-base px-4 py-1">
-              <Coins className="h-4 w-4 ml-1" />
-              {store.points_balance} نقطة
+            <Badge variant={store.points_balance > 0 ? "default" : "destructive"} className="text-base px-4 py-1">
+              <Coins className="h-4 w-4 ml-1" />{store.points_balance} نقطة
             </Badge>
             <a href={`/store/${store.store_slug}`} target="_blank">
               <Button variant="outline" size="sm"><Eye className="h-4 w-4 ml-1" />شوف المتجر</Button>
@@ -315,23 +330,26 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {store.points_balance <= 0 && (
+          <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 mb-6 text-center">
+            <p className="font-bold text-destructive">⚠️ رصيد النقاط خلص — المتجر متوقف عن استقبال الطلبات</p>
+            <a href={whatsappUrl} target="_blank"><Button size="sm" className="mt-2">اشحن نقاط دلوقتي</Button></a>
+          </div>
+        )}
+
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
           {[
             { icon: Package, label: "المنتجات", value: products.length },
-            { icon: ShoppingCart, label: "الطلبات", value: orders.length },
-            { icon: ShoppingCart, label: "طلبات جديدة", value: orders.filter(o => o.status === "new").length },
+            { icon: ShoppingCart, label: "كل الطلبات", value: orders.length },
+            { icon: Clock, label: "طلبات جديدة", value: orders.filter(o => o.status === "new").length },
+            { icon: Coins, label: "إجمالي المبيعات", value: `${totalSales} ج` },
             { icon: Coins, label: "رصيد النقاط", value: store.points_balance },
           ].map((s, i) => (
             <Card key={i}>
               <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                  <s.icon className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{s.label}</p>
-                  <p className="text-xl font-bold">{s.value}</p>
-                </div>
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><s.icon className="h-5 w-5" /></div>
+                <div><p className="text-xs text-muted-foreground">{s.label}</p><p className="text-xl font-bold">{s.value}</p></div>
               </CardContent>
             </Card>
           ))}
@@ -350,54 +368,70 @@ export default function Dashboard() {
           <TabsContent value="products" className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold">منتجاتك ({products.length})</h2>
-              <Button onClick={() => { resetProductForm(); setShowProductForm(true); }}>
-                <Plus className="h-4 w-4 ml-1" />ضيف منتج
-              </Button>
+              <Button onClick={() => { resetProductForm(); setShowProductForm(true); }}><Plus className="h-4 w-4 ml-1" />ضيف منتج</Button>
             </div>
 
-            {/* Product Form Dialog */}
             <Dialog open={showProductForm} onOpenChange={(o) => { if (!o) resetProductForm(); }}>
               <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>{editingProduct ? "تعديل المنتج" : "ضيف منتج جديد"}</DialogTitle>
-                </DialogHeader>
+                <DialogHeader><DialogTitle>{editingProduct ? "تعديل المنتج" : "ضيف منتج جديد"}</DialogTitle></DialogHeader>
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>اسم المنتج</Label>
-                    <Input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="اسم المنتج" />
+                  <div className="space-y-2"><Label>اسم المنتج</Label><Input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="اسم المنتج" /></div>
+                  <div className="space-y-2"><Label>الوصف</Label><Textarea value={productDesc} onChange={(e) => setProductDesc(e.target.value)} placeholder="وصف المنتج..." /></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2"><Label>السعر (جنيه)</Label><Input type="number" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} placeholder="0" dir="ltr" /></div>
+                    <div className="space-y-2"><Label>سعر الخصم (اختياري)</Label><Input type="number" value={productDiscountPrice} onChange={(e) => setProductDiscountPrice(e.target.value)} placeholder="0" dir="ltr" /></div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>الوصف</Label>
-                    <Textarea value={productDesc} onChange={(e) => setProductDesc(e.target.value)} placeholder="وصف المنتج..." />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label>التصنيف</Label>
+                      <Select value={productCategory} onValueChange={setProductCategory}>
+                        <SelectTrigger><SelectValue placeholder="اختار تصنيف" /></SelectTrigger>
+                        <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2"><Label>المخزون (اختياري)</Label><Input type="number" value={productStock} onChange={(e) => setProductStock(e.target.value)} placeholder="غير محدود" dir="ltr" /></div>
                   </div>
+
+                  {/* Sizes */}
                   <div className="space-y-2">
-                    <Label>السعر (جنيه)</Label>
-                    <Input type="number" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} placeholder="0" dir="ltr" />
+                    <Label>المقاسات المتاحة</Label>
+                    <div className="flex gap-2 flex-wrap">
+                      {SIZES.map(s => (
+                        <button key={s} onClick={() => setProductSizes(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s])}
+                          className={`px-3 py-1.5 rounded-lg border-2 text-sm font-semibold transition-all ${productSizes.includes(s) ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>
+                          {s}
+                        </button>
+                      ))}
+                    </div>
                   </div>
+
+                  {/* Colors */}
                   <div className="space-y-2">
-                    <Label>التصنيف</Label>
-                    <Select value={productCategory} onValueChange={setProductCategory}>
-                      <SelectTrigger><SelectValue placeholder="اختار تصنيف" /></SelectTrigger>
-                      <SelectContent>
-                        {categories.map(c => (
-                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label>الألوان المتاحة</Label>
+                    <div className="flex gap-2 flex-wrap">
+                      {COLORS.map(c => (
+                        <button key={c} onClick={() => setProductColors(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])}
+                          className={`px-3 py-1.5 rounded-lg border-2 text-sm transition-all ${productColors.includes(c) ? "border-primary bg-primary/10" : "border-border"}`}>
+                          {c}
+                        </button>
+                      ))}
+                    </div>
                   </div>
+
+                  <div className="flex items-center gap-2">
+                    <Checkbox checked={productFeatured} onCheckedChange={(v) => setProductFeatured(!!v)} id="featured" />
+                    <Label htmlFor="featured">منتج مميز ⭐</Label>
+                  </div>
+
                   <div className="space-y-2">
                     <Label>صورة المنتج الرئيسية</Label>
-                    {productImagePreview && (
-                      <img src={productImagePreview} alt="preview" className="w-32 h-32 object-cover rounded-lg" />
-                    )}
+                    {productImagePreview && <img src={productImagePreview} alt="preview" className="w-32 h-32 object-cover rounded-lg" />}
                     <Input type="file" accept="image/*" onChange={handleMainImageChange} />
                   </div>
                   <div className="space-y-2">
                     <Label>صور إضافية</Label>
                     <Input type="file" accept="image/*" multiple onChange={(e) => setAdditionalImages(Array.from(e.target.files || []))} />
-                    {additionalImages.length > 0 && (
-                      <p className="text-xs text-muted-foreground">{additionalImages.length} صور محددة</p>
-                    )}
+                    {additionalImages.length > 0 && <p className="text-xs text-muted-foreground">{additionalImages.length} صور محددة</p>}
                   </div>
                   <Button className="w-full" onClick={saveProduct} disabled={savingProduct}>
                     {savingProduct ? "جاري الحفظ..." : editingProduct ? "حفظ التعديلات" : "ضيف المنتج"}
@@ -407,36 +441,32 @@ export default function Dashboard() {
             </Dialog>
 
             {products.length === 0 ? (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <Package className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">مفيش منتجات لسه — ضيف أول منتج!</p>
-                </CardContent>
-              </Card>
+              <Card><CardContent className="p-12 text-center"><Package className="h-12 w-12 text-muted-foreground mx-auto mb-3" /><p className="text-muted-foreground">مفيش منتجات لسه — ضيف أول منتج!</p></CardContent></Card>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {products.map((p) => (
+                {products.map(p => (
                   <Card key={p.id} className="overflow-hidden">
                     {p.main_image_url ? (
                       <img src={p.main_image_url} alt={p.name} className="w-full h-40 object-cover" />
                     ) : (
-                      <div className="w-full h-40 bg-muted flex items-center justify-center">
-                        <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                      </div>
+                      <div className="w-full h-40 bg-muted flex items-center justify-center"><ImageIcon className="h-8 w-8 text-muted-foreground" /></div>
                     )}
                     <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold">{p.name}</h3>
-                        <span className="font-bold text-primary">{p.price} جنيه</span>
+                      <div className="flex justify-between items-start mb-1">
+                        <h3 className="font-semibold truncate">{p.name}</h3>
+                        {p.is_featured && <Badge className="text-xs">مميز</Badge>}
                       </div>
-                      {p.description && <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{p.description}</p>}
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => startEditProduct(p)}>
-                          <Edit className="h-3 w-3 ml-1" />تعديل
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-bold text-primary">{p.discount_price || p.price} جنيه</span>
+                        {p.discount_price && <span className="text-xs text-muted-foreground line-through">{p.price}</span>}
+                      </div>
+                      {p.stock !== null && <p className="text-xs text-muted-foreground mb-2">المخزون: {p.stock}</p>}
+                      <div className="flex gap-1 flex-wrap">
+                        <Button size="sm" variant="outline" onClick={() => startEditProduct(p)}><Edit className="h-3 w-3 ml-1" />تعديل</Button>
+                        <Button size="sm" variant="outline" onClick={() => toggleFeatured(p.id, p.is_featured)}>
+                          {p.is_featured ? "إلغاء تمييز" : "⭐ تمييز"}
                         </Button>
-                        <Button size="sm" variant="destructive" onClick={() => deleteProduct(p.id)}>
-                          <Trash2 className="h-3 w-3 ml-1" />حذف
-                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => deleteProduct(p.id)}><Trash2 className="h-3 w-3" /></Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -447,46 +477,44 @@ export default function Dashboard() {
 
           {/* Orders Tab */}
           <TabsContent value="orders" className="space-y-4">
-            <h2 className="text-lg font-semibold">الطلبات ({orders.length})</h2>
-            {orders.length === 0 ? (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">مفيش طلبات لسه</p>
-                </CardContent>
-              </Card>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <h2 className="text-lg font-semibold">الطلبات ({filteredOrders.length})</h2>
+              <div className="flex gap-2 flex-wrap">
+                {["all", "new", "processing", "delivered", "cancelled"].map(f => (
+                  <Button key={f} size="sm" variant={orderFilter === f ? "default" : "outline"} onClick={() => setOrderFilter(f)}>
+                    {f === "all" ? "الكل" : statusMap[f].label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div className="relative">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="ابحث باسم العميل أو رقم الموبايل..." value={orderSearch} onChange={(e) => setOrderSearch(e.target.value)} className="pr-10" />
+            </div>
+
+            {filteredOrders.length === 0 ? (
+              <Card><CardContent className="p-12 text-center"><ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-3" /><p className="text-muted-foreground">مفيش طلبات</p></CardContent></Card>
             ) : (
               <div className="space-y-3">
-                {orders.map((order) => {
+                {filteredOrders.map(order => {
                   const s = statusMap[order.status] || statusMap.new;
                   return (
-                    <Card key={order.id}>
+                    <Card key={order.id} className="cursor-pointer hover:border-primary/30 transition-colors" onClick={() => setShowOrderDetail(order)}>
                       <CardContent className="p-4">
-                        <div className="flex flex-col sm:flex-row justify-between gap-3">
+                        <div className="flex justify-between items-start">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <span className="font-semibold">{order.customer_name}</span>
                               <span className={`text-xs px-2 py-0.5 rounded-full ${s.color}`}>{s.label}</span>
                             </div>
                             <p className="text-sm text-muted-foreground">📱 {order.customer_phone}</p>
-                            <p className="text-sm text-muted-foreground">📍 {order.customer_address}</p>
                             <p className="text-sm font-semibold text-primary">الإجمالي: {order.total_price} جنيه</p>
-                            {order.order_items?.map((item: any, i: number) => (
-                              <p key={i} className="text-xs text-muted-foreground">
-                                • {item.products?.name || "منتج"} × {item.quantity} = {item.price * item.quantity} جنيه
-                              </p>
-                            ))}
                             <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleString("ar-EG")}</p>
                           </div>
                           <div className="flex flex-wrap gap-1">
-                            {["new", "processing", "delivered", "cancelled"].map((st) => (
-                              <Button
-                                key={st}
-                                size="sm"
-                                variant={order.status === st ? "default" : "outline"}
-                                className="text-xs"
-                                onClick={() => updateOrderStatus(order.id, st)}
-                              >
+                            {["new", "processing", "delivered", "cancelled"].map(st => (
+                              <Button key={st} size="sm" variant={order.status === st ? "default" : "outline"} className="text-xs"
+                                onClick={(e) => { e.stopPropagation(); updateOrderStatus(order.id, st); }}>
                                 {statusMap[st].label}
                               </Button>
                             ))}
@@ -500,6 +528,45 @@ export default function Dashboard() {
             )}
           </TabsContent>
 
+          {/* Order Detail Dialog */}
+          <Dialog open={!!showOrderDetail} onOpenChange={(o) => !o && setShowOrderDetail(null)}>
+            <DialogContent className="max-w-md">
+              <DialogHeader><DialogTitle>تفاصيل الطلب</DialogTitle></DialogHeader>
+              {showOrderDetail && (
+                <div className="space-y-3">
+                  <div className="bg-muted rounded-lg p-3 text-sm space-y-1">
+                    <p><strong>العميل:</strong> {showOrderDetail.customer_name}</p>
+                    <p><strong>الموبايل:</strong> {showOrderDetail.customer_phone}</p>
+                    <p><strong>العنوان:</strong> {showOrderDetail.customer_address}</p>
+                    {showOrderDetail.customer_notes && <p><strong>ملاحظات:</strong> {showOrderDetail.customer_notes}</p>}
+                    <p><strong>التاريخ:</strong> {new Date(showOrderDetail.created_at).toLocaleString("ar-EG")}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="font-semibold">المنتجات:</h4>
+                    {showOrderDetail.order_items?.map((item: any, i: number) => (
+                      <div key={i} className="flex justify-between text-sm border-b pb-1">
+                        <div>
+                          <p>{item.products?.name || "منتج"} × {item.quantity}</p>
+                          {item.selected_size && <p className="text-xs text-muted-foreground">المقاس: {item.selected_size}</p>}
+                          {item.selected_color && <p className="text-xs text-muted-foreground">اللون: {item.selected_color}</p>}
+                        </div>
+                        <span className="font-semibold">{item.price * item.quantity} جنيه</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="border-t pt-2 text-sm space-y-1">
+                    {showOrderDetail.shipping_cost > 0 && (
+                      <div className="flex justify-between"><span>التوصيل</span><span>{showOrderDetail.shipping_cost} جنيه</span></div>
+                    )}
+                    <div className="flex justify-between font-bold text-base">
+                      <span>الإجمالي</span><span className="text-primary">{showOrderDetail.total_price} جنيه</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
           {/* Categories Tab */}
           <TabsContent value="categories" className="space-y-4">
             <h2 className="text-lg font-semibold">التصنيفات</h2>
@@ -508,7 +575,7 @@ export default function Dashboard() {
               <Button onClick={addCategory}><Plus className="h-4 w-4 ml-1" />ضيف</Button>
             </div>
             <div className="flex flex-wrap gap-2">
-              {categories.map((c) => (
+              {categories.map(c => (
                 <Badge key={c.id} variant="secondary" className="text-sm px-3 py-1.5 gap-2">
                   {c.name}
                   <button onClick={() => deleteCategory(c.id)}><X className="h-3 w-3" /></button>
@@ -522,15 +589,12 @@ export default function Dashboard() {
           <TabsContent value="points" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Coins className="h-5 w-5 text-primary" />
-                  رصيد النقاط: {store.points_balance} نقطة
-                </CardTitle>
+                <CardTitle className="flex items-center gap-2"><Coins className="h-5 w-5 text-primary" />رصيد النقاط: {store.points_balance} نقطة</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">كل طلب بيخصم نقطة واحدة. لو رصيدك خلص مش هتقدر تستقبل طلبات.</p>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-4">
-                  {[100, 200, 300, 500, 1000].map((p) => (
+                  {[100, 200, 300, 500, 1000].map(p => (
                     <a key={p} href={whatsappUrl} target="_blank" rel="noopener noreferrer">
                       <Card className="text-center hover:border-primary/40 transition-colors cursor-pointer">
                         <CardContent className="p-3">
@@ -542,28 +606,18 @@ export default function Dashboard() {
                     </a>
                   ))}
                 </div>
-                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                  <Button className="w-full">شحن نقاط عبر الواتساب</Button>
-                </a>
+                <a href={whatsappUrl} target="_blank"><Button className="w-full">شحن نقاط عبر الواتساب</Button></a>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader><CardTitle>سجل العمليات</CardTitle></CardHeader>
               <CardContent>
-                {transactions.length === 0 ? (
-                  <p className="text-muted-foreground text-sm">مفيش عمليات لسه</p>
-                ) : (
+                {transactions.length === 0 ? <p className="text-muted-foreground text-sm">مفيش عمليات لسه</p> : (
                   <div className="space-y-2">
-                    {transactions.map((t) => (
+                    {transactions.map(t => (
                       <div key={t.id} className="flex justify-between items-center text-sm border-b border-border pb-2">
-                        <div>
-                          <p>{t.description}</p>
-                          <p className="text-xs text-muted-foreground">{new Date(t.created_at).toLocaleString("ar-EG")}</p>
-                        </div>
-                        <span className={`font-bold ${t.amount > 0 ? "text-green-600" : "text-red-500"}`}>
-                          {t.amount > 0 ? "+" : ""}{t.amount}
-                        </span>
+                        <div><p>{t.description}</p><p className="text-xs text-muted-foreground">{new Date(t.created_at).toLocaleString("ar-EG")}</p></div>
+                        <span className={`font-bold ${t.amount > 0 ? "text-green-600" : "text-red-500"}`}>{t.amount > 0 ? "+" : ""}{t.amount}</span>
                       </div>
                     ))}
                   </div>
@@ -577,34 +631,19 @@ export default function Dashboard() {
             <Card>
               <CardHeader><CardTitle>إعدادات المتجر</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>اسم المتجر</Label>
-                  <Input value={editStoreName} onChange={(e) => setEditStoreName(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>رقم الواتساب</Label>
-                  <Input value={editWhatsapp} onChange={(e) => setEditWhatsapp(e.target.value)} dir="ltr" />
-                </div>
+                <div className="space-y-2"><Label>اسم المتجر</Label><Input value={editStoreName} onChange={(e) => setEditStoreName(e.target.value)} /></div>
+                <div className="space-y-2"><Label>رقم الواتساب</Label><Input value={editWhatsapp} onChange={(e) => setEditWhatsapp(e.target.value)} dir="ltr" /></div>
+                <div className="space-y-2"><Label>سعر التوصيل (جنيه)</Label><Input type="number" value={editShippingCost} onChange={(e) => setEditShippingCost(e.target.value)} dir="ltr" /></div>
                 <div className="space-y-2">
                   <Label>القالب</Label>
                   <Select value={editTheme} onValueChange={setEditTheme}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {templates.map(t => (
-                        <SelectItem key={t.slug} value={t.slug}>{t.name}</SelectItem>
-                      ))}
-                    </SelectContent>
+                    <SelectContent>{templates.map(t => <SelectItem key={t.slug} value={t.slug}>{t.name}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>اللون الأساسي</Label>
-                    <Input type="color" value={editPrimaryColor} onChange={(e) => setEditPrimaryColor(e.target.value)} className="h-10" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>اللون الثانوي</Label>
-                    <Input type="color" value={editSecondaryColor} onChange={(e) => setEditSecondaryColor(e.target.value)} className="h-10" />
-                  </div>
+                  <div className="space-y-2"><Label>اللون الأساسي</Label><Input type="color" value={editPrimaryColor} onChange={(e) => setEditPrimaryColor(e.target.value)} className="h-10" /></div>
+                  <div className="space-y-2"><Label>اللون الثانوي</Label><Input type="color" value={editSecondaryColor} onChange={(e) => setEditSecondaryColor(e.target.value)} className="h-10" /></div>
                 </div>
                 <Button onClick={saveStoreSettings} disabled={savingSettings} className="w-full">
                   {savingSettings ? "جاري الحفظ..." : "حفظ الإعدادات"}
