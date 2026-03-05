@@ -286,7 +286,7 @@ export default function StoreFront() {
           <h2 className="text-xl font-bold mb-3">⭐ منتجات مميزة</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {featuredProducts.map(p => (
-              <ProductCard key={p.id} product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} onAddToCart={() => addToCart(p)} />
+              <ProductCard key={p.id} product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} />
             ))}
           </div>
         </section>
@@ -299,7 +299,7 @@ export default function StoreFront() {
           <h2 className="text-xl font-bold mb-3">🔥 الأكثر مبيعاً</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {bestSellers.map(p => (
-              <ProductCard key={p.id} product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} onAddToCart={() => addToCart(p)} />
+              <ProductCard key={p.id} product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} />
             ))}
           </div>
         </section>
