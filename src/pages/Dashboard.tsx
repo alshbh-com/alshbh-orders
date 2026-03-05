@@ -716,6 +716,58 @@ export default function Dashboard() {
             </Card>
           </TabsContent>
 
+          {/* Coupons Tab */}
+          <TabsContent value="coupons" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>كوبونات الخصم</CardTitle>
+                  <CouponForm storeId={store.id} onSaved={fetchData} />
+                </div>
+              </CardHeader>
+              <CardContent>
+                {coupons.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">مفيش كوبونات لسه</p>
+                ) : (
+                  <div className="space-y-3">
+                    {coupons.map(c => (
+                      <div key={c.id} className="border border-border rounded-lg p-3 flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-lg">{c.code}</span>
+                            <Badge variant={c.is_active ? "default" : "secondary"}>{c.is_active ? "فعّال" : "متوقف"}</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            خصم {c.discount_type === 'percentage' ? `${c.discount_value}%` : `${c.discount_value} جنيه`}
+                            {c.min_order_amount > 0 && ` — حد أدنى ${c.min_order_amount} جنيه`}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            استخدام: {c.used_count}{c.max_uses ? `/${c.max_uses}` : ''}
+                            {c.expires_at && ` — ينتهي: ${new Date(c.expires_at).toLocaleDateString("ar-EG")}`}
+                          </p>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button size="sm" variant="outline" onClick={async () => {
+                            await supabase.from("coupons").update({ is_active: !c.is_active }).eq("id", c.id);
+                            fetchData();
+                          }}>
+                            {c.is_active ? "إيقاف" : "تفعيل"}
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={async () => {
+                            await supabase.from("coupons").delete().eq("id", c.id);
+                            fetchData();
+                          }}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-4">
             <Card>
