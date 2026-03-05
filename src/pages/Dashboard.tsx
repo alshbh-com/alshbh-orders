@@ -33,6 +33,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [orderFilter, setOrderFilter] = useState("all");
   const [orderSearch, setOrderSearch] = useState("");
+  const [coupons, setCoupons] = useState<any[]>([]);
 
   // Create store form
   const [showCreateStore, setShowCreateStore] = useState(false);
@@ -97,13 +98,14 @@ export default function Dashboard() {
       setEditGoogleAnalytics(storeData.google_analytics || "");
       setEditSnapchatPixel(storeData.snapchat_pixel || "");
 
-      const [productsRes, ordersRes, categoriesRes, transRes, templatesRes, notifRes] = await Promise.all([
+      const [productsRes, ordersRes, categoriesRes, transRes, templatesRes, notifRes, couponsRes] = await Promise.all([
         supabase.from("products").select("*").eq("store_id", storeData.id).order("created_at", { ascending: false }),
         supabase.from("orders").select("*, order_items(*, products(name))").eq("store_id", storeData.id).order("created_at", { ascending: false }),
         supabase.from("categories").select("*").eq("store_id", storeData.id).order("sort_order"),
         supabase.from("point_transactions").select("*").eq("store_id", storeData.id).order("created_at", { ascending: false }).limit(20),
         supabase.from("templates").select("*"),
         supabase.from("notifications").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(20),
+        supabase.from("coupons").select("*").eq("store_id", storeData.id).order("created_at", { ascending: false }),
       ]);
       setProducts(productsRes.data || []);
       setOrders(ordersRes.data || []);
@@ -111,6 +113,7 @@ export default function Dashboard() {
       setTransactions(transRes.data || []);
       setTemplates(templatesRes.data || []);
       setNotifications(notifRes.data || []);
+      setCoupons(couponsRes.data || []);
     }
     setLoading(false);
   };
@@ -375,6 +378,7 @@ export default function Dashboard() {
             <TabsTrigger value="categories">التصنيفات</TabsTrigger>
             <TabsTrigger value="points">النقاط</TabsTrigger>
             <TabsTrigger value="marketing">التسويق</TabsTrigger>
+            <TabsTrigger value="coupons">الكوبونات</TabsTrigger>
             <TabsTrigger value="notifications">الإشعارات</TabsTrigger>
             <TabsTrigger value="settings">الإعدادات</TabsTrigger>
           </TabsList>
@@ -712,6 +716,58 @@ export default function Dashboard() {
             </Card>
           </TabsContent>
 
+          {/* Coupons Tab */}
+          <TabsContent value="coupons" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>كوبونات الخصم</CardTitle>
+                  <CouponForm storeId={store.id} onSaved={fetchData} />
+                </div>
+              </CardHeader>
+              <CardContent>
+                {coupons.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">مفيش كوبونات لسه</p>
+                ) : (
+                  <div className="space-y-3">
+                    {coupons.map(c => (
+                      <div key={c.id} className="border border-border rounded-lg p-3 flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-lg">{c.code}</span>
+                            <Badge variant={c.is_active ? "default" : "secondary"}>{c.is_active ? "فعّال" : "متوقف"}</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            خصم {c.discount_type === 'percentage' ? `${c.discount_value}%` : `${c.discount_value} جنيه`}
+                            {c.min_order_amount > 0 && ` — حد أدنى ${c.min_order_amount} جنيه`}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            استخدام: {c.used_count}{c.max_uses ? `/${c.max_uses}` : ''}
+                            {c.expires_at && ` — ينتهي: ${new Date(c.expires_at).toLocaleDateString("ar-EG")}`}
+                          </p>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button size="sm" variant="outline" onClick={async () => {
+                            await supabase.from("coupons").update({ is_active: !c.is_active }).eq("id", c.id);
+                            fetchData();
+                          }}>
+                            {c.is_active ? "إيقاف" : "تفعيل"}
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={async () => {
+                            await supabase.from("coupons").delete().eq("id", c.id);
+                            fetchData();
+                          }}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-4">
             <Card>
@@ -740,5 +796,86 @@ export default function Dashboard() {
         </Tabs>
       </div>
     </Layout>
+  );
+}
+
+function CouponForm({ storeId, onSaved }: { storeId: string; onSaved: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [code, setCode] = useState("");
+  const [discountType, setDiscountType] = useState("percentage");
+  const [discountValue, setDiscountValue] = useState("");
+  const [minOrder, setMinOrder] = useState("");
+  const [maxUses, setMaxUses] = useState("");
+  const [expiresAt, setExpiresAt] = useState("");
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+
+  const save = async () => {
+    if (!code || !discountValue) return;
+    setSaving(true);
+    const { error } = await supabase.from("coupons").insert({
+      store_id: storeId,
+      code: code.toUpperCase(),
+      discount_type: discountType,
+      discount_value: Number(discountValue),
+      min_order_amount: minOrder ? Number(minOrder) : 0,
+      max_uses: maxUses ? Number(maxUses) : null,
+      expires_at: expiresAt || null,
+    });
+    if (error) {
+      toast({ title: error.code === "23505" ? "الكود موجود قبل كده" : "حصل مشكلة", variant: "destructive" });
+    } else {
+      toast({ title: "تم إضافة الكوبون ✅" });
+      setOpen(false);
+      setCode(""); setDiscountValue(""); setMinOrder(""); setMaxUses(""); setExpiresAt("");
+      onSaved();
+    }
+    setSaving(false);
+  };
+
+  return (
+    <>
+      <Button size="sm" onClick={() => setOpen(true)}><Plus className="h-4 w-4 ml-1" />إضافة كوبون</Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>إضافة كوبون خصم</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label>كود الكوبون</Label>
+              <Input value={code} onChange={e => setCode(e.target.value.toUpperCase())} placeholder="مثلاً: SAVE20" dir="ltr" />
+            </div>
+            <div className="space-y-2">
+              <Label>نوع الخصم</Label>
+              <Select value={discountType} onValueChange={setDiscountType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="percentage">نسبة مئوية %</SelectItem>
+                  <SelectItem value="fixed">مبلغ ثابت (جنيه)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>قيمة الخصم {discountType === 'percentage' ? '(%)' : '(جنيه)'}</Label>
+              <Input type="number" value={discountValue} onChange={e => setDiscountValue(e.target.value)} dir="ltr" />
+            </div>
+            <div className="space-y-2">
+              <Label>الحد الأدنى للطلب (اختياري)</Label>
+              <Input type="number" value={minOrder} onChange={e => setMinOrder(e.target.value)} placeholder="0" dir="ltr" />
+            </div>
+            <div className="space-y-2">
+              <Label>أقصى عدد استخدامات (اختياري)</Label>
+              <Input type="number" value={maxUses} onChange={e => setMaxUses(e.target.value)} placeholder="بدون حد" dir="ltr" />
+            </div>
+            <div className="space-y-2">
+              <Label>تاريخ الانتهاء (اختياري)</Label>
+              <Input type="date" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} dir="ltr" />
+            </div>
+            <Button className="w-full" onClick={save} disabled={saving}>
+              {saving ? "جاري الحفظ..." : "إضافة الكوبون"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

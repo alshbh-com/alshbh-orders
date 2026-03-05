@@ -39,6 +39,9 @@ export default function StoreFront() {
   const [customerNotes, setCustomerNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
 
   useEffect(() => {
     const fetchStore = async () => {
@@ -89,11 +92,11 @@ export default function StoreFront() {
   const bestSellers = useMemo(() => [...products].sort((a, b) => (b.sales_count || 0) - (a.sales_count || 0)).slice(0, 4), [products]);
   
 
-  const addToCart = (product: any) => {
+  const addToCart = (product: any, size?: string, color?: string) => {
     setCart(prev => {
-      const existing = prev.find(i => i.product.id === product.id && !i.selectedSize && !i.selectedColor);
-      if (existing) return prev.map(i => i.product.id === product.id && !i.selectedSize && !i.selectedColor ? { ...i, quantity: i.quantity + 1 } : i);
-      return [...prev, { product, quantity: 1 }];
+      const existing = prev.find(i => i.product.id === product.id && i.selectedSize === size && i.selectedColor === color);
+      if (existing) return prev.map(i => i.product.id === product.id && i.selectedSize === size && i.selectedColor === color ? { ...i, quantity: i.quantity + 1 } : i);
+      return [...prev, { product, quantity: 1, selectedSize: size, selectedColor: color }];
     });
     toast({ title: "تم الإضافة للسلة", description: product.name });
   };
@@ -108,7 +111,36 @@ export default function StoreFront() {
 
   const shippingCost = store?.shipping_cost || 70;
   const cartSubtotal = cart.reduce((sum, i) => sum + (i.product.discount_price || i.product.price) * i.quantity, 0);
-  const cartTotal = cartSubtotal + shippingCost;
+  const discountAmount = appliedCoupon
+    ? appliedCoupon.discount_type === 'percentage'
+      ? Math.round(cartSubtotal * appliedCoupon.discount_value / 100)
+      : Math.min(appliedCoupon.discount_value, cartSubtotal)
+    : 0;
+  const cartTotal = cartSubtotal - discountAmount + shippingCost;
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim() || !store) return;
+    setApplyingCoupon(true);
+    const { data } = await supabase.from("coupons").select("*")
+      .eq("store_id", store.id).eq("code", couponCode.trim().toUpperCase()).eq("is_active", true).maybeSingle();
+    if (!data) {
+      toast({ title: "الكوبون مش صحيح أو منتهي", variant: "destructive" });
+      setAppliedCoupon(null);
+    } else if (data.max_uses && data.used_count >= data.max_uses) {
+      toast({ title: "الكوبون خلص عدد الاستخدامات", variant: "destructive" });
+      setAppliedCoupon(null);
+    } else if (data.expires_at && new Date(data.expires_at) < new Date()) {
+      toast({ title: "الكوبون منتهي الصلاحية", variant: "destructive" });
+      setAppliedCoupon(null);
+    } else if (data.min_order_amount && cartSubtotal < data.min_order_amount) {
+      toast({ title: `الحد الأدنى للطلب ${data.min_order_amount} جنيه`, variant: "destructive" });
+      setAppliedCoupon(null);
+    } else {
+      setAppliedCoupon(data);
+      toast({ title: "تم تطبيق الكوبون ✅" });
+    }
+    setApplyingCoupon(false);
+  };
 
   const submitOrder = async () => {
     if (!customerName || !customerPhone || !customerAddress || cart.length === 0) return;
@@ -126,8 +158,15 @@ export default function StoreFront() {
         customer_notes: customerNotes || null,
         total_price: cartTotal,
         shipping_cost: shippingCost,
+        coupon_code: appliedCoupon?.code || null,
+        discount_amount: discountAmount,
       }).select().single();
       if (error) throw error;
+
+      // Update coupon used_count
+      if (appliedCoupon) {
+        await supabase.from("coupons").update({ used_count: appliedCoupon.used_count + 1 }).eq("id", appliedCoupon.id);
+      }
 
       const items = cart.map(i => ({
         order_id: order.id,
@@ -286,7 +325,7 @@ export default function StoreFront() {
           <h2 className="text-xl font-bold mb-3">⭐ منتجات مميزة</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {featuredProducts.map(p => (
-              <ProductCard key={p.id} product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} onAddToCart={() => addToCart(p)} />
+              <ProductCard key={p.id} product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} />
             ))}
           </div>
         </section>
@@ -299,7 +338,7 @@ export default function StoreFront() {
           <h2 className="text-xl font-bold mb-3">🔥 الأكثر مبيعاً</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {bestSellers.map(p => (
-              <ProductCard key={p.id} product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} onAddToCart={() => addToCart(p)} />
+              <ProductCard key={p.id} product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} />
             ))}
           </div>
         </section>
@@ -318,7 +357,7 @@ export default function StoreFront() {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filteredProducts.map(p => (
-              <ProductCard key={p.id} product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} onAddToCart={() => addToCart(p)} />
+              <ProductCard key={p.id} product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} />
             ))}
           </div>
         )}
@@ -406,8 +445,24 @@ export default function StoreFront() {
               <Label>ملاحظات (اختياري)</Label>
               <Input value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} placeholder="أي ملاحظات على الطلب..." />
             </div>
+            {/* Coupon */}
+            <div className="space-y-2">
+              <Label>كوبون خصم (اختياري)</Label>
+              <div className="flex gap-2">
+                <Input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="ادخل كود الخصم" dir="ltr" className="flex-1" />
+                <Button variant="outline" onClick={applyCoupon} disabled={applyingCoupon}>
+                  {applyingCoupon ? "..." : "تطبيق"}
+                </Button>
+              </div>
+              {appliedCoupon && (
+                <p className="text-xs text-green-600">✅ كوبون {appliedCoupon.code} — خصم {appliedCoupon.discount_type === 'percentage' ? `${appliedCoupon.discount_value}%` : `${appliedCoupon.discount_value} جنيه`}</p>
+              )}
+            </div>
             <div className="border-t border-border pt-3 space-y-1 text-sm">
               <div className="flex justify-between"><span>المنتجات</span><span>{cartSubtotal} جنيه</span></div>
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-green-600"><span>الخصم</span><span>-{discountAmount} جنيه</span></div>
+              )}
               <div className="flex justify-between"><span>التوصيل</span><span>{shippingCost} جنيه</span></div>
               <div className="flex justify-between font-bold text-base border-t pt-2">
                 <span>الإجمالي</span>
@@ -477,8 +532,8 @@ function ComplaintForm({ storeId, storeName, whatsappNumber }: { storeId: string
   );
 }
 
-function ProductCard({ product, avgRating, onClick, onAddToCart }: {
-  product: any; avgRating: string | null; onClick: () => void; onAddToCart: () => void;
+function ProductCard({ product, avgRating, onClick }: {
+  product: any; avgRating: string | null; onClick: () => void;
 }) {
   const finalPrice = product.discount_price || product.price;
   const hasDiscount = product.discount_price && product.discount_price < product.price;
@@ -504,16 +559,11 @@ function ProductCard({ product, avgRating, onClick, onAddToCart }: {
         {product.stock !== null && product.stock <= 0 && (
           <Badge variant="destructive" className="text-xs mb-2">غير متوفر</Badge>
         )}
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-base font-bold" style={{ color: "var(--store-primary)" }}>{finalPrice} جنيه</span>
-            {hasDiscount && (
-              <span className="text-xs text-muted-foreground line-through mr-1">{product.price}</span>
-            )}
-          </div>
-          <Button size="sm" className="text-xs" onClick={(e) => { e.stopPropagation(); onAddToCart(); }}>
-            <Plus className="h-3 w-3" />
-          </Button>
+        <div>
+          <span className="text-base font-bold" style={{ color: "var(--store-primary)" }}>{finalPrice} جنيه</span>
+          {hasDiscount && (
+            <span className="text-xs text-muted-foreground line-through mr-1">{product.price}</span>
+          )}
         </div>
       </div>
     </div>
