@@ -477,8 +477,8 @@ function ComplaintForm({ storeId, storeName, whatsappNumber }: { storeId: string
   );
 }
 
-function ProductCard({ product, avgRating, onClick, onAddToCart }: {
-  product: any; avgRating: string | null; onClick: () => void; onAddToCart: () => void;
+function ProductCard({ product, avgRating, onClick }: {
+  product: any; avgRating: string | null; onClick: () => void;
 }) {
   const finalPrice = product.discount_price || product.price;
   const hasDiscount = product.discount_price && product.discount_price < product.price;
@@ -504,16 +504,11 @@ function ProductCard({ product, avgRating, onClick, onAddToCart }: {
         {product.stock !== null && product.stock <= 0 && (
           <Badge variant="destructive" className="text-xs mb-2">غير متوفر</Badge>
         )}
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-base font-bold" style={{ color: "var(--store-primary)" }}>{finalPrice} جنيه</span>
-            {hasDiscount && (
-              <span className="text-xs text-muted-foreground line-through mr-1">{product.price}</span>
-            )}
-          </div>
-          <Button size="sm" className="text-xs" onClick={(e) => { e.stopPropagation(); onAddToCart(); }}>
-            <Plus className="h-3 w-3" />
-          </Button>
+        <div>
+          <span className="text-base font-bold" style={{ color: "var(--store-primary)" }}>{finalPrice} جنيه</span>
+          {hasDiscount && (
+            <span className="text-xs text-muted-foreground line-through mr-1">{product.price}</span>
+          )}
         </div>
       </div>
     </div>
