@@ -111,7 +111,36 @@ export default function StoreFront() {
 
   const shippingCost = store?.shipping_cost || 70;
   const cartSubtotal = cart.reduce((sum, i) => sum + (i.product.discount_price || i.product.price) * i.quantity, 0);
-  const cartTotal = cartSubtotal + shippingCost;
+  const discountAmount = appliedCoupon
+    ? appliedCoupon.discount_type === 'percentage'
+      ? Math.round(cartSubtotal * appliedCoupon.discount_value / 100)
+      : Math.min(appliedCoupon.discount_value, cartSubtotal)
+    : 0;
+  const cartTotal = cartSubtotal - discountAmount + shippingCost;
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim() || !store) return;
+    setApplyingCoupon(true);
+    const { data } = await supabase.from("coupons").select("*")
+      .eq("store_id", store.id).eq("code", couponCode.trim().toUpperCase()).eq("is_active", true).maybeSingle();
+    if (!data) {
+      toast({ title: "الكوبون مش صحيح أو منتهي", variant: "destructive" });
+      setAppliedCoupon(null);
+    } else if (data.max_uses && data.used_count >= data.max_uses) {
+      toast({ title: "الكوبون خلص عدد الاستخدامات", variant: "destructive" });
+      setAppliedCoupon(null);
+    } else if (data.expires_at && new Date(data.expires_at) < new Date()) {
+      toast({ title: "الكوبون منتهي الصلاحية", variant: "destructive" });
+      setAppliedCoupon(null);
+    } else if (data.min_order_amount && cartSubtotal < data.min_order_amount) {
+      toast({ title: `الحد الأدنى للطلب ${data.min_order_amount} جنيه`, variant: "destructive" });
+      setAppliedCoupon(null);
+    } else {
+      setAppliedCoupon(data);
+      toast({ title: "تم تطبيق الكوبون ✅" });
+    }
+    setApplyingCoupon(false);
+  };
 
   const submitOrder = async () => {
     if (!customerName || !customerPhone || !customerAddress || cart.length === 0) return;
