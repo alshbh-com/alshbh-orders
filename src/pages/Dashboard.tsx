@@ -97,12 +97,13 @@ export default function Dashboard() {
       setEditGoogleAnalytics(storeData.google_analytics || "");
       setEditSnapchatPixel(storeData.snapchat_pixel || "");
 
-      const [productsRes, ordersRes, categoriesRes, transRes, templatesRes] = await Promise.all([
+      const [productsRes, ordersRes, categoriesRes, transRes, templatesRes, notifRes] = await Promise.all([
         supabase.from("products").select("*").eq("store_id", storeData.id).order("created_at", { ascending: false }),
         supabase.from("orders").select("*, order_items(*, products(name))").eq("store_id", storeData.id).order("created_at", { ascending: false }),
         supabase.from("categories").select("*").eq("store_id", storeData.id).order("sort_order"),
         supabase.from("point_transactions").select("*").eq("store_id", storeData.id).order("created_at", { ascending: false }).limit(20),
         supabase.from("templates").select("*"),
+        supabase.from("notifications").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(20),
       ]);
       setProducts(productsRes.data || []);
       setOrders(ordersRes.data || []);
