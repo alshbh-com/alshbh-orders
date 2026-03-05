@@ -449,6 +449,8 @@ export type Database = {
       stores: {
         Row: {
           created_at: string
+          facebook_pixel: string | null
+          google_analytics: string | null
           id: string
           is_active: boolean
           logo_url: string | null
@@ -457,13 +459,17 @@ export type Database = {
           primary_color: string | null
           secondary_color: string | null
           shipping_cost: number
+          snapchat_pixel: string | null
           store_name: string
           store_slug: string
           theme: string | null
+          tiktok_pixel: string | null
           whatsapp_number: string | null
         }
         Insert: {
           created_at?: string
+          facebook_pixel?: string | null
+          google_analytics?: string | null
           id?: string
           is_active?: boolean
           logo_url?: string | null
@@ -472,13 +478,17 @@ export type Database = {
           primary_color?: string | null
           secondary_color?: string | null
           shipping_cost?: number
+          snapchat_pixel?: string | null
           store_name: string
           store_slug: string
           theme?: string | null
+          tiktok_pixel?: string | null
           whatsapp_number?: string | null
         }
         Update: {
           created_at?: string
+          facebook_pixel?: string | null
+          google_analytics?: string | null
           id?: string
           is_active?: boolean
           logo_url?: string | null
@@ -487,9 +497,11 @@ export type Database = {
           primary_color?: string | null
           secondary_color?: string | null
           shipping_cost?: number
+          snapchat_pixel?: string | null
           store_name?: string
           store_slug?: string
           theme?: string | null
+          tiktok_pixel?: string | null
           whatsapp_number?: string | null
         }
         Relationships: []

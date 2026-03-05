@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   Package, ShoppingCart, Coins, Store, Plus, Trash2, Edit, Eye,
-  X, Check, Clock, Truck, XCircle, Image as ImageIcon, Search
+  X, Check, Clock, Truck, XCircle, Image as ImageIcon, Search, Megaphone, Bell
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -68,7 +68,12 @@ export default function Dashboard() {
   const [editPrimaryColor, setEditPrimaryColor] = useState("");
   const [editSecondaryColor, setEditSecondaryColor] = useState("");
   const [editShippingCost, setEditShippingCost] = useState("");
+  const [editFacebookPixel, setEditFacebookPixel] = useState("");
+  const [editTiktokPixel, setEditTiktokPixel] = useState("");
+  const [editGoogleAnalytics, setEditGoogleAnalytics] = useState("");
+  const [editSnapchatPixel, setEditSnapchatPixel] = useState("");
   const [savingSettings, setSavingSettings] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   // Order detail
   const [showOrderDetail, setShowOrderDetail] = useState<any>(null);
@@ -87,19 +92,25 @@ export default function Dashboard() {
       setEditPrimaryColor(storeData.primary_color || "#D97706");
       setEditSecondaryColor(storeData.secondary_color || "#F59E0B");
       setEditShippingCost(String(storeData.shipping_cost || 70));
+      setEditFacebookPixel(storeData.facebook_pixel || "");
+      setEditTiktokPixel(storeData.tiktok_pixel || "");
+      setEditGoogleAnalytics(storeData.google_analytics || "");
+      setEditSnapchatPixel(storeData.snapchat_pixel || "");
 
-      const [productsRes, ordersRes, categoriesRes, transRes, templatesRes] = await Promise.all([
+      const [productsRes, ordersRes, categoriesRes, transRes, templatesRes, notifRes] = await Promise.all([
         supabase.from("products").select("*").eq("store_id", storeData.id).order("created_at", { ascending: false }),
         supabase.from("orders").select("*, order_items(*, products(name))").eq("store_id", storeData.id).order("created_at", { ascending: false }),
         supabase.from("categories").select("*").eq("store_id", storeData.id).order("sort_order"),
         supabase.from("point_transactions").select("*").eq("store_id", storeData.id).order("created_at", { ascending: false }).limit(20),
         supabase.from("templates").select("*"),
+        supabase.from("notifications").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(20),
       ]);
       setProducts(productsRes.data || []);
       setOrders(ordersRes.data || []);
       setCategories(categoriesRes.data || []);
       setTransactions(transRes.data || []);
       setTemplates(templatesRes.data || []);
+      setNotifications(notifRes.data || []);
     }
     setLoading(false);
   };
@@ -243,6 +254,8 @@ export default function Dashboard() {
       store_name: editStoreName, whatsapp_number: editWhatsapp,
       theme: editTheme, primary_color: editPrimaryColor,
       secondary_color: editSecondaryColor, shipping_cost: parseFloat(editShippingCost) || 70,
+      facebook_pixel: editFacebookPixel || null, tiktok_pixel: editTiktokPixel || null,
+      google_analytics: editGoogleAnalytics || null, snapchat_pixel: editSnapchatPixel || null,
     }).eq("id", store.id);
     if (!error) toast({ title: "تم حفظ الإعدادات" });
     else toast({ title: "حصل مشكلة", description: error.message, variant: "destructive" });
@@ -361,6 +374,8 @@ export default function Dashboard() {
             <TabsTrigger value="orders">الطلبات</TabsTrigger>
             <TabsTrigger value="categories">التصنيفات</TabsTrigger>
             <TabsTrigger value="points">النقاط</TabsTrigger>
+            <TabsTrigger value="marketing">التسويق</TabsTrigger>
+            <TabsTrigger value="notifications">الإشعارات</TabsTrigger>
             <TabsTrigger value="settings">الإعدادات</TabsTrigger>
           </TabsList>
 
@@ -618,6 +633,77 @@ export default function Dashboard() {
                       <div key={t.id} className="flex justify-between items-center text-sm border-b border-border pb-2">
                         <div><p>{t.description}</p><p className="text-xs text-muted-foreground">{new Date(t.created_at).toLocaleString("ar-EG")}</p></div>
                         <span className={`font-bold ${t.amount > 0 ? "text-green-600" : "text-red-500"}`}>{t.amount > 0 ? "+" : ""}{t.amount}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Marketing Tab */}
+          <TabsContent value="marketing" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Megaphone className="h-5 w-5 text-primary" />إعدادات التسويق</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">ضيف أكواد البيكسل عشان تتبع حملاتك الإعلانية وتحسن مبيعاتك</p>
+                <div className="space-y-2">
+                  <Label>Facebook Pixel ID</Label>
+                  <Input value={editFacebookPixel} onChange={(e) => setEditFacebookPixel(e.target.value)} placeholder="مثال: 123456789012345" dir="ltr" />
+                  <p className="text-xs text-muted-foreground">هتلاقيه في Facebook Events Manager</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>TikTok Pixel ID</Label>
+                  <Input value={editTiktokPixel} onChange={(e) => setEditTiktokPixel(e.target.value)} placeholder="مثال: CXXXXXXXXXXXXXXXXX" dir="ltr" />
+                  <p className="text-xs text-muted-foreground">هتلاقيه في TikTok Ads Manager → Assets → Events</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Google Analytics ID</Label>
+                  <Input value={editGoogleAnalytics} onChange={(e) => setEditGoogleAnalytics(e.target.value)} placeholder="مثال: G-XXXXXXXXXX" dir="ltr" />
+                  <p className="text-xs text-muted-foreground">هتلاقيه في Google Analytics → Admin → Data Streams</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Snapchat Pixel ID</Label>
+                  <Input value={editSnapchatPixel} onChange={(e) => setEditSnapchatPixel(e.target.value)} placeholder="مثال: xxxxxxxx-xxxx-xxxx-xxxx" dir="ltr" />
+                  <p className="text-xs text-muted-foreground">هتلاقيه في Snapchat Ads Manager → Events Manager</p>
+                </div>
+                <Button onClick={saveStoreSettings} disabled={savingSettings} className="w-full">
+                  {savingSettings ? "جاري الحفظ..." : "حفظ إعدادات التسويق"}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Notifications Tab */}
+          <TabsContent value="notifications" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5 text-primary" />الإشعارات</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {notifications.length === 0 ? (
+                  <p className="text-muted-foreground text-sm text-center py-8">مفيش إشعارات لسه</p>
+                ) : (
+                  <div className="space-y-3">
+                    {notifications.map(n => (
+                      <div key={n.id} className={`border rounded-lg p-3 ${n.is_read ? "border-border" : "border-primary/40 bg-primary/5"}`}>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-semibold text-sm">{n.title}</h4>
+                            <p className="text-sm text-muted-foreground">{n.message}</p>
+                            <p className="text-xs text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString("ar-EG")}</p>
+                          </div>
+                          {!n.is_read && (
+                            <Button size="sm" variant="ghost" onClick={async () => {
+                              await supabase.from("notifications").update({ is_read: true }).eq("id", n.id);
+                              fetchData();
+                            }}>
+                              <Check className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
