@@ -87,7 +87,7 @@ export default function StoreFront() {
 
   const featuredProducts = useMemo(() => products.filter(p => p.is_featured), [products]);
   const bestSellers = useMemo(() => [...products].sort((a, b) => (b.sales_count || 0) - (a.sales_count || 0)).slice(0, 4), [products]);
-  const newProducts = useMemo(() => [...products].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 4), [products]);
+  
 
   const addToCart = (product: any) => {
     setCart(prev => {
