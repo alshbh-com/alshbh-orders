@@ -798,3 +798,84 @@ export default function Dashboard() {
     </Layout>
   );
 }
+
+function CouponForm({ storeId, onSaved }: { storeId: string; onSaved: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [code, setCode] = useState("");
+  const [discountType, setDiscountType] = useState("percentage");
+  const [discountValue, setDiscountValue] = useState("");
+  const [minOrder, setMinOrder] = useState("");
+  const [maxUses, setMaxUses] = useState("");
+  const [expiresAt, setExpiresAt] = useState("");
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+
+  const save = async () => {
+    if (!code || !discountValue) return;
+    setSaving(true);
+    const { error } = await supabase.from("coupons").insert({
+      store_id: storeId,
+      code: code.toUpperCase(),
+      discount_type: discountType,
+      discount_value: Number(discountValue),
+      min_order_amount: minOrder ? Number(minOrder) : 0,
+      max_uses: maxUses ? Number(maxUses) : null,
+      expires_at: expiresAt || null,
+    });
+    if (error) {
+      toast({ title: error.code === "23505" ? "الكود موجود قبل كده" : "حصل مشكلة", variant: "destructive" });
+    } else {
+      toast({ title: "تم إضافة الكوبون ✅" });
+      setOpen(false);
+      setCode(""); setDiscountValue(""); setMinOrder(""); setMaxUses(""); setExpiresAt("");
+      onSaved();
+    }
+    setSaving(false);
+  };
+
+  return (
+    <>
+      <Button size="sm" onClick={() => setOpen(true)}><Plus className="h-4 w-4 ml-1" />إضافة كوبون</Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>إضافة كوبون خصم</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label>كود الكوبون</Label>
+              <Input value={code} onChange={e => setCode(e.target.value.toUpperCase())} placeholder="مثلاً: SAVE20" dir="ltr" />
+            </div>
+            <div className="space-y-2">
+              <Label>نوع الخصم</Label>
+              <Select value={discountType} onValueChange={setDiscountType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="percentage">نسبة مئوية %</SelectItem>
+                  <SelectItem value="fixed">مبلغ ثابت (جنيه)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>قيمة الخصم {discountType === 'percentage' ? '(%)' : '(جنيه)'}</Label>
+              <Input type="number" value={discountValue} onChange={e => setDiscountValue(e.target.value)} dir="ltr" />
+            </div>
+            <div className="space-y-2">
+              <Label>الحد الأدنى للطلب (اختياري)</Label>
+              <Input type="number" value={minOrder} onChange={e => setMinOrder(e.target.value)} placeholder="0" dir="ltr" />
+            </div>
+            <div className="space-y-2">
+              <Label>أقصى عدد استخدامات (اختياري)</Label>
+              <Input type="number" value={maxUses} onChange={e => setMaxUses(e.target.value)} placeholder="بدون حد" dir="ltr" />
+            </div>
+            <div className="space-y-2">
+              <Label>تاريخ الانتهاء (اختياري)</Label>
+              <Input type="date" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} dir="ltr" />
+            </div>
+            <Button className="w-full" onClick={save} disabled={saving}>
+              {saving ? "جاري الحفظ..." : "إضافة الكوبون"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
