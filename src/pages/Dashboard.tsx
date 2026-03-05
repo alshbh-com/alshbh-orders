@@ -254,6 +254,8 @@ export default function Dashboard() {
       store_name: editStoreName, whatsapp_number: editWhatsapp,
       theme: editTheme, primary_color: editPrimaryColor,
       secondary_color: editSecondaryColor, shipping_cost: parseFloat(editShippingCost) || 70,
+      facebook_pixel: editFacebookPixel || null, tiktok_pixel: editTiktokPixel || null,
+      google_analytics: editGoogleAnalytics || null, snapchat_pixel: editSnapchatPixel || null,
     }).eq("id", store.id);
     if (!error) toast({ title: "تم حفظ الإعدادات" });
     else toast({ title: "حصل مشكلة", description: error.message, variant: "destructive" });
