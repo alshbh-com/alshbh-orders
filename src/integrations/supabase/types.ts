@@ -110,6 +110,8 @@ export type Database = {
           price: number
           product_id: string | null
           quantity: number
+          selected_color: string | null
+          selected_size: string | null
         }
         Insert: {
           id?: string
@@ -117,6 +119,8 @@ export type Database = {
           price?: number
           product_id?: string | null
           quantity?: number
+          selected_color?: string | null
+          selected_size?: string | null
         }
         Update: {
           id?: string
@@ -124,6 +128,8 @@ export type Database = {
           price?: number
           product_id?: string | null
           quantity?: number
+          selected_color?: string | null
+          selected_size?: string | null
         }
         Relationships: [
           {
@@ -147,8 +153,10 @@ export type Database = {
           created_at: string
           customer_address: string
           customer_name: string
+          customer_notes: string | null
           customer_phone: string
           id: string
+          shipping_cost: number
           status: Database["public"]["Enums"]["order_status"]
           store_id: string
           total_price: number
@@ -157,8 +165,10 @@ export type Database = {
           created_at?: string
           customer_address: string
           customer_name: string
+          customer_notes?: string | null
           customer_phone: string
           id?: string
+          shipping_cost?: number
           status?: Database["public"]["Enums"]["order_status"]
           store_id: string
           total_price?: number
@@ -167,8 +177,10 @@ export type Database = {
           created_at?: string
           customer_address?: string
           customer_name?: string
+          customer_notes?: string | null
           customer_phone?: string
           id?: string
+          shipping_cost?: number
           status?: Database["public"]["Enums"]["order_status"]
           store_id?: string
           total_price?: number
@@ -274,11 +286,50 @@ export type Database = {
           },
         ]
       }
+      product_variants: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          price_adjustment: number
+          product_id: string
+          size: string | null
+          stock: number
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          price_adjustment?: number
+          product_id: string
+          size?: string | null
+          stock?: number
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          price_adjustment?: number
+          product_id?: string
+          size?: string | null
+          stock?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category_id: string | null
           created_at: string
           description: string | null
+          discount_price: number | null
           id: string
           is_active: boolean | null
           is_featured: boolean | null
@@ -286,12 +337,14 @@ export type Database = {
           name: string
           price: number
           sales_count: number | null
+          stock: number | null
           store_id: string
         }
         Insert: {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          discount_price?: number | null
           id?: string
           is_active?: boolean | null
           is_featured?: boolean | null
@@ -299,12 +352,14 @@ export type Database = {
           name: string
           price?: number
           sales_count?: number | null
+          stock?: number | null
           store_id: string
         }
         Update: {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          discount_price?: number | null
           id?: string
           is_active?: boolean | null
           is_featured?: boolean | null
@@ -312,6 +367,7 @@ export type Database = {
           name?: string
           price?: number
           sales_count?: number | null
+          stock?: number | null
           store_id?: string
         }
         Relationships: [
@@ -400,6 +456,7 @@ export type Database = {
           points_balance: number
           primary_color: string | null
           secondary_color: string | null
+          shipping_cost: number
           store_name: string
           store_slug: string
           theme: string | null
@@ -414,6 +471,7 @@ export type Database = {
           points_balance?: number
           primary_color?: string | null
           secondary_color?: string | null
+          shipping_cost?: number
           store_name: string
           store_slug: string
           theme?: string | null
@@ -428,6 +486,7 @@ export type Database = {
           points_balance?: number
           primary_color?: string | null
           secondary_color?: string | null
+          shipping_cost?: number
           store_name?: string
           store_slug?: string
           theme?: string | null
