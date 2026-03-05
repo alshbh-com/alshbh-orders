@@ -68,7 +68,12 @@ export default function Dashboard() {
   const [editPrimaryColor, setEditPrimaryColor] = useState("");
   const [editSecondaryColor, setEditSecondaryColor] = useState("");
   const [editShippingCost, setEditShippingCost] = useState("");
+  const [editFacebookPixel, setEditFacebookPixel] = useState("");
+  const [editTiktokPixel, setEditTiktokPixel] = useState("");
+  const [editGoogleAnalytics, setEditGoogleAnalytics] = useState("");
+  const [editSnapchatPixel, setEditSnapchatPixel] = useState("");
   const [savingSettings, setSavingSettings] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   // Order detail
   const [showOrderDetail, setShowOrderDetail] = useState<any>(null);
