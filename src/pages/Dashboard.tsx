@@ -641,6 +641,77 @@ export default function Dashboard() {
             </Card>
           </TabsContent>
 
+          {/* Marketing Tab */}
+          <TabsContent value="marketing" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Megaphone className="h-5 w-5 text-primary" />إعدادات التسويق</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">ضيف أكواد البيكسل عشان تتبع حملاتك الإعلانية وتحسن مبيعاتك</p>
+                <div className="space-y-2">
+                  <Label>Facebook Pixel ID</Label>
+                  <Input value={editFacebookPixel} onChange={(e) => setEditFacebookPixel(e.target.value)} placeholder="مثال: 123456789012345" dir="ltr" />
+                  <p className="text-xs text-muted-foreground">هتلاقيه في Facebook Events Manager</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>TikTok Pixel ID</Label>
+                  <Input value={editTiktokPixel} onChange={(e) => setEditTiktokPixel(e.target.value)} placeholder="مثال: CXXXXXXXXXXXXXXXXX" dir="ltr" />
+                  <p className="text-xs text-muted-foreground">هتلاقيه في TikTok Ads Manager → Assets → Events</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Google Analytics ID</Label>
+                  <Input value={editGoogleAnalytics} onChange={(e) => setEditGoogleAnalytics(e.target.value)} placeholder="مثال: G-XXXXXXXXXX" dir="ltr" />
+                  <p className="text-xs text-muted-foreground">هتلاقيه في Google Analytics → Admin → Data Streams</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Snapchat Pixel ID</Label>
+                  <Input value={editSnapchatPixel} onChange={(e) => setEditSnapchatPixel(e.target.value)} placeholder="مثال: xxxxxxxx-xxxx-xxxx-xxxx" dir="ltr" />
+                  <p className="text-xs text-muted-foreground">هتلاقيه في Snapchat Ads Manager → Events Manager</p>
+                </div>
+                <Button onClick={saveStoreSettings} disabled={savingSettings} className="w-full">
+                  {savingSettings ? "جاري الحفظ..." : "حفظ إعدادات التسويق"}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Notifications Tab */}
+          <TabsContent value="notifications" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5 text-primary" />الإشعارات</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {notifications.length === 0 ? (
+                  <p className="text-muted-foreground text-sm text-center py-8">مفيش إشعارات لسه</p>
+                ) : (
+                  <div className="space-y-3">
+                    {notifications.map(n => (
+                      <div key={n.id} className={`border rounded-lg p-3 ${n.is_read ? "border-border" : "border-primary/40 bg-primary/5"}`}>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-semibold text-sm">{n.title}</h4>
+                            <p className="text-sm text-muted-foreground">{n.message}</p>
+                            <p className="text-xs text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString("ar-EG")}</p>
+                          </div>
+                          {!n.is_read && (
+                            <Button size="sm" variant="ghost" onClick={async () => {
+                              await supabase.from("notifications").update({ is_read: true }).eq("id", n.id);
+                              fetchData();
+                            }}>
+                              <Check className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-4">
             <Card>
