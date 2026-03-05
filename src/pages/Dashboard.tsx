@@ -378,6 +378,7 @@ export default function Dashboard() {
             <TabsTrigger value="categories">التصنيفات</TabsTrigger>
             <TabsTrigger value="points">النقاط</TabsTrigger>
             <TabsTrigger value="marketing">التسويق</TabsTrigger>
+            <TabsTrigger value="coupons">الكوبونات</TabsTrigger>
             <TabsTrigger value="notifications">الإشعارات</TabsTrigger>
             <TabsTrigger value="settings">الإعدادات</TabsTrigger>
           </TabsList>
