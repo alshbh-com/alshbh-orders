@@ -92,6 +92,10 @@ export default function Dashboard() {
       setEditPrimaryColor(storeData.primary_color || "#D97706");
       setEditSecondaryColor(storeData.secondary_color || "#F59E0B");
       setEditShippingCost(String(storeData.shipping_cost || 70));
+      setEditFacebookPixel(storeData.facebook_pixel || "");
+      setEditTiktokPixel(storeData.tiktok_pixel || "");
+      setEditGoogleAnalytics(storeData.google_analytics || "");
+      setEditSnapchatPixel(storeData.snapchat_pixel || "");
 
       const [productsRes, ordersRes, categoriesRes, transRes, templatesRes] = await Promise.all([
         supabase.from("products").select("*").eq("store_id", storeData.id).order("created_at", { ascending: false }),
