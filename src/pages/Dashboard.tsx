@@ -425,6 +425,7 @@ export default function Dashboard() {
           </Button>
         </div>
 
+        <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold">أهلاً يسطا! 👋 {store.store_name}</h1>
             <p className="text-muted-foreground">هنا بتدير كل حاجة في متجرك — منتجات وطلبات وكل الحاجات</p>
