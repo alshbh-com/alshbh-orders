@@ -136,11 +136,36 @@ export default function Dashboard() {
   };
 
   const uploadImage = async (file: File, folder: string) => {
-    const ext = file.name.split(".").pop();
+    // Compress image before upload to save storage space
+    const compressedFile = await compressImage(file);
+    const ext = "webp";
     const name = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from("product-images").upload(name, file);
+    const { error } = await supabase.storage.from("product-images").upload(name, compressedFile, {
+      contentType: "image/webp",
+    });
     if (error) throw error;
     return supabase.storage.from("product-images").getPublicUrl(name).data.publicUrl;
+  };
+
+  const compressImage = (file: File): Promise<Blob> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_SIZE = 800;
+        let { width, height } = img;
+        if (width > MAX_SIZE || height > MAX_SIZE) {
+          if (width > height) { height = (height / width) * MAX_SIZE; width = MAX_SIZE; }
+          else { width = (width / height) * MAX_SIZE; height = MAX_SIZE; }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => resolve(blob!), "image/webp", 0.75);
+      };
+      img.src = URL.createObjectURL(file);
+    });
   };
 
   const saveProduct = async () => {
