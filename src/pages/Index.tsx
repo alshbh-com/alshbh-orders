@@ -108,11 +108,35 @@ export default function Index() {
         </div>
       </section>
 
+      {/* FAQ Section for SEO */}
+      <section className="py-20 bg-muted/30">
+        <div className="container max-w-3xl">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">أسئلة شائعة عن منصة ALSHBH الشبح</h2>
+          <div className="space-y-6">
+            {[
+              { q: "إيه هي منصة ALSHBH الشبح؟", a: "ALSHBH الشبح هي منصة مصرية لإنشاء المتاجر الإلكترونية. تقدر تعمل متجرك الخاص في دقايق وتبدأ تبيع أونلاين من غير ما تحتاج أي خبرة تقنية. بديل سلة وزد المصري." },
+              { q: "كم تكلفة إنشاء متجر إلكتروني على الشبح ALSHBH؟", a: "إنشاء المتجر مجاني تماماً! بتدفع بس لما تستقبل طلبات من خلال نظام النقاط - كل طلب = نقطة واحدة = جنيه واحد. مفيش اشتراكات شهرية أو رسوم خفية." },
+              { q: "إزاي أعمل متجر إلكتروني على منصة الشبح؟", a: "سجل حساب جديد بجوجل أو بالإيميل، اختار قالب متجرك (مطاعم، ملابس، عطور، سوبر ماركت)، ضيف منتجاتك بالصور والأسعار، وشارك رابط متجرك. الموضوع مش بياخد أكتر من 5 دقايق." },
+              { q: "هل منصة ALSHBH بتدعم إيزي أوردر Easy Order؟", a: "أيوا! منصة الشبح ALSHBH بتوفرلك نظام طلبات سهل وبسيط. العملاء يقدروا يطلبوا من متجرك بسهولة، وانت تستقبل الطلبات وتتابعها من لوحة التحكم." },
+              { q: "إيه المميزات اللي بتقدمها منصة الشبح؟", a: "قوالب جاهزة، نظام طلبات متكامل، كوبونات خصم، تقييمات المنتجات، إحصائيات المبيعات، رابط خاص لمتجرك على alshbh.store، ودعم كامل للموبايل." },
+            ].map((faq, i) => (
+              <details key={i} className="group rounded-xl border border-border bg-card p-5 cursor-pointer">
+                <summary className="font-bold text-lg list-none flex justify-between items-center">
+                  <span>{faq.q}</span>
+                  <span className="text-primary group-open:rotate-45 transition-transform text-2xl">+</span>
+                </summary>
+                <p className="mt-4 text-muted-foreground leading-relaxed">{faq.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="py-20 bg-primary text-primary-foreground">
         <div className="container text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">جاهز تبدأ؟</h2>
-          <p className="text-lg opacity-90 mb-8 max-w-xl mx-auto">سجل دلوقتي واعمل متجرك الإلكتروني في أقل من 5 دقايق</p>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">جاهز تبدأ متجرك الإلكتروني؟</h2>
+          <p className="text-lg opacity-90 mb-8 max-w-xl mx-auto">سجل دلوقتي واعمل متجرك الإلكتروني في أقل من 5 دقايق - مجاناً مع ALSHBH الشبح</p>
           <Link to="/auth">
             <Button size="lg" variant="secondary" className="text-lg px-8 py-6">ابدأ مجانًا</Button>
           </Link>
