@@ -53,6 +53,9 @@ export default function Dashboard() {
   const [productStock, setProductStock] = useState("");
   const [productImage, setProductImage] = useState<File | null>(null);
   const [productImagePreview, setProductImagePreview] = useState("");
+  const [productImageUrl, setProductImageUrl] = useState("");
+  const [additionalImages, setAdditionalImages] = useState<File[]>([]);
+  const [additionalImageUrls, setAdditionalImageUrls] = useState<string[]>([]);
   const [additionalImages, setAdditionalImages] = useState<File[]>([]);
   const [productSizes, setProductSizes] = useState<string[]>([]);
   const [productColors, setProductColors] = useState<string[]>([]);
