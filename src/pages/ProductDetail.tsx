@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AlshbhWatermark from "@/components/AlshbhWatermark";
-import { Store, ShoppingCart, Star, ChevronRight, Share2, MessageCircle, Minus, Plus, ArrowRight, MapPin } from "lucide-react";
+import { Store, ShoppingCart, Star, Share2, MessageCircle, Minus, Plus, ArrowRight, MapPin, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const SIZES = ["S", "M", "L", "XL", "XXL"];
 const COLORS: Record<string, string> = {
   "أسود": "#000000",
   "أبيض": "#FFFFFF",
@@ -66,21 +65,17 @@ export default function ProductDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchProduct();
-  }, [slug, productId]);
+  useEffect(() => { fetchProduct(); }, [slug, productId]);
 
   const fetchProduct = async () => {
     setLoading(true);
     const { data: storeData } = await supabase
       .from("stores").select("*").eq("store_slug", slug).eq("is_active", true).maybeSingle();
-
     if (!storeData) { setLoading(false); return; }
     setStore(storeData);
 
     const { data: productData } = await supabase
       .from("products").select("*").eq("id", productId).eq("store_id", storeData.id).eq("is_active", true).maybeSingle();
-
     if (!productData) { setLoading(false); return; }
     setProduct(productData);
 
@@ -100,28 +95,22 @@ export default function ProductDetail() {
     setRelatedProducts(relatedRes.data || []);
     setStoreShipping(shippingRes.data || []);
 
-    const availableSizes = [...new Set((variantsRes.data || []).map(v => v.size).filter(Boolean))];
-    const availableColors = [...new Set((variantsRes.data || []).map(v => v.color).filter(Boolean))];
-    // Initialize first selection with defaults
-    setSelections([{
-      size: availableSizes[0] || undefined,
-      color: availableColors[0] || undefined,
-      quantity: 1,
-    }]);
-
+    const avSizes = [...new Set((variantsRes.data || []).map(v => v.size).filter(Boolean))];
+    const avColors = [...new Set((variantsRes.data || []).map(v => v.color).filter(Boolean))];
+    setSelections([{ size: avSizes[0], color: avColors[0], quantity: 1 }]);
     setLoading(false);
   };
 
   const availableSizes = [...new Set(variants.map(v => v.size).filter(Boolean))];
   const availableColors = [...new Set(variants.map(v => v.color).filter(Boolean))];
+  const hasVariants = availableSizes.length > 0 || availableColors.length > 0;
 
-  const avgRating = reviews.length
-    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
-    : null;
-
+  const avgRating = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : null;
   const finalPrice = product?.discount_price || product?.price || 0;
   const hasDiscount = product?.discount_price && product.discount_price < product.price;
-  
+
+  const totalQuantity = selections.reduce((s, sel) => s + sel.quantity, 0);
+
   const getShippingCost = () => {
     if (selectedGovernorate && storeShipping.length > 0) {
       const found = storeShipping.find(s => s.governorate === selectedGovernorate);
@@ -131,31 +120,53 @@ export default function ProductDetail() {
   };
   const shippingCost = getShippingCost();
 
+  // Selection helpers
+  const updateSelection = (index: number, field: keyof VariantSelection, value: any) => {
+    setSelections(prev => prev.map((s, i) => i === index ? { ...s, [field]: value } : s));
+  };
+
+  const addSelection = () => {
+    setSelections(prev => [...prev, { size: availableSizes[0], color: availableColors[0], quantity: 1 }]);
+  };
+
+  const removeSelection = (index: number) => {
+    if (selections.length <= 1) return;
+    setSelections(prev => prev.filter((_, i) => i !== index));
+  };
+
   const addToCartAndGo = () => {
-    if (availableSizes.length > 0 && !selectedSize) {
-      toast({ title: "اختار المقاس الأول يسطا! 👕", variant: "destructive" });
-      return;
-    }
-    if (availableColors.length > 0 && !selectedColor) {
-      toast({ title: "اختار اللون الأول يا اخويا! 🎨", variant: "destructive" });
-      return;
+    for (const sel of selections) {
+      if (availableSizes.length > 0 && !sel.size) {
+        toast({ title: "اختار المقاس لكل الاختيارات يسطا! 👕", variant: "destructive" });
+        return;
+      }
+      if (availableColors.length > 0 && !sel.color) {
+        toast({ title: "اختار اللون لكل الاختيارات يا اخويا! 🎨", variant: "destructive" });
+        return;
+      }
     }
 
     const cartKey = `cart_${store.id}`;
     const existing: CartItem[] = JSON.parse(localStorage.getItem(cartKey) || "[]");
-    const cartItem: CartItem = { product, quantity, selectedSize, selectedColor };
 
-    const existingIdx = existing.findIndex(
-      i => i.product.id === product.id && i.selectedSize === selectedSize && i.selectedColor === selectedColor
-    );
-    if (existingIdx >= 0) {
-      existing[existingIdx].quantity += quantity;
-    } else {
-      existing.push(cartItem);
+    for (const sel of selections) {
+      const existingIdx = existing.findIndex(
+        i => i.product.id === product.id && i.selectedSize === (sel.size || undefined) && i.selectedColor === (sel.color || undefined)
+      );
+      if (existingIdx >= 0) {
+        existing[existingIdx].quantity += sel.quantity;
+      } else {
+        existing.push({
+          product,
+          quantity: sel.quantity,
+          selectedSize: sel.size,
+          selectedColor: sel.color,
+        });
+      }
     }
-    localStorage.setItem(cartKey, JSON.stringify(existing));
 
-    toast({ title: "حلو! اتضاف في السلة 🛒", description: `${product.name} - ${quantity} قطعة` });
+    localStorage.setItem(cartKey, JSON.stringify(existing));
+    toast({ title: "حلو! اتضاف في السلة 🛒", description: `${product.name} - ${totalQuantity} قطعة` });
     navigate(`/store/${slug}`);
   };
 
@@ -174,7 +185,7 @@ export default function ProductDetail() {
     }
     setSubmitting(true);
     try {
-      const totalPrice = finalPrice * quantity + shippingCost;
+      const totalPrice = finalPrice * totalQuantity + shippingCost;
       const addressWithGov = selectedGovernorate ? `${selectedGovernorate} - ${customerAddress}` : customerAddress;
       const { data: order, error } = await supabase.from("orders").insert({
         store_id: store.id,
@@ -187,14 +198,15 @@ export default function ProductDetail() {
       }).select().single();
       if (error) throw error;
 
-      await supabase.from("order_items").insert({
+      const items = selections.map(sel => ({
         order_id: order.id,
         product_id: product.id,
-        quantity,
+        quantity: sel.quantity,
         price: finalPrice,
-        selected_size: selectedSize || null,
-        selected_color: selectedColor || null,
-      });
+        selected_size: sel.size || null,
+        selected_color: sel.color || null,
+      }));
+      await supabase.from("order_items").insert(items);
 
       setOrderSuccess(order.id);
       setShowBuy(false);
@@ -207,44 +219,21 @@ export default function ProductDetail() {
   const submitReview = async () => {
     if (!reviewName || !reviewRating) return;
     await supabase.from("reviews").insert({
-      product_id: product.id,
-      customer_name: reviewName,
-      rating: reviewRating,
-      comment: reviewComment || null,
+      product_id: product.id, customer_name: reviewName, rating: reviewRating, comment: reviewComment || null,
     });
     toast({ title: "شكراً ليك يسطا! ⭐" });
-    setShowReview(false);
-    setReviewName(""); setReviewRating(5); setReviewComment("");
+    setShowReview(false); setReviewName(""); setReviewRating(5); setReviewComment("");
     fetchProduct();
   };
 
   const shareProduct = () => {
     const url = window.location.href;
-    if (navigator.share) {
-      navigator.share({ title: product?.name, url });
-    } else {
-      navigator.clipboard.writeText(url);
-      toast({ title: "تم نسخ الرابط يسطا! 📋" });
-    }
+    if (navigator.share) navigator.share({ title: product?.name, url });
+    else { navigator.clipboard.writeText(url); toast({ title: "تم نسخ الرابط يسطا! 📋" }); }
   };
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-
-  if (!store || !product) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-        <Store className="h-16 w-16 text-muted-foreground" />
-        <h1 className="text-2xl font-bold">المنتج ده مش موجود يسطا 😕</h1>
-        <Button onClick={() => navigate(`/store/${slug}`)}>يلا ارجع للمتجر</Button>
-      </div>
-    );
-  }
+  if (loading) return <div className="flex min-h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
+  if (!store || !product) return <div className="flex min-h-screen flex-col items-center justify-center gap-4"><Store className="h-16 w-16 text-muted-foreground" /><h1 className="text-2xl font-bold">المنتج ده مش موجود يسطا 😕</h1><Button onClick={() => navigate(`/store/${slug}`)}>يلا ارجع للمتجر</Button></div>;
 
   if (orderSuccess) {
     return (
@@ -286,14 +275,10 @@ export default function ProductDetail() {
             <span className="font-bold">{store.store_name}</span>
           </div>
           <div className="flex gap-1">
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20" onClick={shareProduct}>
-              <Share2 className="h-5 w-5" />
-            </Button>
+            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20" onClick={shareProduct}><Share2 className="h-5 w-5" /></Button>
             {store.whatsapp_number && (
               <a href={`https://wa.me/${store.whatsapp_number}`} target="_blank">
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
-                  <MessageCircle className="h-5 w-5" />
-                </Button>
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20"><MessageCircle className="h-5 w-5" /></Button>
               </a>
             )}
           </div>
@@ -318,9 +303,7 @@ export default function ProductDetail() {
               )}
             </>
           ) : (
-            <div className="w-full h-72 bg-muted rounded-xl flex items-center justify-center">
-              <ShoppingCart className="h-12 w-12 text-muted-foreground" />
-            </div>
+            <div className="w-full h-72 bg-muted rounded-xl flex items-center justify-center"><ShoppingCart className="h-12 w-12 text-muted-foreground" /></div>
           )}
         </div>
 
@@ -330,71 +313,120 @@ export default function ProductDetail() {
           <div className="flex items-center gap-3">
             <span className="text-2xl font-bold" style={{ color: "var(--store-primary)" }}>{finalPrice} جنيه</span>
             {hasDiscount && <span className="text-lg text-muted-foreground line-through">{product.price} جنيه</span>}
-            {hasDiscount && (
-              <Badge variant="destructive" className="text-xs">خصم {Math.round((1 - product.discount_price / product.price) * 100)}% 🔥</Badge>
-            )}
+            {hasDiscount && <Badge variant="destructive" className="text-xs">خصم {Math.round((1 - product.discount_price / product.price) * 100)}% 🔥</Badge>}
           </div>
           {product.description && <p className="text-muted-foreground leading-relaxed">{product.description}</p>}
           {avgRating && (
             <div className="flex items-center gap-2">
-              <div className="flex">
-                {[1, 2, 3, 4, 5].map(s => (
-                  <Star key={s} className={`h-4 w-4 ${s <= Math.round(Number(avgRating)) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
-                ))}
-              </div>
+              <div className="flex">{[1,2,3,4,5].map(s => <Star key={s} className={`h-4 w-4 ${s <= Math.round(Number(avgRating)) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />)}</div>
               <span className="text-sm font-semibold">{avgRating}</span>
               <span className="text-sm text-muted-foreground">({reviews.length} تقييم)</span>
             </div>
           )}
-          {product.stock !== null && (
-            <Badge variant={product.stock > 0 ? "default" : "destructive"}>
-              {product.stock > 0 ? `متوفر ✅ ${product.stock} قطعة` : "خلص يسطا 😅"}
-            </Badge>
-          )}
+          {product.stock !== null && <Badge variant={product.stock > 0 ? "default" : "destructive"}>{product.stock > 0 ? `متوفر ✅ ${product.stock} قطعة` : "خلص يسطا 😅"}</Badge>}
           <p className="text-sm text-muted-foreground">🚚 التوصيل لكل محافظات مصر — السعر حسب محافظتك</p>
         </div>
 
-        {/* Size Selection */}
-        {availableSizes.length > 0 && (
-          <div className="mb-4">
-            <h3 className="font-semibold mb-2">اختار المقاس 👕</h3>
-            <div className="flex gap-2 flex-wrap">
-              {availableSizes.map(size => (
-                <button key={size} onClick={() => setSelectedSize(size)}
-                  className={`px-4 py-2 rounded-lg border-2 text-sm font-semibold transition-all ${
-                    selectedSize === size ? "border-primary bg-primary text-primary-foreground" : "border-border hover:border-primary/50"
-                  }`}>{size}</button>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* ===== VARIANT SELECTION - Super Simple ===== */}
+        <div className="mb-6 space-y-3">
+          {hasVariants && (
+            <div className="bg-card border border-border rounded-2xl p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-base">اختار اللي عايزه 👇</h3>
+                {selections.length > 0 && (
+                  <Badge variant="secondary" className="text-xs">{totalQuantity} قطعة</Badge>
+                )}
+              </div>
 
-        {/* Color Selection */}
-        {availableColors.length > 0 && (
-          <div className="mb-4">
-            <h3 className="font-semibold mb-2">اختار اللون 🎨</h3>
-            <div className="flex gap-3 flex-wrap">
-              {availableColors.map(color => (
-                <button key={color} onClick={() => setSelectedColor(color)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 text-sm transition-all ${
-                    selectedColor === color ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"
-                  }`}>
-                  <span className="w-5 h-5 rounded-full border border-border" style={{ backgroundColor: COLORS[color] || "#888" }} />
-                  {color}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+              {selections.map((sel, idx) => (
+                <div key={idx} className="relative bg-muted/50 rounded-xl p-3 space-y-3">
+                  {selections.length > 1 && (
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-semibold text-muted-foreground">اختيار {idx + 1}</span>
+                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-destructive" onClick={() => removeSelection(idx)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
 
-        {/* Quantity */}
-        <div className="mb-6">
-          <h3 className="font-semibold mb-2">كام قطعة عايز؟ 🔢</h3>
-          <div className="flex items-center gap-3">
-            <Button size="icon" variant="outline" onClick={() => setQuantity(Math.max(1, quantity - 1))}><Minus className="h-4 w-4" /></Button>
-            <span className="text-xl font-bold w-12 text-center">{quantity}</span>
-            <Button size="icon" variant="outline" onClick={() => setQuantity(quantity + 1)}><Plus className="h-4 w-4" /></Button>
-          </div>
+                  {/* Size chips */}
+                  {availableSizes.length > 0 && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1.5">👕 المقاس</p>
+                      <div className="flex gap-1.5 flex-wrap">
+                        {availableSizes.map(size => (
+                          <button key={size} onClick={() => updateSelection(idx, 'size', size)}
+                            className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                              sel.size === size
+                                ? "text-white shadow-md"
+                                : "border border-border bg-background hover:border-primary/50"
+                            }`}
+                            style={sel.size === size ? { backgroundColor: store.primary_color || '#D97706' } : {}}>
+                            {size}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Color chips */}
+                  {availableColors.length > 0 && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1.5">🎨 اللون</p>
+                      <div className="flex gap-2 flex-wrap">
+                        {availableColors.map(color => (
+                          <button key={color} onClick={() => updateSelection(idx, 'color', color)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
+                              sel.color === color ? "ring-2 ring-offset-1 border-primary" : "border border-border bg-background hover:border-primary/50"
+                            }`}
+                            style={sel.color === color ? { ringColor: store.primary_color } : {}}>
+                            <span className="w-4 h-4 rounded-full border border-border shrink-0" style={{ backgroundColor: COLORS[color] || "#888" }} />
+                            {color}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Quantity */}
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1.5">🔢 الكمية</p>
+                    <div className="flex items-center gap-2">
+                      <Button size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={() => updateSelection(idx, 'quantity', Math.max(1, sel.quantity - 1))}>
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <span className="text-lg font-bold w-8 text-center">{sel.quantity}</span>
+                      <Button size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={() => updateSelection(idx, 'quantity', sel.quantity + 1)}>
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Add another variant button */}
+              <Button variant="outline" size="sm" className="w-full rounded-xl border-dashed" onClick={addSelection}>
+                <Plus className="h-4 w-4 ml-1" />
+                عايز مقاس/لون تاني؟ ضيف كمان! ➕
+              </Button>
+            </div>
+          )}
+
+          {/* No variants - just quantity */}
+          {!hasVariants && (
+            <div className="bg-card border border-border rounded-2xl p-4">
+              <h3 className="font-bold text-base mb-3">كام قطعة عايز؟ 🔢</h3>
+              <div className="flex items-center gap-3">
+                <Button size="icon" variant="outline" className="rounded-full" onClick={() => updateSelection(0, 'quantity', Math.max(1, selections[0].quantity - 1))}>
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <span className="text-xl font-bold w-12 text-center">{selections[0].quantity}</span>
+                <Button size="icon" variant="outline" className="rounded-full" onClick={() => updateSelection(0, 'quantity', selections[0].quantity + 1)}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Reviews */}
@@ -411,11 +443,7 @@ export default function ProductDetail() {
                 <div key={r.id} className="border border-border rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-semibold text-sm">{r.customer_name}</span>
-                    <div className="flex">
-                      {[1, 2, 3, 4, 5].map(s => (
-                        <Star key={s} className={`h-3 w-3 ${s <= r.rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
-                      ))}
-                    </div>
+                    <div className="flex">{[1,2,3,4,5].map(s => <Star key={s} className={`h-3 w-3 ${s <= r.rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />)}</div>
                   </div>
                   {r.comment && <p className="text-sm text-muted-foreground">{r.comment}</p>}
                   <p className="text-xs text-muted-foreground mt-1">{new Date(r.created_at).toLocaleDateString("ar-EG")}</p>
@@ -454,7 +482,7 @@ export default function ProductDetail() {
         <div className="container flex gap-2">
           <Button className="flex-1 text-base h-12" onClick={addToCartAndGo}>
             <ShoppingCart className="h-5 w-5 ml-2" />
-            حطه في السلة 🛒
+            حطه في السلة ({totalQuantity}) 🛒
           </Button>
           <Button variant="outline" className="flex-1 text-base h-12" onClick={() => setShowBuy(true)}>
             اشتري دلوقتي 🔥
@@ -467,13 +495,18 @@ export default function ProductDetail() {
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>يلا نشتري! 🎉</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div className="bg-muted rounded-lg p-3 text-sm">
-              <p className="font-semibold">{product.name} × {quantity}</p>
-              {selectedSize && <p>المقاس: {selectedSize}</p>}
-              {selectedColor && <p>اللون: {selectedColor}</p>}
-              <p className="font-bold mt-1">المنتج: {finalPrice * quantity} جنيه</p>
+            <div className="bg-muted rounded-lg p-3 text-sm space-y-1">
+              <p className="font-semibold">{product.name}</p>
+              {selections.map((sel, i) => (
+                <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>• {sel.quantity} قطعة</span>
+                  {sel.size && <span>— مقاس {sel.size}</span>}
+                  {sel.color && <span>— {sel.color}</span>}
+                </div>
+              ))}
+              <p className="font-bold mt-1">المنتج: {finalPrice * totalQuantity} جنيه</p>
               <p>التوصيل: {shippingCost} جنيه {selectedGovernorate && `(${selectedGovernorate})`}</p>
-              <p className="text-base font-bold mt-1 border-t pt-1">الإجمالي: {finalPrice * quantity + shippingCost} جنيه</p>
+              <p className="text-base font-bold mt-1 border-t pt-1">الإجمالي: {finalPrice * totalQuantity + shippingCost} جنيه</p>
             </div>
             <div className="space-y-2">
               <Label>اسمك إيه يا اخويا؟ 😊</Label>
@@ -483,24 +516,17 @@ export default function ProductDetail() {
               <Label>رقم موبايلك 📱</Label>
               <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="01xxxxxxxxx" dir="ltr" />
             </div>
-
-            {/* Governorate */}
             {storeShipping.length > 0 && (
               <div className="space-y-2">
                 <Label className="flex items-center gap-1"><MapPin className="h-3 w-3" />محافظتك إيه؟ 📍</Label>
                 <Select value={selectedGovernorate} onValueChange={setSelectedGovernorate}>
                   <SelectTrigger><SelectValue placeholder="اختار المحافظة..." /></SelectTrigger>
                   <SelectContent>
-                    {storeShipping.map(s => (
-                      <SelectItem key={s.id} value={s.governorate}>
-                        {s.governorate} — {s.shipping_cost} جنيه توصيل
-                      </SelectItem>
-                    ))}
+                    {storeShipping.map(s => <SelectItem key={s.id} value={s.governorate}>{s.governorate} — {s.shipping_cost} جنيه توصيل</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
             )}
-
             <div className="space-y-2">
               <Label>عنوانك بالتفصيل 🏠</Label>
               <Textarea value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} placeholder="الشارع والعمارة والشقة..." />
@@ -521,24 +547,12 @@ export default function ProductDetail() {
         <DialogContent>
           <DialogHeader><DialogTitle>قولنا رأيك يسطا! ⭐</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>اسمك</Label>
-              <Input value={reviewName} onChange={(e) => setReviewName(e.target.value)} placeholder="اسمك إيه؟" />
-            </div>
+            <div className="space-y-2"><Label>اسمك</Label><Input value={reviewName} onChange={(e) => setReviewName(e.target.value)} placeholder="اسمك إيه؟" /></div>
             <div className="space-y-2">
               <Label>التقييم</Label>
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map(s => (
-                  <button key={s} onClick={() => setReviewRating(s)}>
-                    <Star className={`h-8 w-8 ${s <= reviewRating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
-                  </button>
-                ))}
-              </div>
+              <div className="flex gap-1">{[1,2,3,4,5].map(s => <button key={s} onClick={() => setReviewRating(s)}><Star className={`h-8 w-8 ${s <= reviewRating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} /></button>)}</div>
             </div>
-            <div className="space-y-2">
-              <Label>عايز تقول حاجة تانية؟ (اختياري)</Label>
-              <Textarea value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} placeholder="رأيك في المنتج يسطا..." />
-            </div>
+            <div className="space-y-2"><Label>عايز تقول حاجة تانية؟ (اختياري)</Label><Textarea value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} placeholder="رأيك في المنتج يسطا..." /></div>
             <Button className="w-full" onClick={submitReview}>ابعت التقييم ⭐</Button>
           </div>
         </DialogContent>
