@@ -455,9 +455,11 @@ export default function Dashboard() {
                 {s.store_name}
               </Button>
             ))}
-            <Button size="sm" variant="ghost" onClick={() => setShowCreateStore(true)} className="shrink-0">
-              <Plus className="h-4 w-4 ml-1" />متجر جديد
-            </Button>
+            {allStores.length < 4 && (
+              <Button size="sm" variant="ghost" onClick={() => setShowCreateStore(true)} className="shrink-0">
+                <Plus className="h-4 w-4 ml-1" />متجر جديد
+              </Button>
+            )}
           </div>
         )}
 
