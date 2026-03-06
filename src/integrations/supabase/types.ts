@@ -55,6 +55,8 @@ export type Database = {
           name: string
           phone: string | null
           status: string | null
+          store_id: string | null
+          store_name: string | null
         }
         Insert: {
           created_at?: string
@@ -64,6 +66,8 @@ export type Database = {
           name: string
           phone?: string | null
           status?: string | null
+          store_id?: string | null
+          store_name?: string | null
         }
         Update: {
           created_at?: string
@@ -73,8 +77,18 @@ export type Database = {
           name?: string
           phone?: string | null
           status?: string | null
+          store_id?: string | null
+          store_name?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "complaints_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       coupons: {
         Row: {
