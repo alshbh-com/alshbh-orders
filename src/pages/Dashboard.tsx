@@ -499,7 +499,7 @@ export default function Dashboard() {
             </Dialog>
 
             {products.length === 0 ? (
-              <Card><CardContent className="p-12 text-center"><Package className="h-12 w-12 text-muted-foreground mx-auto mb-3" /><p className="text-muted-foreground">مفيش منتجات لسه — ضيف أول منتج!</p></CardContent></Card>
+              <Card><CardContent className="p-12 text-center"><Package className="h-12 w-12 text-muted-foreground mx-auto mb-3" /><p className="text-muted-foreground">مفيش منتجات لسه يسطا — يلا ضيف أول منتج! 🎯</p></CardContent></Card>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {products.map(p => (
