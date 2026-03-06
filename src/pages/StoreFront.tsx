@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AlshbhWatermark from "@/components/AlshbhWatermark";
-import { Store, ShoppingCart, Search, Star, Plus, Minus, Trash2, MessageCircle, Share2, X } from "lucide-react";
+import { Store, ShoppingCart, Search, Star, Plus, Minus, Trash2, MessageCircle, Share2, X, AlertTriangle, Tag, Sparkles, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,7 +50,6 @@ export default function StoreFront() {
 
       if (storeData) {
         setStore(storeData);
-        // Load cart from localStorage
         const savedCart = localStorage.getItem(`cart_${storeData.id}`);
         if (savedCart) {
           try { setCart(JSON.parse(savedCart)); } catch {}
@@ -72,7 +71,6 @@ export default function StoreFront() {
     fetchStore();
   }, [slug]);
 
-  // Sync cart to localStorage
   useEffect(() => {
     if (store) localStorage.setItem(`cart_${store.id}`, JSON.stringify(cart));
   }, [cart, store]);
@@ -90,7 +88,6 @@ export default function StoreFront() {
 
   const featuredProducts = useMemo(() => products.filter(p => p.is_featured), [products]);
   const bestSellers = useMemo(() => [...products].sort((a, b) => (b.sales_count || 0) - (a.sales_count || 0)).slice(0, 4), [products]);
-  
 
   const addToCart = (product: any, size?: string, color?: string) => {
     setCart(prev => {
@@ -163,7 +160,6 @@ export default function StoreFront() {
       }).select().single();
       if (error) throw error;
 
-      // Update coupon used_count
       if (appliedCoupon) {
         await supabase.from("coupons").update({ used_count: appliedCoupon.used_count + 1 }).eq("id", appliedCoupon.id);
       }
@@ -206,29 +202,45 @@ export default function StoreFront() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-muted">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-sm text-muted-foreground animate-pulse">جاري تحميل المتجر...</p>
+        </div>
       </div>
     );
   }
 
   if (!store) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-        <Store className="h-16 w-16 text-muted-foreground" />
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gradient-to-br from-background to-muted">
+        <div className="rounded-3xl bg-muted p-6">
+          <Store className="h-16 w-16 text-muted-foreground" />
+        </div>
         <h1 className="text-2xl font-bold">المتجر مش موجود</h1>
         <p className="text-muted-foreground">ممكن يكون الرابط غلط أو المتجر متوقف</p>
       </div>
     );
   }
 
-  // Store inactive (no points)
+  // Store has no points
   if (store.points_balance <= 0) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-4 text-center">
-        <Store className="h-16 w-16 text-muted-foreground" />
-        <h1 className="text-2xl font-bold">{store.store_name}</h1>
-        <p className="text-muted-foreground">المتجر مش بيستقبل طلبات حالياً — رصيد النقاط خلص</p>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4 text-center bg-gradient-to-br from-background to-muted">
+        <div className="rounded-3xl bg-destructive/10 p-6">
+          <AlertTriangle className="h-16 w-16 text-destructive" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold">{store.store_name}</h1>
+          <p className="text-muted-foreground max-w-md">
+            المتجر مش بيستقبل طلبات حالياً لأن رصيد النقاط خلص. 
+            لو أنت صاحب المتجر، اشحن نقاط من لوحة التحكم عشان تبدأ تستقبل طلبات تاني.
+          </p>
+        </div>
+        <div className="bg-muted rounded-xl p-4 max-w-sm text-sm text-muted-foreground">
+          <p className="font-semibold text-foreground mb-1">❓ إيه هي النقاط؟</p>
+          <p>كل طلب بيخصم نقطة واحدة من رصيد المتجر. لما النقاط تخلص، المتجر بيوقف استقبال طلبات لحد ما صاحبه يشحن تاني.</p>
+        </div>
         <AlshbhWatermark />
       </div>
     );
@@ -237,17 +249,22 @@ export default function StoreFront() {
   // Order success
   if (orderSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center max-w-md space-y-4">
-          <div className="text-6xl">🎉</div>
-          <h1 className="text-2xl font-bold">تم تسجيل طلبك بنجاح!</h1>
-          <p className="text-muted-foreground">رقم الطلب: <span className="font-mono font-bold">{orderSuccess.slice(0, 8)}</span></p>
-          <p className="text-muted-foreground">هيتم التواصل معاك قريب</p>
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-muted">
+        <div className="text-center max-w-md space-y-6 bg-card rounded-3xl p-8 shadow-xl border border-border">
+          <div className="text-7xl">🎉</div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold">تم تسجيل طلبك بنجاح!</h1>
+            <div className="bg-muted rounded-xl p-3">
+              <p className="text-sm text-muted-foreground">رقم الطلب</p>
+              <p className="font-mono font-bold text-xl text-primary">{orderSuccess.slice(0, 8)}</p>
+            </div>
+          </div>
+          <p className="text-muted-foreground">هيتم التواصل معاك قريب على الواتساب أو التليفون</p>
           <div className="flex gap-2 justify-center">
-            <Button onClick={() => setOrderSuccess(null)}>ارجع للمتجر</Button>
+            <Button onClick={() => setOrderSuccess(null)} className="rounded-xl">ارجع للمتجر</Button>
             {store.whatsapp_number && (
               <a href={`https://wa.me/${store.whatsapp_number}?text=${encodeURIComponent(`مرحباً، أنا عملت طلب رقم ${orderSuccess.slice(0, 8)}`)}`} target="_blank">
-                <Button variant="outline"><MessageCircle className="h-4 w-4 ml-1" />واتساب</Button>
+                <Button variant="outline" className="rounded-xl"><MessageCircle className="h-4 w-4 ml-1" />واتساب</Button>
               </a>
             )}
           </div>
@@ -262,102 +279,164 @@ export default function StoreFront() {
     "--store-secondary": store.secondary_color || "#F59E0B",
   } as React.CSSProperties;
 
+  const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
+
   return (
-    <div className="min-h-screen flex flex-col" style={storeStyle}>
-      {/* Header */}
-      <header className="text-white py-6" style={{ background: `linear-gradient(to left, ${store.primary_color}, ${store.secondary_color})` }}>
-        <div className="container flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {store.logo_url ? (
-              <img src={store.logo_url} alt={store.store_name} className="h-14 w-14 rounded-xl object-cover bg-white/10" />
-            ) : (
-              <div className="h-14 w-14 rounded-xl bg-white/20 flex items-center justify-center">
-                <Store className="h-7 w-7" />
-              </div>
-            )}
-            <div>
-              <h1 className="text-2xl font-bold">{store.store_name}</h1>
-              <p className="text-sm opacity-80">مرحبًا بيك في متجرنا</p>
+    <div className="min-h-screen flex flex-col bg-muted/30" style={storeStyle}>
+      {/* Hero Header */}
+      <header className="relative overflow-hidden">
+        <div className="absolute inset-0" style={{ 
+          background: `linear-gradient(135deg, ${store.primary_color || '#D97706'}, ${store.secondary_color || '#F59E0B'}, ${store.primary_color || '#D97706'})`,
+          backgroundSize: '200% 200%',
+        }} />
+        <div className="absolute inset-0 bg-black/10" />
+        <div className="relative container py-8 text-white">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex gap-2">
+              <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/20 rounded-full" onClick={shareStore}>
+                <Share2 className="h-5 w-5" />
+              </Button>
+              {store.whatsapp_number && (
+                <a href={`https://wa.me/${store.whatsapp_number}`} target="_blank">
+                  <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/20 rounded-full">
+                    <MessageCircle className="h-5 w-5" />
+                  </Button>
+                </a>
+              )}
             </div>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/20" onClick={shareStore}>
-              <Share2 className="h-5 w-5" />
-            </Button>
-            {store.whatsapp_number && (
-              <a href={`https://wa.me/${store.whatsapp_number}`} target="_blank">
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
-                  <MessageCircle className="h-5 w-5" />
-                </Button>
-              </a>
-            )}
-            <Button variant="secondary" className="relative" onClick={() => setShowCart(true)}>
-              <ShoppingCart className="h-5 w-5" />
-              {cart.length > 0 && (
-                <span className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
-                  {cart.length}
+            <Button 
+              className="relative rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 text-white"
+              onClick={() => setShowCart(true)}
+            >
+              <ShoppingCart className="h-5 w-5 ml-1" />
+              السلة
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white text-xs flex items-center justify-center font-bold" style={{ color: store.primary_color || '#D97706' }}>
+                  {cartCount}
                 </span>
               )}
             </Button>
           </div>
+          <div className="flex items-center gap-4">
+            {store.logo_url ? (
+              <img src={store.logo_url} alt={store.store_name} className="h-20 w-20 rounded-2xl object-cover ring-4 ring-white/30 shadow-lg" />
+            ) : (
+              <div className="h-20 w-20 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center ring-4 ring-white/30">
+                <Store className="h-9 w-9" />
+              </div>
+            )}
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">{store.store_name}</h1>
+              <p className="text-white/70 mt-1">مرحبًا بيك في متجرنا 👋</p>
+              <div className="flex items-center gap-2 mt-2">
+                <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm text-xs">
+                  {products.length} منتج
+                </Badge>
+                <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm text-xs">
+                  🚚 التوصيل {shippingCost} جنيه
+                </Badge>
+              </div>
+            </div>
+          </div>
         </div>
       </header>
 
-      {/* Search & Filter */}
-      <div className="container py-4 flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="ابحث عن منتج..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-10" />
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button size="sm" variant={!selectedCategory ? "default" : "outline"} onClick={() => setSelectedCategory(null)}>الكل</Button>
-          {categories.map(c => (
-            <Button key={c.id} size="sm" variant={selectedCategory === c.id ? "default" : "outline"} onClick={() => setSelectedCategory(c.id)}>
-              {c.name}
-            </Button>
-          ))}
+      {/* Search */}
+      <div className="container -mt-5 relative z-10">
+        <div className="bg-card rounded-2xl shadow-lg border border-border p-3">
+          <div className="relative">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="ابحث عن منتج..." 
+              value={searchQuery} 
+              onChange={(e) => setSearchQuery(e.target.value)} 
+              className="pr-10 border-0 bg-muted/50 rounded-xl h-11" 
+            />
+          </div>
         </div>
       </div>
 
+      {/* Categories */}
+      {categories.length > 0 && (
+        <div className="container mt-4">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <Button 
+              size="sm" 
+              variant={!selectedCategory ? "default" : "outline"} 
+              onClick={() => setSelectedCategory(null)}
+              className="rounded-full whitespace-nowrap shrink-0"
+            >
+              الكل
+            </Button>
+            {categories.map(c => (
+              <Button 
+                key={c.id} 
+                size="sm" 
+                variant={selectedCategory === c.id ? "default" : "outline"} 
+                onClick={() => setSelectedCategory(c.id)}
+                className="rounded-full whitespace-nowrap shrink-0"
+              >
+                {c.name}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Featured */}
       {featuredProducts.length > 0 && !searchQuery && !selectedCategory && (
-        <section className="container mb-6">
-          <h2 className="text-xl font-bold mb-3">⭐ منتجات مميزة</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <section className="container mt-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${store.primary_color}20` }}>
+              <Sparkles className="h-4 w-4" style={{ color: store.primary_color }} />
+            </div>
+            <h2 className="text-lg font-bold">منتجات مميزة</h2>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
             {featuredProducts.map(p => (
-              <ProductCard key={p.id} product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} />
+              <div key={p.id} className="w-44 shrink-0">
+                <ProductCard product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} storeColor={store.primary_color} />
+              </div>
             ))}
           </div>
         </section>
       )}
-
 
       {/* Best sellers */}
       {bestSellers.length > 0 && bestSellers[0].sales_count > 0 && !searchQuery && !selectedCategory && (
-        <section className="container mb-6">
-          <h2 className="text-xl font-bold mb-3">🔥 الأكثر مبيعاً</h2>
+        <section className="container mt-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-8 w-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-destructive" />
+            </div>
+            <h2 className="text-lg font-bold">الأكثر مبيعاً</h2>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {bestSellers.map(p => (
-              <ProductCard key={p.id} product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} />
+              <ProductCard key={p.id} product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} storeColor={store.primary_color} />
             ))}
           </div>
         </section>
       )}
 
-      {/* Products */}
-      <main className="flex-1 container pb-8">
-        <h2 className="text-xl font-bold mb-3">
-          {selectedCategory ? categories.find(c => c.id === selectedCategory)?.name : "كل المنتجات"} ({filteredProducts.length})
-        </h2>
+      {/* All Products */}
+      <main className="flex-1 container py-6 pb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold">
+            {selectedCategory ? categories.find(c => c.id === selectedCategory)?.name : "كل المنتجات"}
+          </h2>
+          <Badge variant="secondary" className="rounded-full">{filteredProducts.length} منتج</Badge>
+        </div>
         {filteredProducts.length === 0 ? (
-          <div className="text-center py-20">
-            <ShoppingCart className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">مفيش منتجات</h2>
+          <div className="text-center py-16 bg-card rounded-2xl border border-border">
+            <ShoppingCart className="h-14 w-14 text-muted-foreground mx-auto mb-4" />
+            <h2 className="text-lg font-semibold mb-1">مفيش منتجات</h2>
+            <p className="text-sm text-muted-foreground">جرب تبحث بكلمة تانية</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {filteredProducts.map(p => (
-              <ProductCard key={p.id} product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} />
+              <ProductCard key={p.id} product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} storeColor={store.primary_color} />
             ))}
           </div>
         )}
@@ -366,55 +445,59 @@ export default function StoreFront() {
       {/* Cart Sheet */}
       <Sheet open={showCart} onOpenChange={setShowCart}>
         <SheetContent side="left" className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader><SheetTitle>سلة المشتريات ({cart.length})</SheetTitle></SheetHeader>
+          <SheetHeader><SheetTitle>سلة المشتريات ({cartCount})</SheetTitle></SheetHeader>
           <div className="mt-4 space-y-3">
             {cart.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">السلة فاضية</p>
+              <div className="text-center py-12">
+                <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground">السلة فاضية</p>
+                <p className="text-sm text-muted-foreground mt-1">اختار منتجات من المتجر</p>
+              </div>
             ) : (
               <>
                 {cart.map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-3 border-b border-border pb-3">
+                  <div key={idx} className="flex items-center gap-3 bg-muted/50 rounded-xl p-3">
                     {item.product.main_image_url ? (
-                      <img src={item.product.main_image_url} alt="" className="h-16 w-16 rounded-lg object-cover" />
+                      <img src={item.product.main_image_url} alt="" className="h-16 w-16 rounded-xl object-cover" />
                     ) : (
-                      <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center">
+                      <div className="h-16 w-16 rounded-xl bg-muted flex items-center justify-center">
                         <ShoppingCart className="h-5 w-5 text-muted-foreground" />
                       </div>
                     )}
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-sm">{item.product.name}</h4>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-sm truncate">{item.product.name}</h4>
                       {item.selectedSize && <p className="text-xs text-muted-foreground">المقاس: {item.selectedSize}</p>}
                       {item.selectedColor && <p className="text-xs text-muted-foreground">اللون: {item.selectedColor}</p>}
-                      <p className="text-sm text-primary font-bold">{item.product.discount_price || item.product.price} جنيه</p>
+                      <p className="text-sm font-bold mt-0.5" style={{ color: store.primary_color }}>{item.product.discount_price || item.product.price} جنيه</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <Button size="icon" variant="outline" className="h-6 w-6" onClick={() => updateCartQuantity(idx, -1)}>
+                        <Button size="icon" variant="outline" className="h-6 w-6 rounded-full" onClick={() => updateCartQuantity(idx, -1)}>
                           <Minus className="h-3 w-3" />
                         </Button>
                         <span className="text-sm font-semibold">{item.quantity}</span>
-                        <Button size="icon" variant="outline" className="h-6 w-6" onClick={() => updateCartQuantity(idx, 1)}>
+                        <Button size="icon" variant="outline" className="h-6 w-6 rounded-full" onClick={() => updateCartQuantity(idx, 1)}>
                           <Plus className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
-                    <Button size="icon" variant="ghost" onClick={() => removeFromCart(idx)}>
+                    <Button size="icon" variant="ghost" className="shrink-0" onClick={() => removeFromCart(idx)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
                 ))}
-                <div className="border-t border-border pt-3 space-y-1">
+                <div className="bg-muted/50 rounded-xl p-4 space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>المنتجات</span>
+                    <span className="text-muted-foreground">المنتجات</span>
                     <span>{cartSubtotal} جنيه</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>التوصيل</span>
+                    <span className="text-muted-foreground">التوصيل</span>
                     <span>{shippingCost} جنيه</span>
                   </div>
-                  <div className="flex justify-between font-bold text-lg border-t pt-2">
+                  <div className="flex justify-between font-bold text-lg border-t border-border pt-2">
                     <span>الإجمالي</span>
-                    <span className="text-primary">{cartTotal} جنيه</span>
+                    <span style={{ color: store.primary_color }}>{cartTotal} جنيه</span>
                   </div>
-                  <Button className="w-full mt-3" onClick={() => { setShowCart(false); setShowCheckout(true); }}>
+                  <Button className="w-full mt-2 rounded-xl h-11" onClick={() => { setShowCart(false); setShowCheckout(true); }}>
                     إتمام الطلب
                   </Button>
                 </div>
@@ -426,50 +509,50 @@ export default function StoreFront() {
 
       {/* Checkout Dialog */}
       <Dialog open={showCheckout} onOpenChange={setShowCheckout}>
-        <DialogContent>
+        <DialogContent className="rounded-2xl">
           <DialogHeader><DialogTitle>إتمام الطلب</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>الاسم</Label>
-              <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="اسمك بالكامل" />
+              <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="اسمك بالكامل" className="rounded-xl" />
             </div>
             <div className="space-y-2">
               <Label>رقم الموبايل</Label>
-              <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="01xxxxxxxxx" dir="ltr" />
+              <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="01xxxxxxxxx" dir="ltr" className="rounded-xl" />
             </div>
             <div className="space-y-2">
               <Label>العنوان</Label>
-              <Textarea value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} placeholder="العنوان بالتفصيل" />
+              <Textarea value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} placeholder="العنوان بالتفصيل" className="rounded-xl" />
             </div>
             <div className="space-y-2">
               <Label>ملاحظات (اختياري)</Label>
-              <Input value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} placeholder="أي ملاحظات على الطلب..." />
+              <Input value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} placeholder="أي ملاحظات على الطلب..." className="rounded-xl" />
             </div>
             {/* Coupon */}
             <div className="space-y-2">
-              <Label>كوبون خصم (اختياري)</Label>
+              <Label className="flex items-center gap-1"><Tag className="h-3 w-3" />كوبون خصم (اختياري)</Label>
               <div className="flex gap-2">
-                <Input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="ادخل كود الخصم" dir="ltr" className="flex-1" />
-                <Button variant="outline" onClick={applyCoupon} disabled={applyingCoupon}>
+                <Input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="ادخل كود الخصم" dir="ltr" className="flex-1 rounded-xl" />
+                <Button variant="outline" onClick={applyCoupon} disabled={applyingCoupon} className="rounded-xl">
                   {applyingCoupon ? "..." : "تطبيق"}
                 </Button>
               </div>
               {appliedCoupon && (
-                <p className="text-xs text-green-600">✅ كوبون {appliedCoupon.code} — خصم {appliedCoupon.discount_type === 'percentage' ? `${appliedCoupon.discount_value}%` : `${appliedCoupon.discount_value} جنيه`}</p>
+                <p className="text-xs text-green-600 bg-green-50 rounded-lg px-2 py-1">✅ كوبون {appliedCoupon.code} — خصم {appliedCoupon.discount_type === 'percentage' ? `${appliedCoupon.discount_value}%` : `${appliedCoupon.discount_value} جنيه`}</p>
               )}
             </div>
-            <div className="border-t border-border pt-3 space-y-1 text-sm">
-              <div className="flex justify-between"><span>المنتجات</span><span>{cartSubtotal} جنيه</span></div>
+            <div className="bg-muted/50 rounded-xl p-3 space-y-1 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">المنتجات</span><span>{cartSubtotal} جنيه</span></div>
               {discountAmount > 0 && (
                 <div className="flex justify-between text-green-600"><span>الخصم</span><span>-{discountAmount} جنيه</span></div>
               )}
-              <div className="flex justify-between"><span>التوصيل</span><span>{shippingCost} جنيه</span></div>
-              <div className="flex justify-between font-bold text-base border-t pt-2">
+              <div className="flex justify-between"><span className="text-muted-foreground">التوصيل</span><span>{shippingCost} جنيه</span></div>
+              <div className="flex justify-between font-bold text-base border-t border-border pt-2">
                 <span>الإجمالي</span>
-                <span className="text-primary">{cartTotal} جنيه</span>
+                <span style={{ color: store.primary_color }}>{cartTotal} جنيه</span>
               </div>
             </div>
-            <Button className="w-full" onClick={submitOrder} disabled={submitting}>
+            <Button className="w-full rounded-xl h-11" onClick={submitOrder} disabled={submitting}>
               {submitting ? "جاري التسجيل..." : "تأكيد الطلب"}
             </Button>
           </div>
@@ -478,13 +561,16 @@ export default function StoreFront() {
 
       {/* Complaint / Contact section */}
       <section className="container pb-6">
-        <details className="border border-border rounded-xl p-4">
-          <summary className="font-semibold cursor-pointer">📩 عندك شكوى أو استفسار؟</summary>
+        <details className="bg-card border border-border rounded-2xl p-4 shadow-sm">
+          <summary className="font-semibold cursor-pointer flex items-center gap-2">
+            <MessageCircle className="h-4 w-4 text-muted-foreground" />
+            عندك شكوى أو استفسار؟
+          </summary>
           <ComplaintForm storeId={store.id} storeName={store.store_name} whatsappNumber={store.whatsapp_number} />
         </details>
       </section>
 
-      {/* Inject tracking pixels */}
+      {/* Tracking pixels */}
       {store.facebook_pixel && (
         <script dangerouslySetInnerHTML={{ __html: `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${store.facebook_pixel}');fbq('track','PageView');` }} />
       )}
@@ -506,7 +592,9 @@ function ComplaintForm({ storeId, storeName, whatsappNumber }: { storeId: string
     if (!name || !message) return;
     setSending(true);
     const { error } = await supabase.from("complaints").insert({
-      name, phone: phone || null, message: `[متجر: ${storeName}] ${message}`,
+      name, phone: phone || null, message,
+      store_id: storeId,
+      store_name: storeName,
     });
     if (error) toast({ title: "حصل مشكلة", variant: "destructive" });
     else { setSent(true); toast({ title: "تم إرسال شكواك ✅" }); }
@@ -516,15 +604,15 @@ function ComplaintForm({ storeId, storeName, whatsappNumber }: { storeId: string
   if (sent) return <p className="text-sm text-green-600 mt-3">تم الإرسال بنجاح — هنتواصل معاك قريب 🙏</p>;
 
   return (
-    <div className="mt-3 space-y-3">
-      <Input value={name} onChange={e => setName(e.target.value)} placeholder="اسمك" />
-      <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="رقم موبايلك (اختياري)" dir="ltr" />
-      <Textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="اكتب شكواك أو استفسارك..." />
+    <div className="mt-4 space-y-3">
+      <Input value={name} onChange={e => setName(e.target.value)} placeholder="اسمك" className="rounded-xl" />
+      <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="رقم موبايلك (اختياري)" dir="ltr" className="rounded-xl" />
+      <Textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="اكتب شكواك أو استفسارك..." className="rounded-xl" />
       <div className="flex gap-2">
-        <Button size="sm" onClick={submit} disabled={sending}>{sending ? "جاري الإرسال..." : "ابعت"}</Button>
+        <Button size="sm" onClick={submit} disabled={sending} className="rounded-xl">{sending ? "جاري الإرسال..." : "ابعت"}</Button>
         {whatsappNumber && (
           <a href={`https://wa.me/${whatsappNumber}`} target="_blank">
-            <Button size="sm" variant="outline"><MessageCircle className="h-4 w-4 ml-1" />واتساب</Button>
+            <Button size="sm" variant="outline" className="rounded-xl"><MessageCircle className="h-4 w-4 ml-1" />واتساب</Button>
           </a>
         )}
       </div>
@@ -532,24 +620,37 @@ function ComplaintForm({ storeId, storeName, whatsappNumber }: { storeId: string
   );
 }
 
-function ProductCard({ product, avgRating, onClick }: {
-  product: any; avgRating: string | null; onClick: () => void;
+function ProductCard({ product, avgRating, onClick, storeColor }: {
+  product: any; avgRating: string | null; onClick: () => void; storeColor?: string;
 }) {
   const finalPrice = product.discount_price || product.price;
   const hasDiscount = product.discount_price && product.discount_price < product.price;
+  const discountPercent = hasDiscount ? Math.round((1 - product.discount_price / product.price) * 100) : 0;
 
   return (
-    <div className="rounded-xl border border-border overflow-hidden hover:shadow-lg transition-shadow bg-card cursor-pointer" onClick={onClick}>
-      {product.main_image_url ? (
-        <img src={product.main_image_url} alt={product.name} className="w-full h-44 object-cover" loading="lazy" />
-      ) : (
-        <div className="w-full h-44 bg-muted flex items-center justify-center">
-          <ShoppingCart className="h-8 w-8 text-muted-foreground" />
-        </div>
-      )}
+    <div className="rounded-2xl border border-border overflow-hidden hover:shadow-xl transition-all duration-300 bg-card cursor-pointer group hover:-translate-y-0.5" onClick={onClick}>
+      <div className="relative overflow-hidden">
+        {product.main_image_url ? (
+          <img src={product.main_image_url} alt={product.name} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+        ) : (
+          <div className="w-full h-48 bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+            <ShoppingCart className="h-8 w-8 text-muted-foreground" />
+          </div>
+        )}
+        {hasDiscount && (
+          <Badge className="absolute top-2 left-2 bg-destructive text-destructive-foreground border-0 rounded-lg text-xs">
+            -{discountPercent}%
+          </Badge>
+        )}
+        {product.is_featured && (
+          <Badge className="absolute top-2 right-2 border-0 rounded-lg text-xs" style={{ backgroundColor: storeColor || '#D97706', color: 'white' }}>
+            ⭐ مميز
+          </Badge>
+        )}
+      </div>
       <div className="p-3">
         <h3 className="font-semibold text-sm mb-1 truncate">{product.name}</h3>
-        {product.description && <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{product.description}</p>}
+        {product.description && <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{product.description}</p>}
         {avgRating && (
           <div className="flex items-center gap-1 mb-2">
             <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
@@ -557,12 +658,12 @@ function ProductCard({ product, avgRating, onClick }: {
           </div>
         )}
         {product.stock !== null && product.stock <= 0 && (
-          <Badge variant="destructive" className="text-xs mb-2">غير متوفر</Badge>
+          <Badge variant="destructive" className="text-xs mb-2 rounded-lg">غير متوفر</Badge>
         )}
-        <div>
-          <span className="text-base font-bold" style={{ color: "var(--store-primary)" }}>{finalPrice} جنيه</span>
+        <div className="flex items-center gap-2">
+          <span className="text-base font-bold" style={{ color: storeColor || "var(--store-primary)" }}>{finalPrice} جنيه</span>
           {hasDiscount && (
-            <span className="text-xs text-muted-foreground line-through mr-1">{product.price}</span>
+            <span className="text-xs text-muted-foreground line-through">{product.price}</span>
           )}
         </div>
       </div>
