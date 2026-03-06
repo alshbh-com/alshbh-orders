@@ -29,6 +29,12 @@ interface CartItem {
   selectedColor?: string;
 }
 
+interface VariantSelection {
+  size?: string;
+  color?: string;
+  quantity: number;
+}
+
 export default function ProductDetail() {
   const { slug, productId } = useParams<{ slug: string; productId: string }>();
   const navigate = useNavigate();
