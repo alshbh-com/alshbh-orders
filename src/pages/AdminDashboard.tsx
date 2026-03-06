@@ -365,6 +365,9 @@ export default function AdminDashboard() {
                       {filteredOrders.map((o) => (
                         <TableRow key={o.id}>
                           <TableCell>
+                            <Badge variant="outline" className="text-xs">#{(o as any).order_number || '—'}</Badge>
+                          </TableCell>
+                          <TableCell>
                             <div>
                               <p className="font-semibold text-sm">{o.customer_name}</p>
                               <p className="text-xs text-muted-foreground">{o.customer_phone}</p>
@@ -379,16 +382,26 @@ export default function AdminDashboard() {
                           </TableCell>
                           <TableCell className="text-xs">{new Date(o.created_at).toLocaleDateString("ar-EG")}</TableCell>
                           <TableCell>
-                            <Select value={o.status} onValueChange={(v) => updateOrderStatus(o.id, v)}>
-                              <SelectTrigger className="w-28 h-8">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Object.entries(statusMap).map(([k, v]) => (
-                                  <SelectItem key={k} value={k}>{v}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <div className="flex gap-1">
+                              <Select value={o.status} onValueChange={(v) => updateOrderStatus(o.id, v)}>
+                                <SelectTrigger className="w-28 h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Object.entries(statusMap).map(([k, v]) => (
+                                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Button size="sm" variant="destructive" onClick={async () => {
+                                await supabase.from("order_items").delete().eq("order_id", o.id);
+                                await supabase.from("orders").delete().eq("id", o.id);
+                                toast({ title: "تم حذف الطلب" });
+                                fetchAll();
+                              }}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
