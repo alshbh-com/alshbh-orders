@@ -176,7 +176,12 @@ export default function Dashboard() {
     setSavingProduct(true);
     try {
       let imageUrl = editingProduct?.main_image_url || null;
-      if (productImage) imageUrl = await uploadImage(productImage, store.id);
+      // Use pasted URL if provided, otherwise upload file
+      if (productImageUrl.trim()) {
+        imageUrl = productImageUrl.trim();
+      } else if (productImage) {
+        imageUrl = await uploadImage(productImage, store.id);
+      }
 
       const productData: any = {
         store_id: store.id, name: productName, description: productDesc || null,
