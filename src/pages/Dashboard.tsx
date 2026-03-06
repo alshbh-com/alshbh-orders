@@ -334,8 +334,8 @@ export default function Dashboard() {
       <div className="container py-6">
         <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold">لوحة التحكم - {store.store_name}</h1>
-            <p className="text-muted-foreground">إدارة متجرك ومنتجاتك وطلباتك</p>
+            <h1 className="text-2xl font-bold">أهلاً يسطا! 👋 {store.store_name}</h1>
+            <p className="text-muted-foreground">هنا بتدير كل حاجة في متجرك — منتجات وطلبات وكل الحاجات</p>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant={store.points_balance > 0 ? "default" : "destructive"} className="text-base px-4 py-1">
