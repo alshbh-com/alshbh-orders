@@ -155,7 +155,7 @@ export default function Dashboard() {
     if (error) {
       toast({ title: "حصل مشكلة", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "تم إنشاء المتجر! 🎉 وأخدت 3 نقاط مجانية" });
+      toast({ title: "تم إنشاء المتجر! 🎉 وأخدت 5 نقاط مجانية (5 أوردرات هدية)" });
       localStorage.removeItem("referral_store_id");
       setShowCreateStore(false);
       setStoreName(""); setStoreSlug(""); setWhatsappNumber("");
