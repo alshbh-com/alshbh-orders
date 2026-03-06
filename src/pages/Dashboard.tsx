@@ -436,6 +436,7 @@ export default function Dashboard() {
             <TabsTrigger value="marketing">التسويق</TabsTrigger>
             <TabsTrigger value="coupons">الكوبونات</TabsTrigger>
             <TabsTrigger value="notifications">الإشعارات</TabsTrigger>
+            <TabsTrigger value="shipping">المحافظات 📍</TabsTrigger>
             <TabsTrigger value="settings">الإعدادات</TabsTrigger>
           </TabsList>
 
