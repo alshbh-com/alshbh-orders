@@ -482,6 +482,66 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
 
+          {/* Referrals Tab */}
+          <TabsContent value="referrals">
+            <Card>
+              <CardHeader><CardTitle>🎁 نظام الإحالات</CardTitle></CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="bg-muted rounded-lg p-3 text-center">
+                      <p className="text-2xl font-bold">{stores.filter(s => s.referred_by).length}</p>
+                      <p className="text-xs text-muted-foreground">متجر تم إحالته</p>
+                    </div>
+                    <div className="bg-muted rounded-lg p-3 text-center">
+                      <p className="text-2xl font-bold">{transactions.filter(t => t.type === 'referral').length}</p>
+                      <p className="text-xs text-muted-foreground">مكافآت تم صرفها</p>
+                    </div>
+                    <div className="bg-muted rounded-lg p-3 text-center">
+                      <p className="text-2xl font-bold">{transactions.filter(t => t.type === 'referral').reduce((s, t) => s + t.amount, 0)}</p>
+                      <p className="text-xs text-muted-foreground">إجمالي نقاط المكافآت</p>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>المتجر المُحال</TableHead>
+                          <TableHead>أحاله</TableHead>
+                          <TableHead>تاريخ الإنشاء</TableHead>
+                          <TableHead>حالة المكافأة</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {stores.filter(s => s.referred_by).map(s => {
+                          const referrer = stores.find(st => st.id === s.referred_by);
+                          const rewarded = transactions.some(t => t.type === 'referral' && t.description?.includes(s.id));
+                          return (
+                            <TableRow key={s.id}>
+                              <TableCell className="font-semibold">{s.store_name}</TableCell>
+                              <TableCell>{referrer?.store_name || '—'}</TableCell>
+                              <TableCell className="text-xs">{new Date(s.created_at).toLocaleDateString("ar-EG")}</TableCell>
+                              <TableCell>
+                                <Badge variant={rewarded ? "default" : "secondary"}>
+                                  {rewarded ? "✅ تم المكافأة" : "⏳ لسه مشحنش 100+"}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                        {stores.filter(s => s.referred_by).length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center text-muted-foreground py-8">مفيش إحالات لسه</TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Notifications Tab */}
           <TabsContent value="notifications">
             <Card>
