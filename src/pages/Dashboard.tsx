@@ -102,7 +102,7 @@ export default function Dashboard() {
       setEditGoogleAnalytics(storeData.google_analytics || "");
       setEditSnapchatPixel(storeData.snapchat_pixel || "");
 
-      const [productsRes, ordersRes, categoriesRes, transRes, templatesRes, notifRes, couponsRes] = await Promise.all([
+      const [productsRes, ordersRes, categoriesRes, transRes, templatesRes, notifRes, couponsRes, shippingRes] = await Promise.all([
         supabase.from("products").select("*").eq("store_id", storeData.id).order("created_at", { ascending: false }),
         supabase.from("orders").select("*, order_items(*, products(name))").eq("store_id", storeData.id).order("created_at", { ascending: false }),
         supabase.from("categories").select("*").eq("store_id", storeData.id).order("sort_order"),
@@ -110,6 +110,7 @@ export default function Dashboard() {
         supabase.from("templates").select("*"),
         supabase.from("notifications").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(20),
         supabase.from("coupons").select("*").eq("store_id", storeData.id).order("created_at", { ascending: false }),
+        supabase.from("store_shipping").select("*").eq("store_id", storeData.id).order("governorate"),
       ]);
       setProducts(productsRes.data || []);
       setOrders(ordersRes.data || []);
@@ -118,6 +119,7 @@ export default function Dashboard() {
       setTemplates(templatesRes.data || []);
       setNotifications(notifRes.data || []);
       setCoupons(couponsRes.data || []);
+      setStoreShipping(shippingRes.data || []);
     }
     setLoading(false);
   };
