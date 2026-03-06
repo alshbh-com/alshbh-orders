@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AlshbhWatermark from "@/components/AlshbhWatermark";
-import { Store, ShoppingCart, Search, Star, Plus, Minus, Trash2, MessageCircle, Share2, X, AlertTriangle, Tag, Sparkles, TrendingUp } from "lucide-react";
+import { Store, ShoppingCart, Search, Star, Plus, Minus, Trash2, MessageCircle, Share2, X, AlertTriangle, Tag, Sparkles, TrendingUp, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface CartItem {
   product: any;
@@ -27,6 +28,7 @@ export default function StoreFront() {
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [storeShipping, setStoreShipping] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -37,6 +39,7 @@ export default function StoreFront() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
   const [customerNotes, setCustomerNotes] = useState("");
+  const [selectedGovernorate, setSelectedGovernorate] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState("");
@@ -55,16 +58,18 @@ export default function StoreFront() {
           try { setCart(JSON.parse(savedCart)); } catch {}
         }
 
-        const [productsRes, categoriesRes, reviewsRes] = await Promise.all([
+        const [productsRes, categoriesRes, reviewsRes, shippingRes] = await Promise.all([
           supabase.from("products").select("*").eq("store_id", storeData.id).eq("is_active", true),
           supabase.from("categories").select("*").eq("store_id", storeData.id).order("sort_order"),
           supabase.from("reviews").select("*").in("product_id",
             (await supabase.from("products").select("id").eq("store_id", storeData.id)).data?.map(p => p.id) || []
           ),
+          supabase.from("store_shipping").select("*").eq("store_id", storeData.id).eq("is_active", true),
         ]);
         setProducts(productsRes.data || []);
         setCategories(categoriesRes.data || []);
         setReviews(reviewsRes.data || []);
+        setStoreShipping(shippingRes.data || []);
       }
       setLoading(false);
     };
@@ -95,7 +100,7 @@ export default function StoreFront() {
       if (existing) return prev.map(i => i.product.id === product.id && i.selectedSize === size && i.selectedColor === color ? { ...i, quantity: i.quantity + 1 } : i);
       return [...prev, { product, quantity: 1, selectedSize: size, selectedColor: color }];
     });
-    toast({ title: "تم الإضافة للسلة", description: product.name });
+    toast({ title: "حلو اوي! اتضاف في السلة 🛒", description: product.name });
   };
 
   const updateCartQuantity = (index: number, delta: number) => {
@@ -106,7 +111,16 @@ export default function StoreFront() {
     setCart(prev => prev.filter((_, idx) => idx !== index));
   };
 
-  const shippingCost = store?.shipping_cost || 70;
+  // Get shipping cost based on selected governorate
+  const getShippingCost = () => {
+    if (selectedGovernorate && storeShipping.length > 0) {
+      const found = storeShipping.find(s => s.governorate === selectedGovernorate);
+      return found ? Number(found.shipping_cost) : (store?.shipping_cost || 70);
+    }
+    return store?.shipping_cost || 70;
+  };
+
+  const shippingCost = getShippingCost();
   const cartSubtotal = cart.reduce((sum, i) => sum + (i.product.discount_price || i.product.price) * i.quantity, 0);
   const discountAmount = appliedCoupon
     ? appliedCoupon.discount_type === 'percentage'
@@ -121,37 +135,45 @@ export default function StoreFront() {
     const { data } = await supabase.from("coupons").select("*")
       .eq("store_id", store.id).eq("code", couponCode.trim().toUpperCase()).eq("is_active", true).maybeSingle();
     if (!data) {
-      toast({ title: "الكوبون مش صحيح أو منتهي", variant: "destructive" });
+      toast({ title: "الكوبون ده مش صح يسطا 😕", variant: "destructive" });
       setAppliedCoupon(null);
     } else if (data.max_uses && data.used_count >= data.max_uses) {
-      toast({ title: "الكوبون خلص عدد الاستخدامات", variant: "destructive" });
+      toast({ title: "الكوبون ده خلص للأسف 😅", variant: "destructive" });
       setAppliedCoupon(null);
     } else if (data.expires_at && new Date(data.expires_at) < new Date()) {
-      toast({ title: "الكوبون منتهي الصلاحية", variant: "destructive" });
+      toast({ title: "الكوبون ده انتهت صلاحيته يا اخويا", variant: "destructive" });
       setAppliedCoupon(null);
     } else if (data.min_order_amount && cartSubtotal < data.min_order_amount) {
-      toast({ title: `الحد الأدنى للطلب ${data.min_order_amount} جنيه`, variant: "destructive" });
+      toast({ title: `لازم الطلب يكون ${data.min_order_amount} جنيه على الأقل عشان الكوبون يشتغل`, variant: "destructive" });
       setAppliedCoupon(null);
     } else {
       setAppliedCoupon(data);
-      toast({ title: "تم تطبيق الكوبون ✅" });
+      toast({ title: "تمام! الكوبون اتفعّل 🎉" });
     }
     setApplyingCoupon(false);
   };
 
   const submitOrder = async () => {
-    if (!customerName || !customerPhone || !customerAddress || cart.length === 0) return;
+    if (!customerName || !customerPhone || !customerAddress || cart.length === 0) {
+      toast({ title: "يسطا اكتب كل البيانات الأول! 📝", variant: "destructive" });
+      return;
+    }
+    if (storeShipping.length > 0 && !selectedGovernorate) {
+      toast({ title: "اختار المحافظة بتاعتك يا اخويا! 📍", variant: "destructive" });
+      return;
+    }
     if (store.points_balance <= 0) {
-      toast({ title: "المتجر مش بيستقبل طلبات دلوقتي", variant: "destructive" });
+      toast({ title: "المتجر ده مش بيستقبل طلبات دلوقتي 😕", variant: "destructive" });
       return;
     }
     setSubmitting(true);
     try {
+      const addressWithGov = selectedGovernorate ? `${selectedGovernorate} - ${customerAddress}` : customerAddress;
       const { data: order, error } = await supabase.from("orders").insert({
         store_id: store.id,
         customer_name: customerName,
         customer_phone: customerPhone,
-        customer_address: customerAddress,
+        customer_address: addressWithGov,
         customer_notes: customerNotes || null,
         total_price: cartTotal,
         shipping_cost: shippingCost,
@@ -180,7 +202,7 @@ export default function StoreFront() {
       setShowCart(false);
       localStorage.removeItem(`cart_${store.id}`);
     } catch (e: any) {
-      toast({ title: "حصل مشكلة", description: e.message, variant: "destructive" });
+      toast({ title: "حصلت مشكلة يسطا 😕", description: e.message, variant: "destructive" });
     }
     setSubmitting(false);
   };
@@ -196,7 +218,7 @@ export default function StoreFront() {
       navigator.share({ title: store?.store_name, url });
     } else {
       navigator.clipboard.writeText(url);
-      toast({ title: "تم نسخ رابط المتجر 📋" });
+      toast({ title: "تم نسخ الرابط يسطا! 📋" });
     }
   };
 
@@ -205,7 +227,7 @@ export default function StoreFront() {
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-muted">
         <div className="flex flex-col items-center gap-3">
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-sm text-muted-foreground animate-pulse">جاري تحميل المتجر...</p>
+          <p className="text-sm text-muted-foreground animate-pulse">ثانية واحدة يسطا... ⏳</p>
         </div>
       </div>
     );
@@ -217,13 +239,12 @@ export default function StoreFront() {
         <div className="rounded-3xl bg-muted p-6">
           <Store className="h-16 w-16 text-muted-foreground" />
         </div>
-        <h1 className="text-2xl font-bold">المتجر مش موجود</h1>
-        <p className="text-muted-foreground">ممكن يكون الرابط غلط أو المتجر متوقف</p>
+        <h1 className="text-2xl font-bold">المتجر ده مش موجود يسطا 😕</h1>
+        <p className="text-muted-foreground">يمكن الرابط غلط أو المتجر اتوقف</p>
       </div>
     );
   }
 
-  // Store has no points
   if (store.points_balance <= 0) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4 text-center bg-gradient-to-br from-background to-muted">
@@ -233,38 +254,36 @@ export default function StoreFront() {
         <div className="space-y-2">
           <h1 className="text-2xl font-bold">{store.store_name}</h1>
           <p className="text-muted-foreground max-w-md">
-            المتجر مش بيستقبل طلبات حالياً لأن رصيد النقاط خلص. 
-            لو أنت صاحب المتجر، اشحن نقاط من لوحة التحكم عشان تبدأ تستقبل طلبات تاني.
+            المتجر ده واقف شوية يا اخويا 😕 صاحب المتجر محتاج يشحن نقاط عشان يرجع يستقبل طلبات تاني.
           </p>
         </div>
         <div className="bg-muted rounded-xl p-4 max-w-sm text-sm text-muted-foreground">
-          <p className="font-semibold text-foreground mb-1">❓ إيه هي النقاط؟</p>
-          <p>كل طلب بيخصم نقطة واحدة من رصيد المتجر. لما النقاط تخلص، المتجر بيوقف استقبال طلبات لحد ما صاحبه يشحن تاني.</p>
+          <p className="font-semibold text-foreground mb-1">❓ إيه الحكاية؟</p>
+          <p>كل طلب بياخد نقطة واحدة من صاحب المتجر. لما النقاط تخلص، المتجر بيوقف لحد ما يشحن تاني. الموضوع بسيط!</p>
         </div>
         <AlshbhWatermark />
       </div>
     );
   }
 
-  // Order success
   if (orderSuccess) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-muted">
         <div className="text-center max-w-md space-y-6 bg-card rounded-3xl p-8 shadow-xl border border-border">
           <div className="text-7xl">🎉</div>
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold">تم تسجيل طلبك بنجاح!</h1>
+            <h1 className="text-2xl font-bold">تمام يسطا! طلبك اتسجل 🔥</h1>
             <div className="bg-muted rounded-xl p-3">
-              <p className="text-sm text-muted-foreground">رقم الطلب</p>
+              <p className="text-sm text-muted-foreground">رقم الطلب بتاعك</p>
               <p className="font-mono font-bold text-xl text-primary">{orderSuccess.slice(0, 8)}</p>
             </div>
           </div>
-          <p className="text-muted-foreground">هيتم التواصل معاك قريب على الواتساب أو التليفون</p>
+          <p className="text-muted-foreground">استنى شوية وهنكلمك على الواتساب أو التليفون عشان نأكد الطلب 📞</p>
           <div className="flex gap-2 justify-center">
-            <Button onClick={() => setOrderSuccess(null)} className="rounded-xl">ارجع للمتجر</Button>
+            <Button onClick={() => setOrderSuccess(null)} className="rounded-xl">يلا ارجع للمتجر 🛍️</Button>
             {store.whatsapp_number && (
-              <a href={`https://wa.me/${store.whatsapp_number}?text=${encodeURIComponent(`مرحباً، أنا عملت طلب رقم ${orderSuccess.slice(0, 8)}`)}`} target="_blank">
-                <Button variant="outline" className="rounded-xl"><MessageCircle className="h-4 w-4 ml-1" />واتساب</Button>
+              <a href={`https://wa.me/${store.whatsapp_number}?text=${encodeURIComponent(`ازيك يسطا! أنا عملت طلب رقم ${orderSuccess.slice(0, 8)} 🎉`)}`} target="_blank">
+                <Button variant="outline" className="rounded-xl"><MessageCircle className="h-4 w-4 ml-1" />كلمنا واتساب</Button>
               </a>
             )}
           </div>
@@ -327,13 +346,13 @@ export default function StoreFront() {
             )}
             <div>
               <h1 className="text-3xl font-bold tracking-tight">{store.store_name}</h1>
-              <p className="text-white/70 mt-1">مرحبًا بيك في متجرنا 👋</p>
+              <p className="text-white/70 mt-1">أهلاً بيك يا حبيبي! نورتنا 😍</p>
               <div className="flex items-center gap-2 mt-2">
                 <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm text-xs">
                   {products.length} منتج
                 </Badge>
                 <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm text-xs">
-                  🚚 التوصيل {shippingCost} جنيه
+                  🚚 توصيل لكل مصر
                 </Badge>
               </div>
             </div>
@@ -347,7 +366,7 @@ export default function StoreFront() {
           <div className="relative">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="ابحث عن منتج..." 
+              placeholder="دوّر على اللي عايزه... 🔍" 
               value={searchQuery} 
               onChange={(e) => setSearchQuery(e.target.value)} 
               className="pr-10 border-0 bg-muted/50 rounded-xl h-11" 
@@ -366,7 +385,7 @@ export default function StoreFront() {
               onClick={() => setSelectedCategory(null)}
               className="rounded-full whitespace-nowrap shrink-0"
             >
-              الكل
+              الكل 🔥
             </Button>
             {categories.map(c => (
               <Button 
@@ -390,7 +409,7 @@ export default function StoreFront() {
             <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${store.primary_color}20` }}>
               <Sparkles className="h-4 w-4" style={{ color: store.primary_color }} />
             </div>
-            <h2 className="text-lg font-bold">منتجات مميزة</h2>
+            <h2 className="text-lg font-bold">الحاجات المميزة 🌟</h2>
           </div>
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
             {featuredProducts.map(p => (
@@ -409,7 +428,7 @@ export default function StoreFront() {
             <div className="h-8 w-8 rounded-lg bg-destructive/10 flex items-center justify-center">
               <TrendingUp className="h-4 w-4 text-destructive" />
             </div>
-            <h2 className="text-lg font-bold">الأكثر مبيعاً</h2>
+            <h2 className="text-lg font-bold">الناس بتحب دول 🔥</h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {bestSellers.map(p => (
@@ -423,15 +442,15 @@ export default function StoreFront() {
       <main className="flex-1 container py-6 pb-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">
-            {selectedCategory ? categories.find(c => c.id === selectedCategory)?.name : "كل المنتجات"}
+            {selectedCategory ? categories.find(c => c.id === selectedCategory)?.name : "كل المنتجات 🛍️"}
           </h2>
           <Badge variant="secondary" className="rounded-full">{filteredProducts.length} منتج</Badge>
         </div>
         {filteredProducts.length === 0 ? (
           <div className="text-center py-16 bg-card rounded-2xl border border-border">
             <ShoppingCart className="h-14 w-14 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-lg font-semibold mb-1">مفيش منتجات</h2>
-            <p className="text-sm text-muted-foreground">جرب تبحث بكلمة تانية</p>
+            <h2 className="text-lg font-semibold mb-1">مفيش حاجة هنا 😅</h2>
+            <p className="text-sm text-muted-foreground">جرب تدور بكلمة تانية يسطا</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -445,13 +464,13 @@ export default function StoreFront() {
       {/* Cart Sheet */}
       <Sheet open={showCart} onOpenChange={setShowCart}>
         <SheetContent side="left" className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader><SheetTitle>سلة المشتريات ({cartCount})</SheetTitle></SheetHeader>
+          <SheetHeader><SheetTitle>السلة بتاعتك 🛒 ({cartCount})</SheetTitle></SheetHeader>
           <div className="mt-4 space-y-3">
             {cart.length === 0 ? (
               <div className="text-center py-12">
                 <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground">السلة فاضية</p>
-                <p className="text-sm text-muted-foreground mt-1">اختار منتجات من المتجر</p>
+                <p className="text-muted-foreground font-semibold">السلة فاضية يسطا 😅</p>
+                <p className="text-sm text-muted-foreground mt-1">يلا اختار حاجة حلوة من المتجر!</p>
               </div>
             ) : (
               <>
@@ -490,7 +509,7 @@ export default function StoreFront() {
                     <span>{cartSubtotal} جنيه</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">التوصيل</span>
+                    <span className="text-muted-foreground">التوصيل {selectedGovernorate && `(${selectedGovernorate})`}</span>
                     <span>{shippingCost} جنيه</span>
                   </div>
                   <div className="flex justify-between font-bold text-lg border-t border-border pt-2">
@@ -498,7 +517,7 @@ export default function StoreFront() {
                     <span style={{ color: store.primary_color }}>{cartTotal} جنيه</span>
                   </div>
                   <Button className="w-full mt-2 rounded-xl h-11" onClick={() => { setShowCart(false); setShowCheckout(true); }}>
-                    إتمام الطلب
+                    يلا نكمل الطلب! 🚀
                   </Button>
                 </div>
               </>
@@ -509,68 +528,87 @@ export default function StoreFront() {
 
       {/* Checkout Dialog */}
       <Dialog open={showCheckout} onOpenChange={setShowCheckout}>
-        <DialogContent className="rounded-2xl">
-          <DialogHeader><DialogTitle>إتمام الطلب</DialogTitle></DialogHeader>
+        <DialogContent className="rounded-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>يلا نكمل الطلب! 📦</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>الاسم</Label>
-              <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="اسمك بالكامل" className="rounded-xl" />
+              <Label>اسمك إيه يا اخويا؟ 😊</Label>
+              <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="محمد أحمد" className="rounded-xl" />
             </div>
             <div className="space-y-2">
-              <Label>رقم الموبايل</Label>
+              <Label>رقم موبايلك 📱</Label>
               <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="01xxxxxxxxx" dir="ltr" className="rounded-xl" />
             </div>
+
+            {/* Governorate Selection */}
+            {storeShipping.length > 0 && (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1"><MapPin className="h-3 w-3" />المحافظة بتاعتك 📍</Label>
+                <Select value={selectedGovernorate} onValueChange={setSelectedGovernorate}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue placeholder="اختار محافظتك يسطا..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {storeShipping.map(s => (
+                      <SelectItem key={s.id} value={s.governorate}>
+                        {s.governorate} — {s.shipping_cost} جنيه توصيل
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="space-y-2">
-              <Label>العنوان</Label>
-              <Textarea value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} placeholder="العنوان بالتفصيل" className="rounded-xl" />
+              <Label>العنوان بالتفصيل 🏠</Label>
+              <Textarea value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} placeholder="الشارع والعمارة والشقة..." className="rounded-xl" />
             </div>
             <div className="space-y-2">
-              <Label>ملاحظات (اختياري)</Label>
-              <Input value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} placeholder="أي ملاحظات على الطلب..." className="rounded-xl" />
+              <Label>عايز تقولنا حاجة؟ (اختياري)</Label>
+              <Input value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} placeholder="مثلاً: عايزه يتلف كويس 🎁" className="rounded-xl" />
             </div>
             {/* Coupon */}
             <div className="space-y-2">
-              <Label className="flex items-center gap-1"><Tag className="h-3 w-3" />كوبون خصم (اختياري)</Label>
+              <Label className="flex items-center gap-1"><Tag className="h-3 w-3" />عندك كوبون خصم؟ 🎫</Label>
               <div className="flex gap-2">
-                <Input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="ادخل كود الخصم" dir="ltr" className="flex-1 rounded-xl" />
+                <Input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="اكتب الكود هنا" dir="ltr" className="flex-1 rounded-xl" />
                 <Button variant="outline" onClick={applyCoupon} disabled={applyingCoupon} className="rounded-xl">
-                  {applyingCoupon ? "..." : "تطبيق"}
+                  {applyingCoupon ? "..." : "فعّل! ✨"}
                 </Button>
               </div>
               {appliedCoupon && (
-                <p className="text-xs text-green-600 bg-green-50 rounded-lg px-2 py-1">✅ كوبون {appliedCoupon.code} — خصم {appliedCoupon.discount_type === 'percentage' ? `${appliedCoupon.discount_value}%` : `${appliedCoupon.discount_value} جنيه`}</p>
+                <p className="text-xs text-green-600 bg-green-50 rounded-lg px-2 py-1">✅ تمام! كوبون {appliedCoupon.code} — خصم {appliedCoupon.discount_type === 'percentage' ? `${appliedCoupon.discount_value}%` : `${appliedCoupon.discount_value} جنيه`}</p>
               )}
             </div>
             <div className="bg-muted/50 rounded-xl p-3 space-y-1 text-sm">
               <div className="flex justify-between"><span className="text-muted-foreground">المنتجات</span><span>{cartSubtotal} جنيه</span></div>
               {discountAmount > 0 && (
-                <div className="flex justify-between text-green-600"><span>الخصم</span><span>-{discountAmount} جنيه</span></div>
+                <div className="flex justify-between text-green-600"><span>الخصم 🎉</span><span>-{discountAmount} جنيه</span></div>
               )}
-              <div className="flex justify-between"><span className="text-muted-foreground">التوصيل</span><span>{shippingCost} جنيه</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">التوصيل {selectedGovernorate && `(${selectedGovernorate})`}</span><span>{shippingCost} جنيه</span></div>
               <div className="flex justify-between font-bold text-base border-t border-border pt-2">
                 <span>الإجمالي</span>
                 <span style={{ color: store.primary_color }}>{cartTotal} جنيه</span>
               </div>
             </div>
             <Button className="w-full rounded-xl h-11" onClick={submitOrder} disabled={submitting}>
-              {submitting ? "جاري التسجيل..." : "تأكيد الطلب"}
+              {submitting ? "ثانية يسطا... ⏳" : "أكد الطلب 🎉"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Complaint / Contact section */}
+      {/* Complaint */}
       <section className="container pb-6">
         <details className="bg-card border border-border rounded-2xl p-4 shadow-sm">
           <summary className="font-semibold cursor-pointer flex items-center gap-2">
             <MessageCircle className="h-4 w-4 text-muted-foreground" />
-            عندك شكوى أو استفسار؟
+            عندك مشكلة أو عايز تسأل عن حاجة؟ 🤔
           </summary>
           <ComplaintForm storeId={store.id} storeName={store.store_name} whatsappNumber={store.whatsapp_number} />
         </details>
       </section>
 
-      {/* Tracking pixels */}
       {store.facebook_pixel && (
         <script dangerouslySetInnerHTML={{ __html: `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${store.facebook_pixel}');fbq('track','PageView');` }} />
       )}
@@ -596,23 +634,23 @@ function ComplaintForm({ storeId, storeName, whatsappNumber }: { storeId: string
       store_id: storeId,
       store_name: storeName,
     });
-    if (error) toast({ title: "حصل مشكلة", variant: "destructive" });
-    else { setSent(true); toast({ title: "تم إرسال شكواك ✅" }); }
+    if (error) toast({ title: "حصلت مشكلة يسطا 😕", variant: "destructive" });
+    else { setSent(true); toast({ title: "تمام! وصلتنا رسالتك ✅" }); }
     setSending(false);
   };
 
-  if (sent) return <p className="text-sm text-green-600 mt-3">تم الإرسال بنجاح — هنتواصل معاك قريب 🙏</p>;
+  if (sent) return <p className="text-sm text-green-600 mt-3">تمام يا اخويا! وصلتنا رسالتك وهنرد عليك في أقرب وقت 🙏</p>;
 
   return (
     <div className="mt-4 space-y-3">
-      <Input value={name} onChange={e => setName(e.target.value)} placeholder="اسمك" className="rounded-xl" />
-      <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="رقم موبايلك (اختياري)" dir="ltr" className="rounded-xl" />
-      <Textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="اكتب شكواك أو استفسارك..." className="rounded-xl" />
+      <Input value={name} onChange={e => setName(e.target.value)} placeholder="اسمك إيه يسطا؟" className="rounded-xl" />
+      <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="رقم موبايلك (لو عايز نكلمك)" dir="ltr" className="rounded-xl" />
+      <Textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="قولنا إيه اللي حصل يا اخويا..." className="rounded-xl" />
       <div className="flex gap-2">
-        <Button size="sm" onClick={submit} disabled={sending} className="rounded-xl">{sending ? "جاري الإرسال..." : "ابعت"}</Button>
+        <Button size="sm" onClick={submit} disabled={sending} className="rounded-xl">{sending ? "بنبعت..." : "ابعت 📩"}</Button>
         {whatsappNumber && (
           <a href={`https://wa.me/${whatsappNumber}`} target="_blank">
-            <Button size="sm" variant="outline" className="rounded-xl"><MessageCircle className="h-4 w-4 ml-1" />واتساب</Button>
+            <Button size="sm" variant="outline" className="rounded-xl"><MessageCircle className="h-4 w-4 ml-1" />كلمنا واتساب</Button>
           </a>
         )}
       </div>
@@ -658,7 +696,7 @@ function ProductCard({ product, avgRating, onClick, storeColor }: {
           </div>
         )}
         {product.stock !== null && product.stock <= 0 && (
-          <Badge variant="destructive" className="text-xs mb-2 rounded-lg">غير متوفر</Badge>
+          <Badge variant="destructive" className="text-xs mb-2 rounded-lg">خلص يسطا 😅</Badge>
         )}
         <div className="flex items-center gap-2">
           <span className="text-base font-bold" style={{ color: storeColor || "var(--store-primary)" }}>{finalPrice} جنيه</span>

@@ -516,6 +516,38 @@ export type Database = {
           },
         ]
       }
+      store_shipping: {
+        Row: {
+          governorate: string
+          id: string
+          is_active: boolean
+          shipping_cost: number
+          store_id: string
+        }
+        Insert: {
+          governorate: string
+          id?: string
+          is_active?: boolean
+          shipping_cost?: number
+          store_id: string
+        }
+        Update: {
+          governorate?: string
+          id?: string
+          is_active?: boolean
+          shipping_cost?: number
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_shipping_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stores: {
         Row: {
           created_at: string

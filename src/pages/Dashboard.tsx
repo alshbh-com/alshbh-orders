@@ -34,6 +34,8 @@ export default function Dashboard() {
   const [orderFilter, setOrderFilter] = useState("all");
   const [orderSearch, setOrderSearch] = useState("");
   const [coupons, setCoupons] = useState<any[]>([]);
+  const [storeShipping, setStoreShipping] = useState<any[]>([]);
+  const [savingShipping, setSavingShipping] = useState(false);
 
   // Create store form
   const [showCreateStore, setShowCreateStore] = useState(false);
@@ -100,7 +102,7 @@ export default function Dashboard() {
       setEditGoogleAnalytics(storeData.google_analytics || "");
       setEditSnapchatPixel(storeData.snapchat_pixel || "");
 
-      const [productsRes, ordersRes, categoriesRes, transRes, templatesRes, notifRes, couponsRes] = await Promise.all([
+      const [productsRes, ordersRes, categoriesRes, transRes, templatesRes, notifRes, couponsRes, shippingRes] = await Promise.all([
         supabase.from("products").select("*").eq("store_id", storeData.id).order("created_at", { ascending: false }),
         supabase.from("orders").select("*, order_items(*, products(name))").eq("store_id", storeData.id).order("created_at", { ascending: false }),
         supabase.from("categories").select("*").eq("store_id", storeData.id).order("sort_order"),
@@ -108,6 +110,7 @@ export default function Dashboard() {
         supabase.from("templates").select("*"),
         supabase.from("notifications").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(20),
         supabase.from("coupons").select("*").eq("store_id", storeData.id).order("created_at", { ascending: false }),
+        supabase.from("store_shipping").select("*").eq("store_id", storeData.id).order("governorate"),
       ]);
       setProducts(productsRes.data || []);
       setOrders(ordersRes.data || []);
@@ -116,6 +119,7 @@ export default function Dashboard() {
       setTemplates(templatesRes.data || []);
       setNotifications(notifRes.data || []);
       setCoupons(couponsRes.data || []);
+      setStoreShipping(shippingRes.data || []);
     }
     setLoading(false);
   };
@@ -432,6 +436,7 @@ export default function Dashboard() {
             <TabsTrigger value="marketing">التسويق</TabsTrigger>
             <TabsTrigger value="coupons">الكوبونات</TabsTrigger>
             <TabsTrigger value="notifications">الإشعارات</TabsTrigger>
+            <TabsTrigger value="shipping">المحافظات 📍</TabsTrigger>
             <TabsTrigger value="settings">الإعدادات</TabsTrigger>
           </TabsList>
 
@@ -830,6 +835,12 @@ export default function Dashboard() {
             </Card>
           </TabsContent>
 
+
+          {/* Shipping / Governorates Tab */}
+          <TabsContent value="shipping" className="space-y-4">
+            <ShippingManager storeId={store.id} storeShipping={storeShipping} onSaved={fetchData} defaultCost={store.shipping_cost || 70} />
+          </TabsContent>
+
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-4">
             <Card>
@@ -939,5 +950,97 @@ function CouponForm({ storeId, onSaved }: { storeId: string; onSaved: () => void
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+const EGYPTIAN_GOVERNORATES = [
+  "القاهرة", "الجيزة", "الإسكندرية", "الدقهلية", "البحر الأحمر", "البحيرة",
+  "الفيوم", "الغربية", "الإسماعيلية", "المنوفية", "المنيا", "القليوبية",
+  "الوادي الجديد", "السويس", "أسوان", "أسيوط", "بني سويف", "بورسعيد",
+  "دمياط", "الشرقية", "جنوب سيناء", "كفر الشيخ", "مطروح", "الأقصر",
+  "قنا", "شمال سيناء", "سوهاج"
+];
+
+function ShippingManager({ storeId, storeShipping, onSaved, defaultCost }: {
+  storeId: string; storeShipping: any[]; onSaved: () => void; defaultCost: number;
+}) {
+  const [costs, setCosts] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const initial: Record<string, string> = {};
+    EGYPTIAN_GOVERNORATES.forEach(gov => {
+      const existing = storeShipping.find(s => s.governorate === gov);
+      initial[gov] = existing ? String(existing.shipping_cost) : String(defaultCost);
+    });
+    setCosts(initial);
+  }, [storeShipping, defaultCost]);
+
+  const setAllSamePrice = (price: string) => {
+    const updated: Record<string, string> = {};
+    EGYPTIAN_GOVERNORATES.forEach(gov => { updated[gov] = price; });
+    setCosts(updated);
+  };
+
+  const saveAll = async () => {
+    setSaving(true);
+    try {
+      // Delete all existing
+      await supabase.from("store_shipping").delete().eq("store_id", storeId);
+      
+      // Insert all
+      const rows = EGYPTIAN_GOVERNORATES.map(gov => ({
+        store_id: storeId,
+        governorate: gov,
+        shipping_cost: parseFloat(costs[gov]) || defaultCost,
+        is_active: true,
+      }));
+      const { error } = await supabase.from("store_shipping").insert(rows);
+      if (error) throw error;
+      
+      toast({ title: "تمام يسطا! أسعار التوصيل اتحفظت 🎉" });
+      onSaved();
+    } catch (e: any) {
+      toast({ title: "حصلت مشكلة 😕", description: e.message, variant: "destructive" });
+    }
+    setSaving(false);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">📍 أسعار التوصيل حسب المحافظة</CardTitle>
+        <p className="text-sm text-muted-foreground">حدد سعر التوصيل لكل محافظة يسطا — العميل هيختار محافظته وهيشوف السعر تلقائي</p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-2 bg-muted/50 rounded-xl p-3">
+          <Label className="whitespace-nowrap text-sm">سعر موحد لكل المحافظات:</Label>
+          <Input type="number" placeholder="70" dir="ltr" className="w-24"
+            onChange={(e) => setAllSamePrice(e.target.value)} />
+          <span className="text-xs text-muted-foreground">جنيه</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {EGYPTIAN_GOVERNORATES.map(gov => (
+            <div key={gov} className="flex items-center gap-2 border border-border rounded-lg p-2">
+              <span className="text-sm font-medium flex-1 truncate">{gov}</span>
+              <Input
+                type="number"
+                value={costs[gov] || ""}
+                onChange={(e) => setCosts(prev => ({ ...prev, [gov]: e.target.value }))}
+                className="w-20 text-center"
+                dir="ltr"
+              />
+              <span className="text-xs text-muted-foreground">ج</span>
+            </div>
+          ))}
+        </div>
+
+        <Button className="w-full h-11" onClick={saveAll} disabled={saving}>
+          {saving ? "ثانية يسطا... ⏳" : "احفظ أسعار التوصيل 💾"}
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

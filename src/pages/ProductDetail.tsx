@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AlshbhWatermark from "@/components/AlshbhWatermark";
-import { Store, ShoppingCart, Star, ChevronRight, Share2, MessageCircle, Minus, Plus, ArrowRight } from "lucide-react";
+import { Store, ShoppingCart, Star, ChevronRight, Share2, MessageCircle, Minus, Plus, ArrowRight, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const SIZES = ["S", "M", "L", "XL", "XXL"];
 const COLORS: Record<string, string> = {
@@ -39,6 +40,7 @@ export default function ProductDetail() {
   const [variants, setVariants] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
+  const [storeShipping, setStoreShipping] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [selectedImage, setSelectedImage] = useState(0);
@@ -46,18 +48,17 @@ export default function ProductDetail() {
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
 
-  // Review
   const [showReview, setShowReview] = useState(false);
   const [reviewName, setReviewName] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
 
-  // Direct buy
   const [showBuy, setShowBuy] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
   const [customerNotes, setCustomerNotes] = useState("");
+  const [selectedGovernorate, setSelectedGovernorate] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
 
@@ -79,12 +80,13 @@ export default function ProductDetail() {
     if (!productData) { setLoading(false); return; }
     setProduct(productData);
 
-    const [imagesRes, variantsRes, reviewsRes, relatedRes] = await Promise.all([
+    const [imagesRes, variantsRes, reviewsRes, relatedRes, shippingRes] = await Promise.all([
       supabase.from("product_images").select("*").eq("product_id", productData.id).order("sort_order"),
       supabase.from("product_variants").select("*").eq("product_id", productData.id),
       supabase.from("reviews").select("*").eq("product_id", productData.id).order("created_at", { ascending: false }),
       supabase.from("products").select("*").eq("store_id", storeData.id).eq("is_active", true).neq("id", productData.id)
         .eq("category_id", productData.category_id || "").limit(4),
+      supabase.from("store_shipping").select("*").eq("store_id", storeData.id).eq("is_active", true),
     ]);
 
     const allImages = [productData.main_image_url, ...(imagesRes.data?.map(i => i.image_url) || [])].filter(Boolean);
@@ -92,8 +94,8 @@ export default function ProductDetail() {
     setVariants(variantsRes.data || []);
     setReviews(reviewsRes.data || []);
     setRelatedProducts(relatedRes.data || []);
+    setStoreShipping(shippingRes.data || []);
 
-    // Pre-select first available size/color from variants
     const availableSizes = [...new Set((variantsRes.data || []).map(v => v.size).filter(Boolean))];
     const availableColors = [...new Set((variantsRes.data || []).map(v => v.color).filter(Boolean))];
     if (availableSizes.length > 0) setSelectedSize(availableSizes[0]);
@@ -111,19 +113,26 @@ export default function ProductDetail() {
 
   const finalPrice = product?.discount_price || product?.price || 0;
   const hasDiscount = product?.discount_price && product.discount_price < product.price;
-  const shippingCost = store?.shipping_cost || 70;
+  
+  const getShippingCost = () => {
+    if (selectedGovernorate && storeShipping.length > 0) {
+      const found = storeShipping.find(s => s.governorate === selectedGovernorate);
+      return found ? Number(found.shipping_cost) : (store?.shipping_cost || 70);
+    }
+    return store?.shipping_cost || 70;
+  };
+  const shippingCost = getShippingCost();
 
   const addToCartAndGo = () => {
     if (availableSizes.length > 0 && !selectedSize) {
-      toast({ title: "اختار المقاس الأول", variant: "destructive" });
+      toast({ title: "اختار المقاس الأول يسطا! 👕", variant: "destructive" });
       return;
     }
     if (availableColors.length > 0 && !selectedColor) {
-      toast({ title: "اختار اللون الأول", variant: "destructive" });
+      toast({ title: "اختار اللون الأول يا اخويا! 🎨", variant: "destructive" });
       return;
     }
 
-    // Save to localStorage cart for the store
     const cartKey = `cart_${store.id}`;
     const existing: CartItem[] = JSON.parse(localStorage.getItem(cartKey) || "[]");
     const cartItem: CartItem = { product, quantity, selectedSize, selectedColor };
@@ -138,27 +147,32 @@ export default function ProductDetail() {
     }
     localStorage.setItem(cartKey, JSON.stringify(existing));
 
-    toast({ title: "تم الإضافة للسلة ✅", description: `${product.name} - ${quantity} قطعة` });
+    toast({ title: "حلو! اتضاف في السلة 🛒", description: `${product.name} - ${quantity} قطعة` });
     navigate(`/store/${slug}`);
   };
 
   const directBuy = async () => {
     if (!customerName || !customerPhone || !customerAddress) {
-      toast({ title: "اكتب كل البيانات", variant: "destructive" });
+      toast({ title: "اكتب كل البيانات يسطا! 📝", variant: "destructive" });
+      return;
+    }
+    if (storeShipping.length > 0 && !selectedGovernorate) {
+      toast({ title: "اختار المحافظة بتاعتك يا اخويا! 📍", variant: "destructive" });
       return;
     }
     if (store.points_balance <= 0) {
-      toast({ title: "المتجر مش بيستقبل طلبات دلوقتي", variant: "destructive" });
+      toast({ title: "المتجر ده واقف دلوقتي يسطا 😕", variant: "destructive" });
       return;
     }
     setSubmitting(true);
     try {
       const totalPrice = finalPrice * quantity + shippingCost;
+      const addressWithGov = selectedGovernorate ? `${selectedGovernorate} - ${customerAddress}` : customerAddress;
       const { data: order, error } = await supabase.from("orders").insert({
         store_id: store.id,
         customer_name: customerName,
         customer_phone: customerPhone,
-        customer_address: customerAddress,
+        customer_address: addressWithGov,
         customer_notes: customerNotes || null,
         total_price: totalPrice,
         shipping_cost: shippingCost,
@@ -177,7 +191,7 @@ export default function ProductDetail() {
       setOrderSuccess(order.id);
       setShowBuy(false);
     } catch (e: any) {
-      toast({ title: "حصل مشكلة", description: e.message, variant: "destructive" });
+      toast({ title: "حصلت مشكلة يسطا 😕", description: e.message, variant: "destructive" });
     }
     setSubmitting(false);
   };
@@ -190,7 +204,7 @@ export default function ProductDetail() {
       rating: reviewRating,
       comment: reviewComment || null,
     });
-    toast({ title: "شكراً لتقييمك! ⭐" });
+    toast({ title: "شكراً ليك يسطا! ⭐" });
     setShowReview(false);
     setReviewName(""); setReviewRating(5); setReviewComment("");
     fetchProduct();
@@ -202,7 +216,7 @@ export default function ProductDetail() {
       navigator.share({ title: product?.name, url });
     } else {
       navigator.clipboard.writeText(url);
-      toast({ title: "تم نسخ الرابط 📋" });
+      toast({ title: "تم نسخ الرابط يسطا! 📋" });
     }
   };
 
@@ -218,26 +232,25 @@ export default function ProductDetail() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4">
         <Store className="h-16 w-16 text-muted-foreground" />
-        <h1 className="text-2xl font-bold">المنتج مش موجود</h1>
-        <Button onClick={() => navigate(`/store/${slug}`)}>ارجع للمتجر</Button>
+        <h1 className="text-2xl font-bold">المنتج ده مش موجود يسطا 😕</h1>
+        <Button onClick={() => navigate(`/store/${slug}`)}>يلا ارجع للمتجر</Button>
       </div>
     );
   }
 
-  // Order success page
   if (orderSuccess) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center max-w-md space-y-4">
           <div className="text-6xl">🎉</div>
-          <h1 className="text-2xl font-bold">تم تسجيل طلبك بنجاح!</h1>
+          <h1 className="text-2xl font-bold">تمام يسطا! طلبك اتسجل 🔥</h1>
           <p className="text-muted-foreground">رقم الطلب: <span className="font-mono font-bold">{orderSuccess.slice(0, 8)}</span></p>
-          <p className="text-muted-foreground">هيتم التواصل معاك قريب على الواتساب أو التليفون</p>
+          <p className="text-muted-foreground">استنى شوية وهنكلمك على الواتساب أو التليفون 📞</p>
           <div className="flex gap-2 justify-center">
-            <Button onClick={() => navigate(`/store/${slug}`)}>ارجع للمتجر</Button>
+            <Button onClick={() => navigate(`/store/${slug}`)}>يلا ارجع للمتجر 🛍️</Button>
             {store.whatsapp_number && (
-              <a href={`https://wa.me/${store.whatsapp_number}?text=${encodeURIComponent(`مرحباً، أنا عملت طلب رقم ${orderSuccess.slice(0, 8)}`)}`} target="_blank">
-                <Button variant="outline"><MessageCircle className="h-4 w-4 ml-1" />تواصل واتساب</Button>
+              <a href={`https://wa.me/${store.whatsapp_number}?text=${encodeURIComponent(`ازيك يسطا! أنا عملت طلب رقم ${orderSuccess.slice(0, 8)} 🎉`)}`} target="_blank">
+                <Button variant="outline"><MessageCircle className="h-4 w-4 ml-1" />كلمنا واتساب</Button>
               </a>
             )}
           </div>
@@ -284,17 +297,12 @@ export default function ProductDetail() {
         <div className="mb-6">
           {images.length > 0 ? (
             <>
-              <img
-                src={images[selectedImage]}
-                alt={product.name}
-                className="w-full h-72 sm:h-96 object-cover rounded-xl mb-3"
-              />
+              <img src={images[selectedImage]} alt={product.name} className="w-full h-72 sm:h-96 object-cover rounded-xl mb-3" />
               {images.length > 1 && (
                 <div className="flex gap-2 overflow-x-auto pb-2">
                   {images.map((img, i) => (
                     <button key={i} onClick={() => setSelectedImage(i)}
-                      className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${i === selectedImage ? "border-primary ring-2 ring-primary/30" : "border-border"}`}
-                    >
+                      className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${i === selectedImage ? "border-primary ring-2 ring-primary/30" : "border-border"}`}>
                       <img src={img} alt="" className="w-full h-full object-cover" />
                     </button>
                   ))}
@@ -311,24 +319,14 @@ export default function ProductDetail() {
         {/* Info */}
         <div className="space-y-4 mb-6">
           <h1 className="text-2xl font-bold">{product.name}</h1>
-
           <div className="flex items-center gap-3">
             <span className="text-2xl font-bold" style={{ color: "var(--store-primary)" }}>{finalPrice} جنيه</span>
+            {hasDiscount && <span className="text-lg text-muted-foreground line-through">{product.price} جنيه</span>}
             {hasDiscount && (
-              <span className="text-lg text-muted-foreground line-through">{product.price} جنيه</span>
-            )}
-            {hasDiscount && (
-              <Badge variant="destructive" className="text-xs">
-                خصم {Math.round((1 - product.discount_price / product.price) * 100)}%
-              </Badge>
+              <Badge variant="destructive" className="text-xs">خصم {Math.round((1 - product.discount_price / product.price) * 100)}% 🔥</Badge>
             )}
           </div>
-
-          {product.description && (
-            <p className="text-muted-foreground leading-relaxed">{product.description}</p>
-          )}
-
-          {/* Rating */}
+          {product.description && <p className="text-muted-foreground leading-relaxed">{product.description}</p>}
           {avgRating && (
             <div className="flex items-center gap-2">
               <div className="flex">
@@ -340,37 +338,24 @@ export default function ProductDetail() {
               <span className="text-sm text-muted-foreground">({reviews.length} تقييم)</span>
             </div>
           )}
-
-          {/* Stock */}
           {product.stock !== null && (
-            <div className="flex items-center gap-2">
-              <Badge variant={product.stock > 0 ? "default" : "destructive"}>
-                {product.stock > 0 ? `متوفر - ${product.stock} قطعة` : "غير متوفر"}
-              </Badge>
-            </div>
+            <Badge variant={product.stock > 0 ? "default" : "destructive"}>
+              {product.stock > 0 ? `متوفر ✅ ${product.stock} قطعة` : "خلص يسطا 😅"}
+            </Badge>
           )}
-
-          {/* Shipping */}
-          <p className="text-sm text-muted-foreground">🚚 التوصيل: {shippingCost} جنيه لكل المحافظات</p>
+          <p className="text-sm text-muted-foreground">🚚 التوصيل لكل محافظات مصر — السعر حسب محافظتك</p>
         </div>
 
         {/* Size Selection */}
         {availableSizes.length > 0 && (
           <div className="mb-4">
-            <h3 className="font-semibold mb-2">المقاس</h3>
+            <h3 className="font-semibold mb-2">اختار المقاس 👕</h3>
             <div className="flex gap-2 flex-wrap">
               {availableSizes.map(size => (
-                <button
-                  key={size}
-                  onClick={() => setSelectedSize(size)}
+                <button key={size} onClick={() => setSelectedSize(size)}
                   className={`px-4 py-2 rounded-lg border-2 text-sm font-semibold transition-all ${
-                    selectedSize === size
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  {size}
-                </button>
+                    selectedSize === size ? "border-primary bg-primary text-primary-foreground" : "border-border hover:border-primary/50"
+                  }`}>{size}</button>
               ))}
             </div>
           </div>
@@ -379,22 +364,14 @@ export default function ProductDetail() {
         {/* Color Selection */}
         {availableColors.length > 0 && (
           <div className="mb-4">
-            <h3 className="font-semibold mb-2">اللون</h3>
+            <h3 className="font-semibold mb-2">اختار اللون 🎨</h3>
             <div className="flex gap-3 flex-wrap">
               {availableColors.map(color => (
-                <button
-                  key={color}
-                  onClick={() => setSelectedColor(color)}
+                <button key={color} onClick={() => setSelectedColor(color)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 text-sm transition-all ${
-                    selectedColor === color
-                      ? "border-primary ring-2 ring-primary/30"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  <span
-                    className="w-5 h-5 rounded-full border border-border"
-                    style={{ backgroundColor: COLORS[color] || "#888" }}
-                  />
+                    selectedColor === color ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"
+                  }`}>
+                  <span className="w-5 h-5 rounded-full border border-border" style={{ backgroundColor: COLORS[color] || "#888" }} />
                   {color}
                 </button>
               ))}
@@ -404,26 +381,22 @@ export default function ProductDetail() {
 
         {/* Quantity */}
         <div className="mb-6">
-          <h3 className="font-semibold mb-2">الكمية</h3>
+          <h3 className="font-semibold mb-2">كام قطعة عايز؟ 🔢</h3>
           <div className="flex items-center gap-3">
-            <Button size="icon" variant="outline" onClick={() => setQuantity(Math.max(1, quantity - 1))}>
-              <Minus className="h-4 w-4" />
-            </Button>
+            <Button size="icon" variant="outline" onClick={() => setQuantity(Math.max(1, quantity - 1))}><Minus className="h-4 w-4" /></Button>
             <span className="text-xl font-bold w-12 text-center">{quantity}</span>
-            <Button size="icon" variant="outline" onClick={() => setQuantity(quantity + 1)}>
-              <Plus className="h-4 w-4" />
-            </Button>
+            <Button size="icon" variant="outline" onClick={() => setQuantity(quantity + 1)}><Plus className="h-4 w-4" /></Button>
           </div>
         </div>
 
         {/* Reviews */}
         <div className="mb-6">
           <div className="flex justify-between items-center mb-3">
-            <h3 className="font-semibold text-lg">التقييمات ({reviews.length})</h3>
+            <h3 className="font-semibold text-lg">الناس بتقول إيه؟ 💬 ({reviews.length})</h3>
             <Button size="sm" variant="outline" onClick={() => setShowReview(true)}>⭐ قيّم المنتج</Button>
           </div>
           {reviews.length === 0 ? (
-            <p className="text-muted-foreground text-sm">مفيش تقييمات لسه — كن أول واحد يقيّم!</p>
+            <p className="text-muted-foreground text-sm">مفيش تقييمات لسه — كن أول واحد يقيّم يسطا! 🌟</p>
           ) : (
             <div className="space-y-3">
               {reviews.slice(0, 5).map(r => (
@@ -444,10 +417,10 @@ export default function ProductDetail() {
           )}
         </div>
 
-        {/* Related Products */}
+        {/* Related */}
         {relatedProducts.length > 0 && (
           <div className="mb-6">
-            <h3 className="font-semibold text-lg mb-3">منتجات مشابهة</h3>
+            <h3 className="font-semibold text-lg mb-3">ممكن يعجبك كمان 😍</h3>
             <div className="grid grid-cols-2 gap-3">
               {relatedProducts.map(p => (
                 <div key={p.id} className="border border-border rounded-xl overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
@@ -459,9 +432,7 @@ export default function ProductDetail() {
                   )}
                   <div className="p-2">
                     <h4 className="font-semibold text-sm truncate">{p.name}</h4>
-                    <span className="text-sm font-bold" style={{ color: "var(--store-primary)" }}>
-                      {p.discount_price || p.price} جنيه
-                    </span>
+                    <span className="text-sm font-bold" style={{ color: "var(--store-primary)" }}>{p.discount_price || p.price} جنيه</span>
                   </div>
                 </div>
               ))}
@@ -475,45 +446,63 @@ export default function ProductDetail() {
         <div className="container flex gap-2">
           <Button className="flex-1 text-base h-12" onClick={addToCartAndGo}>
             <ShoppingCart className="h-5 w-5 ml-2" />
-            أضف للسلة
+            حطه في السلة 🛒
           </Button>
           <Button variant="outline" className="flex-1 text-base h-12" onClick={() => setShowBuy(true)}>
-            اشتري دلوقتي
+            اشتري دلوقتي 🔥
           </Button>
         </div>
       </div>
 
       {/* Direct Buy Dialog */}
       <Dialog open={showBuy} onOpenChange={setShowBuy}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>شراء مباشر</DialogTitle></DialogHeader>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>يلا نشتري! 🎉</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div className="bg-muted rounded-lg p-3 text-sm">
               <p className="font-semibold">{product.name} × {quantity}</p>
               {selectedSize && <p>المقاس: {selectedSize}</p>}
               {selectedColor && <p>اللون: {selectedColor}</p>}
               <p className="font-bold mt-1">المنتج: {finalPrice * quantity} جنيه</p>
-              <p>التوصيل: {shippingCost} جنيه</p>
+              <p>التوصيل: {shippingCost} جنيه {selectedGovernorate && `(${selectedGovernorate})`}</p>
               <p className="text-base font-bold mt-1 border-t pt-1">الإجمالي: {finalPrice * quantity + shippingCost} جنيه</p>
             </div>
             <div className="space-y-2">
-              <Label>الاسم</Label>
-              <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="اسمك بالكامل" />
+              <Label>اسمك إيه يا اخويا؟ 😊</Label>
+              <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="محمد أحمد" />
             </div>
             <div className="space-y-2">
-              <Label>رقم الموبايل</Label>
+              <Label>رقم موبايلك 📱</Label>
               <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="01xxxxxxxxx" dir="ltr" />
             </div>
+
+            {/* Governorate */}
+            {storeShipping.length > 0 && (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1"><MapPin className="h-3 w-3" />محافظتك إيه؟ 📍</Label>
+                <Select value={selectedGovernorate} onValueChange={setSelectedGovernorate}>
+                  <SelectTrigger><SelectValue placeholder="اختار المحافظة..." /></SelectTrigger>
+                  <SelectContent>
+                    {storeShipping.map(s => (
+                      <SelectItem key={s.id} value={s.governorate}>
+                        {s.governorate} — {s.shipping_cost} جنيه توصيل
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="space-y-2">
-              <Label>العنوان</Label>
-              <Textarea value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} placeholder="العنوان بالتفصيل" />
+              <Label>عنوانك بالتفصيل 🏠</Label>
+              <Textarea value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} placeholder="الشارع والعمارة والشقة..." />
             </div>
             <div className="space-y-2">
-              <Label>ملاحظات (اختياري)</Label>
-              <Input value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} placeholder="أي ملاحظات..." />
+              <Label>عايز تقولنا حاجة؟ (اختياري)</Label>
+              <Input value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} placeholder="مثلاً: عايزه يتلف كويس 🎁" />
             </div>
             <Button className="w-full" onClick={directBuy} disabled={submitting}>
-              {submitting ? "جاري التسجيل..." : "تأكيد الطلب"}
+              {submitting ? "ثانية يسطا... ⏳" : "أكد الطلب 🎉"}
             </Button>
           </div>
         </DialogContent>
@@ -522,11 +511,11 @@ export default function ProductDetail() {
       {/* Review Dialog */}
       <Dialog open={showReview} onOpenChange={setShowReview}>
         <DialogContent>
-          <DialogHeader><DialogTitle>قيّم المنتج ⭐</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>قولنا رأيك يسطا! ⭐</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>اسمك</Label>
-              <Input value={reviewName} onChange={(e) => setReviewName(e.target.value)} placeholder="اسمك" />
+              <Input value={reviewName} onChange={(e) => setReviewName(e.target.value)} placeholder="اسمك إيه؟" />
             </div>
             <div className="space-y-2">
               <Label>التقييم</Label>
@@ -539,10 +528,10 @@ export default function ProductDetail() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>تعليق (اختياري)</Label>
-              <Textarea value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} placeholder="رأيك في المنتج..." />
+              <Label>عايز تقول حاجة تانية؟ (اختياري)</Label>
+              <Textarea value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} placeholder="رأيك في المنتج يسطا..." />
             </div>
-            <Button className="w-full" onClick={submitReview}>إرسال التقييم</Button>
+            <Button className="w-full" onClick={submitReview}>ابعت التقييم ⭐</Button>
           </div>
         </DialogContent>
       </Dialog>
