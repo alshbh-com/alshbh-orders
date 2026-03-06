@@ -53,7 +53,9 @@ export default function Dashboard() {
   const [productStock, setProductStock] = useState("");
   const [productImage, setProductImage] = useState<File | null>(null);
   const [productImagePreview, setProductImagePreview] = useState("");
+  const [productImageUrl, setProductImageUrl] = useState("");
   const [additionalImages, setAdditionalImages] = useState<File[]>([]);
+  const [additionalImageUrls, setAdditionalImageUrls] = useState<string[]>([]);
   const [productSizes, setProductSizes] = useState<string[]>([]);
   const [productColors, setProductColors] = useState<string[]>([]);
   const [productFeatured, setProductFeatured] = useState(false);
@@ -173,7 +175,12 @@ export default function Dashboard() {
     setSavingProduct(true);
     try {
       let imageUrl = editingProduct?.main_image_url || null;
-      if (productImage) imageUrl = await uploadImage(productImage, store.id);
+      // Use pasted URL if provided, otherwise upload file
+      if (productImageUrl.trim()) {
+        imageUrl = productImageUrl.trim();
+      } else if (productImage) {
+        imageUrl = await uploadImage(productImage, store.id);
+      }
 
       const productData: any = {
         store_id: store.id, name: productName, description: productDesc || null,
@@ -194,10 +201,16 @@ export default function Dashboard() {
         productId = data.id;
       }
 
-      // Upload additional images
+      // Upload additional image files
       for (const img of additionalImages) {
         const url = await uploadImage(img, store.id);
         await supabase.from("product_images").insert({ product_id: productId, image_url: url });
+      }
+      // Add additional image URLs
+      for (const url of additionalImageUrls) {
+        if (url.trim()) {
+          await supabase.from("product_images").insert({ product_id: productId, image_url: url.trim() });
+        }
       }
 
       // Save variants (sizes × colors)
@@ -239,7 +252,8 @@ export default function Dashboard() {
     setShowProductForm(false); setEditingProduct(null);
     setProductName(""); setProductDesc(""); setProductPrice("");
     setProductDiscountPrice(""); setProductCategory(""); setProductStock("");
-    setProductImage(null); setProductImagePreview(""); setAdditionalImages([]);
+    setProductImage(null); setProductImagePreview(""); setProductImageUrl("");
+    setAdditionalImages([]); setAdditionalImageUrls([]);
     setProductSizes([]); setProductColors([]); setProductFeatured(false);
   };
 
@@ -482,14 +496,23 @@ export default function Dashboard() {
 
                   <div className="space-y-2">
                     <Label>صورة المنتج الرئيسية 📸</Label>
-                    <p className="text-xs text-muted-foreground">الصورة هتتضغط تلقائياً عشان متاخدش مساحة كبيرة يسطا 💡</p>
-                    {productImagePreview && <img src={productImagePreview} alt="preview" className="w-32 h-32 object-cover rounded-lg" />}
+                    <p className="text-xs text-muted-foreground">ارفع صورة من جهازك (هتتضغط تلقائياً 💡) أو الصق لينك صورة من أي موقع</p>
+                    {(productImagePreview || productImageUrl) && (
+                      <img src={productImageUrl || productImagePreview} alt="preview" className="w-32 h-32 object-cover rounded-lg" />
+                    )}
                     <Input type="file" accept="image/*" onChange={handleMainImageChange} />
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+                      <div className="relative flex justify-center text-xs"><span className="bg-background px-2 text-muted-foreground">أو الصق لينك</span></div>
+                    </div>
+                    <Input value={productImageUrl} onChange={(e) => setProductImageUrl(e.target.value)} placeholder="https://example.com/image.jpg" dir="ltr" />
                   </div>
                   <div className="space-y-2">
                     <Label>صور إضافية (لو عايز)</Label>
                     <Input type="file" accept="image/*" multiple onChange={(e) => setAdditionalImages(Array.from(e.target.files || []))} />
                     {additionalImages.length > 0 && <p className="text-xs text-muted-foreground">✅ {additionalImages.length} صور جاهزة للرفع</p>}
+                    <Input placeholder="أو الصق لينكات صور إضافية (لينك في كل سطر)" value={additionalImageUrls.join("\n")}
+                      onChange={(e) => setAdditionalImageUrls(e.target.value.split("\n"))} dir="ltr" />
                   </div>
                   <Button className="w-full" onClick={saveProduct} disabled={savingProduct}>
                     {savingProduct ? "جاري الحفظ..." : editingProduct ? "حفظ التعديلات" : "ضيف المنتج"}
