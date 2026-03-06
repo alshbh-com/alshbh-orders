@@ -19,16 +19,16 @@ export default function Navbar() {
         {/* Desktop */}
         <div className="hidden md:flex items-center gap-4">
           <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">عن المنصة</Link>
-          <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">تواصل معانا</Link>
+          <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">كلمنا</Link>
           {user ? (
             <>
               {userRole === "admin" && (
                 <Link to="/admin">
-                  <Button variant="outline" size="sm"><Shield className="ml-1 h-4 w-4" />لوحة الأدمن</Button>
+                  <Button variant="outline" size="sm"><Shield className="ml-1 h-4 w-4" />الأدمن</Button>
                 </Link>
               )}
               <Link to="/dashboard">
-                <Button variant="outline" size="sm"><LayoutDashboard className="ml-1 h-4 w-4" />لوحة التحكم</Button>
+                <Button variant="outline" size="sm"><LayoutDashboard className="ml-1 h-4 w-4" />متجري</Button>
               </Link>
               <Button variant="ghost" size="sm" onClick={() => signOut()}>
                 <LogOut className="ml-1 h-4 w-4" />خروج
@@ -36,7 +36,7 @@ export default function Navbar() {
             </>
           ) : (
             <Link to="/auth">
-              <Button size="sm">دخول / تسجيل</Button>
+              <Button size="sm">يلا ادخل! 🚀</Button>
             </Link>
           )}
         </div>
