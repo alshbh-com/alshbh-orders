@@ -524,22 +524,18 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
-          {[
-            { icon: Package, label: "المنتجات", value: products.length },
-            { icon: ShoppingCart, label: "كل الطلبات", value: orders.length },
-            { icon: Clock, label: "طلبات جديدة", value: orders.filter(o => o.status === "new").length },
-            { icon: Coins, label: "إجمالي المبيعات", value: `${totalSales} ج` },
-            { icon: Coins, label: "رصيد النقاط", value: store.points_balance },
-          ].map((s, i) => (
-            <Card key={i}>
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary"><s.icon className="h-5 w-5" /></div>
-                <div><p className="text-xs text-muted-foreground">{s.label}</p><p className="text-xl font-bold">{s.value}</p></div>
-              </CardContent>
-            </Card>
-          ))}
+        {/* Stats - compact ticker */}
+        <div className="flex items-center gap-3 mb-6 overflow-x-auto pb-1">
+          <div className="flex items-center gap-1.5 shrink-0 bg-muted rounded-lg px-3 py-2">
+            <Clock className="h-4 w-4 text-blue-500" />
+            <span className="text-xs text-muted-foreground">طلبات جديدة</span>
+            <span className="font-bold text-sm">{orders.filter(o => o.status === "new").length}</span>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0 bg-muted rounded-lg px-3 py-2">
+            <Coins className="h-4 w-4 text-primary" />
+            <span className="text-xs text-muted-foreground">النقاط</span>
+            <span className={`font-bold text-sm ${store.points_balance > 0 ? "" : "text-destructive"}`}>{store.points_balance}</span>
+          </div>
         </div>
 
         <Tabs defaultValue="products" className="space-y-4">
