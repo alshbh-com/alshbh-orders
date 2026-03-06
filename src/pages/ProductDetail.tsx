@@ -50,9 +50,7 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
 
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedSize, setSelectedSize] = useState<string>("");
-  const [selectedColor, setSelectedColor] = useState<string>("");
-  const [quantity, setQuantity] = useState(1);
+  const [selections, setSelections] = useState<VariantSelection[]>([{ quantity: 1 }]);
 
   const [showReview, setShowReview] = useState(false);
   const [reviewName, setReviewName] = useState("");
