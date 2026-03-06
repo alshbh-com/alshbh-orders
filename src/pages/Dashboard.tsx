@@ -298,13 +298,14 @@ export default function Dashboard() {
           <Card>
             <CardHeader className="text-center">
               <Store className="h-12 w-12 text-primary mx-auto mb-2" />
-              <CardTitle>اعمل متجرك دلوقتي!</CardTitle>
-              <p className="text-muted-foreground">اكتب بيانات متجرك وابدأ استقبل طلبات</p>
+              <CardTitle>يلا نعملك متجرك يسطا! 🚀</CardTitle>
+              <p className="text-muted-foreground">اكتب بيانات متجرك وفي ثانيتين هتبقى جاهز تبيع</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>اسم المتجر</Label>
-                <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="مثال: مطعم الشبح" />
+                <Label>اسم المتجر بتاعك</Label>
+                <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="مثال: مطعم الشبح 🍔" />
+                <p className="text-xs text-muted-foreground">الاسم ده هو اللي هيظهر للعملاء بتوعك</p>
               </div>
               <div className="space-y-2">
                 <Label>رابط المتجر (بالإنجليزي)</Label>
@@ -312,15 +313,15 @@ export default function Dashboard() {
                 <p className="text-xs text-muted-foreground">هيبقى الرابط: alshbh.store/store/{storeSlug || "اسم-متجرك"}</p>
               </div>
               <div className="space-y-2">
-                <Label>رقم الواتساب</Label>
+                <Label>رقم الواتساب (عشان العملاء يكلموك)</Label>
                 <Input value={whatsappNumber} onChange={(e) => setWhatsappNumber(e.target.value)} placeholder="201xxxxxxxxx" dir="ltr" />
               </div>
               <div className="space-y-2">
                 <Label>سعر التوصيل (جنيه)</Label>
                 <Input type="number" value={storeShippingCost} onChange={(e) => setStoreShippingCost(e.target.value)} placeholder="70" dir="ltr" />
               </div>
-              <Button className="w-full" onClick={createStore}>إنشاء المتجر</Button>
-              <p className="text-xs text-center text-muted-foreground">⚠️ المتجر مش هيتفعل إلا لما يكون معاك نقاط</p>
+              <Button className="w-full h-11 text-base" onClick={createStore}>يلا نبدأ! 🎉</Button>
+              <p className="text-xs text-center text-muted-foreground">💡 يا اخويا المتجر هيشتغل لما يكون معاك نقاط — كل طلب = نقطة = جنيه واحد بس</p>
             </CardContent>
           </Card>
         </div>
