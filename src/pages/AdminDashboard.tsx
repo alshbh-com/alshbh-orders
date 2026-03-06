@@ -234,6 +234,7 @@ export default function AdminDashboard() {
                         <TableHead>المتجر</TableHead>
                         <TableHead>الرابط</TableHead>
                         <TableHead>النقاط</TableHead>
+                        <TableHead>الإحالة</TableHead>
                         <TableHead>الحالة</TableHead>
                         <TableHead>إجراءات</TableHead>
                       </TableRow>
