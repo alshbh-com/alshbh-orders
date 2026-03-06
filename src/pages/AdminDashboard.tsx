@@ -218,6 +218,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="orders">الطلبات</TabsTrigger>
             <TabsTrigger value="points">النقاط</TabsTrigger>
             <TabsTrigger value="complaints">الشكاوى</TabsTrigger>
+            <TabsTrigger value="referrals">الإحالات 🎁</TabsTrigger>
             <TabsTrigger value="notifications">الإشعارات</TabsTrigger>
           </TabsList>
 
