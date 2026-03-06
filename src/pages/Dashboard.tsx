@@ -88,9 +88,17 @@ export default function Dashboard() {
 
   useEffect(() => { if (user) fetchData(); }, [user]);
 
-  const fetchData = async () => {
+  const fetchData = async (selectedStoreId?: string) => {
     setLoading(true);
-    const { data: storeData } = await supabase.from("stores").select("*").eq("owner_id", user!.id).maybeSingle();
+    const { data: storesData } = await supabase.from("stores").select("*").eq("owner_id", user!.id).order("created_at");
+    setAllStores(storesData || []);
+
+    // Pick which store to show
+    const storeData = selectedStoreId
+      ? storesData?.find(s => s.id === selectedStoreId) || storesData?.[0] || null
+      : store?.id
+        ? storesData?.find(s => s.id === store.id) || storesData?.[0] || null
+        : storesData?.[0] || null;
 
     if (storeData) {
       setStore(storeData);
