@@ -386,6 +386,22 @@ export default function Dashboard() {
   return (
     <Layout>
       <div className="container py-6">
+        {/* Store Link Banner */}
+        <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="flex-1">
+            <p className="text-sm font-semibold">🔗 رابط متجرك — ابعته لكل الناس يسطا!</p>
+            <code className="text-xs bg-muted px-2 py-1 rounded mt-1 inline-block break-all" dir="ltr">
+              {window.location.origin}/store/{store.store_slug}
+            </code>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => {
+            navigator.clipboard.writeText(`${window.location.origin}/store/${store.store_slug}`);
+            toast({ title: "تم نسخ الرابط يسطا! 📋" });
+          }}>
+            📋 انسخ الرابط
+          </Button>
+        </div>
+
         <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold">أهلاً يسطا! 👋 {store.store_name}</h1>
