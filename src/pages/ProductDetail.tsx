@@ -379,7 +379,7 @@ export default function ProductDetail() {
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
                               sel.color === color ? "ring-2 ring-offset-1 border-primary" : "border border-border bg-background hover:border-primary/50"
                             }`}
-                            style={sel.color === color ? { ringColor: store.primary_color } : {}}>
+                            style={sel.color === color ? { borderColor: store.primary_color } : {}}>
                             <span className="w-4 h-4 rounded-full border border-border shrink-0" style={{ backgroundColor: COLORS[color] || "#888" }} />
                             {color}
                           </button>
