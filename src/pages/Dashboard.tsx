@@ -496,14 +496,23 @@ export default function Dashboard() {
 
                   <div className="space-y-2">
                     <Label>صورة المنتج الرئيسية 📸</Label>
-                    <p className="text-xs text-muted-foreground">الصورة هتتضغط تلقائياً عشان متاخدش مساحة كبيرة يسطا 💡</p>
-                    {productImagePreview && <img src={productImagePreview} alt="preview" className="w-32 h-32 object-cover rounded-lg" />}
+                    <p className="text-xs text-muted-foreground">ارفع صورة من جهازك (هتتضغط تلقائياً 💡) أو الصق لينك صورة من أي موقع</p>
+                    {(productImagePreview || productImageUrl) && (
+                      <img src={productImageUrl || productImagePreview} alt="preview" className="w-32 h-32 object-cover rounded-lg" />
+                    )}
                     <Input type="file" accept="image/*" onChange={handleMainImageChange} />
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+                      <div className="relative flex justify-center text-xs"><span className="bg-background px-2 text-muted-foreground">أو الصق لينك</span></div>
+                    </div>
+                    <Input value={productImageUrl} onChange={(e) => setProductImageUrl(e.target.value)} placeholder="https://example.com/image.jpg" dir="ltr" />
                   </div>
                   <div className="space-y-2">
                     <Label>صور إضافية (لو عايز)</Label>
                     <Input type="file" accept="image/*" multiple onChange={(e) => setAdditionalImages(Array.from(e.target.files || []))} />
                     {additionalImages.length > 0 && <p className="text-xs text-muted-foreground">✅ {additionalImages.length} صور جاهزة للرفع</p>}
+                    <Input placeholder="أو الصق لينكات صور إضافية (لينك في كل سطر)" value={additionalImageUrls.join("\n")}
+                      onChange={(e) => setAdditionalImageUrls(e.target.value.split("\n"))} dir="ltr" />
                   </div>
                   <Button className="w-full" onClick={saveProduct} disabled={savingProduct}>
                     {savingProduct ? "جاري الحفظ..." : editingProduct ? "حفظ التعديلات" : "ضيف المنتج"}
