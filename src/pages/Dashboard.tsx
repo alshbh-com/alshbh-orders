@@ -408,7 +408,23 @@ export default function Dashboard() {
           </Button>
         </div>
 
-        <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        {/* Referral Link Banner */}
+        <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-xl p-4 mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="flex-1">
+            <p className="text-sm font-semibold">🎁 ادعي صحابك واكسب 20 نقطة مجاناً!</p>
+            <p className="text-xs text-muted-foreground mt-1">لما حد يسجل من لينكك ويشحن 100 نقطة أو أكتر — هتاخد 20 نقطة هدية تلقائي</p>
+            <code className="text-xs bg-muted px-2 py-1 rounded mt-1 inline-block break-all" dir="ltr">
+              {window.location.origin}/auth?ref={store.id}
+            </code>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => {
+            navigator.clipboard.writeText(`${window.location.origin}/auth?ref=${store.id}`);
+            toast({ title: "تم نسخ لينك الإحالة يسطا! 📋🎁" });
+          }}>
+            📋 انسخ لينك الإحالة
+          </Button>
+        </div>
+
           <div>
             <h1 className="text-2xl font-bold">أهلاً يسطا! 👋 {store.store_name}</h1>
             <p className="text-muted-foreground">هنا بتدير كل حاجة في متجرك — منتجات وطلبات وكل الحاجات</p>
