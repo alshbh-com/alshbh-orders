@@ -559,6 +559,7 @@ export type Database = {
           owner_id: string
           points_balance: number
           primary_color: string | null
+          referred_by: string | null
           secondary_color: string | null
           shipping_cost: number
           snapchat_pixel: string | null
@@ -578,6 +579,7 @@ export type Database = {
           owner_id: string
           points_balance?: number
           primary_color?: string | null
+          referred_by?: string | null
           secondary_color?: string | null
           shipping_cost?: number
           snapchat_pixel?: string | null
@@ -597,6 +599,7 @@ export type Database = {
           owner_id?: string
           points_balance?: number
           primary_color?: string | null
+          referred_by?: string | null
           secondary_color?: string | null
           shipping_cost?: number
           snapchat_pixel?: string | null
@@ -606,7 +609,15 @@ export type Database = {
           tiktok_pixel?: string | null
           whatsapp_number?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "stores_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       templates: {
         Row: {
