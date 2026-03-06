@@ -137,6 +137,10 @@ export default function Dashboard() {
 
   const createStore = async () => {
     if (!storeName || !storeSlug) return;
+    if (allStores.length >= 4) {
+      toast({ title: "وصلت الحد الأقصى", description: "مينفعش تضيف أكتر من 4 متاجر", variant: "destructive" });
+      return;
+    }
     const slug = storeSlug.toLowerCase().replace(/[^a-z0-9-]/g, "-");
     const referralStoreId = localStorage.getItem("referral_store_id") || null;
     
@@ -151,7 +155,7 @@ export default function Dashboard() {
     if (error) {
       toast({ title: "حصل مشكلة", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "تم إنشاء المتجر! 🎉 وأخدت 3 نقاط مجانية" });
+      toast({ title: "تم إنشاء المتجر! 🎉 وأخدت 5 نقاط مجانية (5 أوردرات هدية)" });
       localStorage.removeItem("referral_store_id");
       setShowCreateStore(false);
       setStoreName(""); setStoreSlug(""); setWhatsappNumber("");
@@ -451,9 +455,11 @@ export default function Dashboard() {
                 {s.store_name}
               </Button>
             ))}
-            <Button size="sm" variant="ghost" onClick={() => setShowCreateStore(true)} className="shrink-0">
-              <Plus className="h-4 w-4 ml-1" />متجر جديد
-            </Button>
+            {allStores.length < 4 && (
+              <Button size="sm" variant="ghost" onClick={() => setShowCreateStore(true)} className="shrink-0">
+                <Plus className="h-4 w-4 ml-1" />متجر جديد
+              </Button>
+            )}
           </div>
         )}
 
@@ -481,7 +487,7 @@ export default function Dashboard() {
             <a href={`/store/${store.store_slug}`} target="_blank">
               <Button variant="outline" size="sm"><Eye className="h-4 w-4 ml-1" />شوف المتجر</Button>
             </a>
-            {allStores.length <= 1 && (
+            {allStores.length < 4 && (
               <Button variant="outline" size="sm" onClick={() => setShowCreateStore(true)}>
                 <Plus className="h-4 w-4 ml-1" />متجر جديد
               </Button>
