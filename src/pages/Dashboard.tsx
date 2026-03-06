@@ -835,6 +835,12 @@ export default function Dashboard() {
             </Card>
           </TabsContent>
 
+
+          {/* Shipping / Governorates Tab */}
+          <TabsContent value="shipping" className="space-y-4">
+            <ShippingManager storeId={store.id} storeShipping={storeShipping} onSaved={fetchData} defaultCost={store.shipping_cost || 70} />
+          </TabsContent>
+
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-4">
             <Card>
