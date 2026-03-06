@@ -353,17 +353,21 @@ export default function AdminDashboard() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>#</TableHead>
                         <TableHead>العميل</TableHead>
                         <TableHead>المتجر</TableHead>
                         <TableHead>الإجمالي</TableHead>
                         <TableHead>الحالة</TableHead>
                         <TableHead>التاريخ</TableHead>
-                        <TableHead>تغيير</TableHead>
+                        <TableHead>إجراءات</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredOrders.map((o) => (
                         <TableRow key={o.id}>
+                          <TableCell>
+                            <Badge variant="outline" className="text-xs">#{(o as any).order_number || '—'}</Badge>
+                          </TableCell>
                           <TableCell>
                             <div>
                               <p className="font-semibold text-sm">{o.customer_name}</p>
@@ -379,16 +383,26 @@ export default function AdminDashboard() {
                           </TableCell>
                           <TableCell className="text-xs">{new Date(o.created_at).toLocaleDateString("ar-EG")}</TableCell>
                           <TableCell>
-                            <Select value={o.status} onValueChange={(v) => updateOrderStatus(o.id, v)}>
-                              <SelectTrigger className="w-28 h-8">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Object.entries(statusMap).map(([k, v]) => (
-                                  <SelectItem key={k} value={k}>{v}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <div className="flex gap-1">
+                              <Select value={o.status} onValueChange={(v) => updateOrderStatus(o.id, v)}>
+                                <SelectTrigger className="w-28 h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Object.entries(statusMap).map(([k, v]) => (
+                                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Button size="sm" variant="destructive" onClick={async () => {
+                                await supabase.from("order_items").delete().eq("order_id", o.id);
+                                await supabase.from("orders").delete().eq("id", o.id);
+                                toast({ title: "تم حذف الطلب" });
+                                fetchAll();
+                              }}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -453,25 +467,35 @@ export default function AdminDashboard() {
                 ) : (
                   <div className="space-y-3">
                     {complaints.map(c => (
-                      <Card key={c.id}>
+                       <Card key={c.id}>
                         <CardContent className="p-4">
                           <div className="flex justify-between items-start">
                             <div>
                               <p className="font-semibold">{c.name}</p>
+                              {c.store_name && <p className="text-xs text-muted-foreground">متجر: {c.store_name}</p>}
                               {c.email && <p className="text-xs text-muted-foreground">{c.email}</p>}
                               {c.phone && <p className="text-xs text-muted-foreground">{c.phone}</p>}
                               <p className="text-sm mt-2">{c.message}</p>
                               <p className="text-xs text-muted-foreground mt-1">{new Date(c.created_at).toLocaleString("ar-EG")}</p>
                             </div>
-                            <Select value={c.status} onValueChange={(v) => updateComplaintStatus(c.id, v)}>
-                              <SelectTrigger className="w-24 h-8">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="pending">معلق</SelectItem>
-                                <SelectItem value="resolved">تم الحل</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <div className="flex gap-1 items-start">
+                              <Select value={c.status} onValueChange={(v) => updateComplaintStatus(c.id, v)}>
+                                <SelectTrigger className="w-24 h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pending">معلق</SelectItem>
+                                  <SelectItem value="resolved">تم الحل</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Button size="sm" variant="destructive" onClick={async () => {
+                                await supabase.from("complaints").delete().eq("id", c.id);
+                                toast({ title: "تم حذف الشكوى" });
+                                fetchAll();
+                              }}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
