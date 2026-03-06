@@ -353,12 +353,13 @@ export default function AdminDashboard() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>#</TableHead>
                         <TableHead>العميل</TableHead>
                         <TableHead>المتجر</TableHead>
                         <TableHead>الإجمالي</TableHead>
                         <TableHead>الحالة</TableHead>
                         <TableHead>التاريخ</TableHead>
-                        <TableHead>تغيير</TableHead>
+                        <TableHead>إجراءات</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
