@@ -481,14 +481,15 @@ export default function Dashboard() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>صورة المنتج الرئيسية</Label>
+                    <Label>صورة المنتج الرئيسية 📸</Label>
+                    <p className="text-xs text-muted-foreground">الصورة هتتضغط تلقائياً عشان متاخدش مساحة كبيرة يسطا 💡</p>
                     {productImagePreview && <img src={productImagePreview} alt="preview" className="w-32 h-32 object-cover rounded-lg" />}
                     <Input type="file" accept="image/*" onChange={handleMainImageChange} />
                   </div>
                   <div className="space-y-2">
-                    <Label>صور إضافية</Label>
+                    <Label>صور إضافية (لو عايز)</Label>
                     <Input type="file" accept="image/*" multiple onChange={(e) => setAdditionalImages(Array.from(e.target.files || []))} />
-                    {additionalImages.length > 0 && <p className="text-xs text-muted-foreground">{additionalImages.length} صور محددة</p>}
+                    {additionalImages.length > 0 && <p className="text-xs text-muted-foreground">✅ {additionalImages.length} صور جاهزة للرفع</p>}
                   </div>
                   <Button className="w-full" onClick={saveProduct} disabled={savingProduct}>
                     {savingProduct ? "جاري الحفظ..." : editingProduct ? "حفظ التعديلات" : "ضيف المنتج"}
