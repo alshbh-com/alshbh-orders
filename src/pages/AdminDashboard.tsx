@@ -249,6 +249,9 @@ export default function AdminDashboard() {
                               {s.points_balance}
                             </Badge>
                           </TableCell>
+                          <TableCell className="text-xs">
+                            {s.referred_by ? `✅ من ${stores.find(st => st.id === s.referred_by)?.store_name || '—'}` : '—'}
+                          </TableCell>
                           <TableCell>
                             <Badge variant={s.is_active ? "default" : "secondary"}>
                               {s.is_active ? "مفعل" : "متوقف"}
