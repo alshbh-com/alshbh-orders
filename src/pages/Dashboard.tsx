@@ -44,6 +44,8 @@ export default function Dashboard() {
   const [storeSlug, setStoreSlug] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [storeShippingCost, setStoreShippingCost] = useState("70");
+  const [newStorePrimaryColor, setNewStorePrimaryColor] = useState("#D97706");
+  const [newStoreSecondaryColor, setNewStoreSecondaryColor] = useState("#F59E0B");
 
   // Product form
   const [showProductForm, setShowProductForm] = useState(false);
