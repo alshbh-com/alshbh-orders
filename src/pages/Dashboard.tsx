@@ -740,7 +740,7 @@ export default function Dashboard() {
           {/* Order Detail Dialog */}
           <Dialog open={!!showOrderDetail} onOpenChange={(o) => !o && setShowOrderDetail(null)}>
             <DialogContent className="max-w-md">
-              <DialogHeader><DialogTitle>تفاصيل الطلب</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>تفاصيل الطلب #{showOrderDetail?.order_number || '—'}</DialogTitle></DialogHeader>
               {showOrderDetail && (
                 <div className="space-y-3">
                   <div className="bg-muted rounded-lg p-3 text-sm space-y-1">
