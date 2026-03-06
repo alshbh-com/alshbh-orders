@@ -889,14 +889,23 @@ export default function Dashboard() {
                             <p className="text-sm text-muted-foreground">{n.message}</p>
                             <p className="text-xs text-muted-foreground mt-1">{new Date(n.created_at).toLocaleString("ar-EG")}</p>
                           </div>
-                          {!n.is_read && (
-                            <Button size="sm" variant="ghost" onClick={async () => {
-                              await supabase.from("notifications").update({ is_read: true }).eq("id", n.id);
+                          <div className="flex gap-1">
+                            {!n.is_read && (
+                              <Button size="sm" variant="ghost" onClick={async () => {
+                                await supabase.from("notifications").update({ is_read: true }).eq("id", n.id);
+                                fetchData();
+                              }}>
+                                <Check className="h-3 w-3" />
+                              </Button>
+                            )}
+                            <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={async () => {
+                              await supabase.from("notifications").delete().eq("id", n.id);
+                              toast({ title: "تم حذف الإشعار" });
                               fetchData();
                             }}>
-                              <Check className="h-3 w-3" />
+                              <Trash2 className="h-3 w-3" />
                             </Button>
-                          )}
+                          </div>
                         </div>
                       </div>
                     ))}
