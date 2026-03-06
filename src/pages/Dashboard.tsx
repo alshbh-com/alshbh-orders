@@ -127,15 +127,21 @@ export default function Dashboard() {
   const createStore = async () => {
     if (!storeName || !storeSlug) return;
     const slug = storeSlug.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+    
+    // Check for referral
+    const referralStoreId = localStorage.getItem("referral_store_id") || null;
+    
     const { error } = await supabase.from("stores").insert({
       owner_id: user!.id, store_name: storeName, store_slug: slug,
       whatsapp_number: whatsappNumber,
       shipping_cost: parseFloat(storeShippingCost) || 70,
-    });
+      referred_by: referralStoreId,
+    } as any);
     if (error) {
       toast({ title: "حصل مشكلة", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "تم إنشاء المتجر!" });
+      toast({ title: "تم إنشاء المتجر! 🎉 وأخدت 3 نقاط مجانية" });
+      localStorage.removeItem("referral_store_id");
       setShowCreateStore(false);
       fetchData();
     }
@@ -399,6 +405,23 @@ export default function Dashboard() {
             toast({ title: "تم نسخ الرابط يسطا! 📋" });
           }}>
             📋 انسخ الرابط
+          </Button>
+        </div>
+
+        {/* Referral Link Banner */}
+        <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-xl p-4 mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="flex-1">
+            <p className="text-sm font-semibold">🎁 ادعي صحابك واكسب 20 نقطة مجاناً!</p>
+            <p className="text-xs text-muted-foreground mt-1">لما حد يسجل من لينكك ويشحن 100 نقطة أو أكتر — هتاخد 20 نقطة هدية تلقائي</p>
+            <code className="text-xs bg-muted px-2 py-1 rounded mt-1 inline-block break-all" dir="ltr">
+              {window.location.origin}/auth?ref={store.id}
+            </code>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => {
+            navigator.clipboard.writeText(`${window.location.origin}/auth?ref=${store.id}`);
+            toast({ title: "تم نسخ لينك الإحالة يسطا! 📋🎁" });
+          }}>
+            📋 انسخ لينك الإحالة
           </Button>
         </div>
 
