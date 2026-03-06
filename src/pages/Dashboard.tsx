@@ -364,6 +364,64 @@ export default function Dashboard() {
     return <Layout><div className="flex min-h-[60vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div></Layout>;
   }
 
+  // Create store form content (reused in both no-store and dialog)
+  const storeFormContent = (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>اسم المتجر بتاعك</Label>
+        <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="مثال: مطعم الشبح 🍔" />
+      </div>
+      <div className="space-y-2">
+        <Label>رابط المتجر (بالإنجليزي)</Label>
+        <Input value={storeSlug} onChange={(e) => setStoreSlug(e.target.value)} placeholder="مثال: alshbh-restaurant" dir="ltr" />
+        <p className="text-xs text-muted-foreground">هيبقى الرابط: alshbh.store/store/{storeSlug || "اسم-متجرك"}</p>
+      </div>
+      <div className="space-y-2">
+        <Label>رقم الواتساب (عشان العملاء يكلموك)</Label>
+        <Input value={whatsappNumber} onChange={(e) => setWhatsappNumber(e.target.value)} placeholder="201xxxxxxxxx" dir="ltr" />
+      </div>
+      <div className="space-y-2">
+        <Label>سعر التوصيل (جنيه)</Label>
+        <Input type="number" value={storeShippingCost} onChange={(e) => setStoreShippingCost(e.target.value)} placeholder="70" dir="ltr" />
+      </div>
+      {/* Color Pickers with Live Preview */}
+      <div className="space-y-2">
+        <Label>ألوان المتجر 🎨</Label>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <Label className="text-xs">اللون الأساسي</Label>
+            <div className="flex items-center gap-2">
+              <input type="color" value={newStorePrimaryColor} onChange={(e) => setNewStorePrimaryColor(e.target.value)} className="h-9 w-12 rounded cursor-pointer border border-border" />
+              <Input value={newStorePrimaryColor} onChange={(e) => setNewStorePrimaryColor(e.target.value)} dir="ltr" className="flex-1 text-xs" />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">اللون الثانوي</Label>
+            <div className="flex items-center gap-2">
+              <input type="color" value={newStoreSecondaryColor} onChange={(e) => setNewStoreSecondaryColor(e.target.value)} className="h-9 w-12 rounded cursor-pointer border border-border" />
+              <Input value={newStoreSecondaryColor} onChange={(e) => setNewStoreSecondaryColor(e.target.value)} dir="ltr" className="flex-1 text-xs" />
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Live Preview */}
+      <div className="rounded-xl overflow-hidden border border-border">
+        <div className="py-4 px-4 text-white text-center" style={{ background: `linear-gradient(135deg, ${newStorePrimaryColor}, ${newStoreSecondaryColor})` }}>
+          <Store className="h-8 w-8 mx-auto mb-1" />
+          <p className="font-bold text-lg">{storeName || "اسم متجرك"}</p>
+          <p className="text-white/70 text-xs">أهلاً بيك يا حبيبي! نورتنا 😍</p>
+        </div>
+        <div className="p-3 bg-card flex gap-2">
+          <div className="h-8 rounded-full px-3 flex items-center text-white text-xs" style={{ backgroundColor: newStorePrimaryColor }}>الكل 🔥</div>
+          <div className="h-8 rounded-full px-3 flex items-center text-xs border border-border">تصنيف</div>
+          <div className="h-8 rounded-full px-3 flex items-center text-xs border border-border">تصنيف</div>
+        </div>
+      </div>
+      <Button className="w-full h-11 text-base" onClick={createStore}>يلا نبدأ! 🎉</Button>
+      <p className="text-xs text-center text-muted-foreground">💡 كل طلب = نقطة = جنيه واحد بس</p>
+    </div>
+  );
+
   if (!store) {
     return (
       <Layout>
@@ -374,28 +432,7 @@ export default function Dashboard() {
               <CardTitle>يلا نعملك متجرك يسطا! 🚀</CardTitle>
               <p className="text-muted-foreground">اكتب بيانات متجرك وفي ثانيتين هتبقى جاهز تبيع</p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>اسم المتجر بتاعك</Label>
-                <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="مثال: مطعم الشبح 🍔" />
-                <p className="text-xs text-muted-foreground">الاسم ده هو اللي هيظهر للعملاء بتوعك</p>
-              </div>
-              <div className="space-y-2">
-                <Label>رابط المتجر (بالإنجليزي)</Label>
-                <Input value={storeSlug} onChange={(e) => setStoreSlug(e.target.value)} placeholder="مثال: alshbh-restaurant" dir="ltr" />
-                <p className="text-xs text-muted-foreground">هيبقى الرابط: alshbh.store/store/{storeSlug || "اسم-متجرك"}</p>
-              </div>
-              <div className="space-y-2">
-                <Label>رقم الواتساب (عشان العملاء يكلموك)</Label>
-                <Input value={whatsappNumber} onChange={(e) => setWhatsappNumber(e.target.value)} placeholder="201xxxxxxxxx" dir="ltr" />
-              </div>
-              <div className="space-y-2">
-                <Label>سعر التوصيل (جنيه)</Label>
-                <Input type="number" value={storeShippingCost} onChange={(e) => setStoreShippingCost(e.target.value)} placeholder="70" dir="ltr" />
-              </div>
-              <Button className="w-full h-11 text-base" onClick={createStore}>يلا نبدأ! 🎉</Button>
-              <p className="text-xs text-center text-muted-foreground">💡 يا اخويا المتجر هيشتغل لما يكون معاك نقاط — كل طلب = نقطة = جنيه واحد بس</p>
-            </CardContent>
+            <CardContent>{storeFormContent}</CardContent>
           </Card>
         </div>
       </Layout>
