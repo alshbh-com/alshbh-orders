@@ -347,9 +347,21 @@ export default function Dashboard() {
         </div>
 
         {store.points_balance <= 0 && (
-          <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 mb-6 text-center">
-            <p className="font-bold text-destructive">⚠️ رصيد النقاط خلص — المتجر متوقف عن استقبال الطلبات</p>
-            <a href={whatsappUrl} target="_blank"><Button size="sm" className="mt-2">اشحن نقاط دلوقتي</Button></a>
+          <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-6 mb-6">
+            <div className="flex items-start gap-3">
+              <div className="h-10 w-10 rounded-full bg-destructive/20 flex items-center justify-center shrink-0">
+                <Coins className="h-5 w-5 text-destructive" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-destructive text-lg mb-1">⚠️ المتجر متوقف عن استقبال الطلبات</h3>
+                <p className="text-sm text-muted-foreground mb-1">رصيد النقاط بتاعك خلص. كل طلب بيخصم نقطة واحدة من رصيدك، ولما النقاط تخلص المتجر بيقف تلقائياً.</p>
+                <p className="text-sm text-muted-foreground mb-3">العملاء اللي بيزوروا متجرك هيشوفوا رسالة إن المتجر مش بيستقبل طلبات ومش هيقدروا يشتروا حاجة.</p>
+                <div className="flex items-center gap-2">
+                  <a href={whatsappUrl} target="_blank"><Button size="sm">اشحن نقاط دلوقتي</Button></a>
+                  <p className="text-xs text-muted-foreground">الباقات بتبدأ من 100 نقطة = 100 جنيه</p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
