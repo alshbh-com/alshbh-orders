@@ -392,48 +392,27 @@ export default function Dashboard() {
   return (
     <Layout>
       <div className="container py-6">
-        {/* Store Link Banner */}
-        <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <div className="flex-1">
-            <p className="text-sm font-semibold">🔗 رابط متجرك — ابعته لكل الناس يسطا!</p>
-            <code className="text-xs bg-muted px-2 py-1 rounded mt-1 inline-block break-all" dir="ltr">
-              {window.location.origin}/store/{store.store_slug}
-            </code>
-          </div>
-          <Button size="sm" variant="outline" onClick={() => {
-            navigator.clipboard.writeText(`${window.location.origin}/store/${store.store_slug}`);
-            toast({ title: "تم نسخ الرابط يسطا! 📋" });
-          }}>
-            📋 انسخ الرابط
-          </Button>
-        </div>
-
-        {/* Referral Link Banner */}
-        <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-xl p-4 mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <div className="flex-1">
-            <p className="text-sm font-semibold">🎁 ادعي صحابك واكسب 20 نقطة مجاناً!</p>
-            <p className="text-xs text-muted-foreground mt-1">لما حد يسجل من لينكك ويشحن 100 نقطة أو أكتر — هتاخد 20 نقطة هدية تلقائي</p>
-            <code className="text-xs bg-muted px-2 py-1 rounded mt-1 inline-block break-all" dir="ltr">
-              {window.location.origin}/auth?ref={store.id}
-            </code>
-          </div>
-          <Button size="sm" variant="outline" onClick={() => {
-            navigator.clipboard.writeText(`${window.location.origin}/auth?ref=${store.id}`);
-            toast({ title: "تم نسخ لينك الإحالة يسطا! 📋🎁" });
-          }}>
-            📋 انسخ لينك الإحالة
-          </Button>
-        </div>
-
         <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold">أهلاً يسطا! 👋 {store.store_name}</h1>
             <p className="text-muted-foreground">هنا بتدير كل حاجة في متجرك — منتجات وطلبات وكل الحاجات</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Badge variant={store.points_balance > 0 ? "default" : "destructive"} className="text-base px-4 py-1">
               <Coins className="h-4 w-4 ml-1" />{store.points_balance} نقطة
             </Badge>
+            <Button variant="outline" size="sm" onClick={() => {
+              navigator.clipboard.writeText(`${window.location.origin}/store/${store.store_slug}`);
+              toast({ title: "تم نسخ رابط المتجر يسطا! 📋" });
+            }}>
+              📋 انسخ رابط المتجر
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => {
+              navigator.clipboard.writeText(`${window.location.origin}/auth?ref=${store.id}`);
+              toast({ title: "تم نسخ لينك الإحالة! 🎁" });
+            }}>
+              🎁 لينك الإحالة
+            </Button>
             <a href={`/store/${store.store_slug}`} target="_blank">
               <Button variant="outline" size="sm"><Eye className="h-4 w-4 ml-1" />شوف المتجر</Button>
             </a>
