@@ -487,7 +487,7 @@ export default function Dashboard() {
             <a href={`/store/${store.store_slug}`} target="_blank">
               <Button variant="outline" size="sm"><Eye className="h-4 w-4 ml-1" />شوف المتجر</Button>
             </a>
-            {allStores.length <= 1 && (
+            {allStores.length < 4 && (
               <Button variant="outline" size="sm" onClick={() => setShowCreateStore(true)}>
                 <Plus className="h-4 w-4 ml-1" />متجر جديد
               </Button>
