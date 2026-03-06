@@ -137,6 +137,10 @@ export default function Dashboard() {
 
   const createStore = async () => {
     if (!storeName || !storeSlug) return;
+    if (allStores.length >= 4) {
+      toast({ title: "وصلت الحد الأقصى", description: "مينفعش تضيف أكتر من 4 متاجر", variant: "destructive" });
+      return;
+    }
     const slug = storeSlug.toLowerCase().replace(/[^a-z0-9-]/g, "-");
     const referralStoreId = localStorage.getItem("referral_store_id") || null;
     
