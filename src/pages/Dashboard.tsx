@@ -253,7 +253,8 @@ export default function Dashboard() {
     setShowProductForm(false); setEditingProduct(null);
     setProductName(""); setProductDesc(""); setProductPrice("");
     setProductDiscountPrice(""); setProductCategory(""); setProductStock("");
-    setProductImage(null); setProductImagePreview(""); setAdditionalImages([]);
+    setProductImage(null); setProductImagePreview(""); setProductImageUrl("");
+    setAdditionalImages([]); setAdditionalImageUrls([]);
     setProductSizes([]); setProductColors([]); setProductFeatured(false);
   };
 
