@@ -527,7 +527,7 @@ export default function Dashboard() {
         {/* Stats - compact ticker */}
         <div className="flex items-center gap-3 mb-6 overflow-x-auto pb-1">
           <div className="flex items-center gap-1.5 shrink-0 bg-muted rounded-lg px-3 py-2">
-            <Clock className="h-4 w-4 text-blue-500" />
+            <Clock className="h-4 w-4 text-primary" />
             <span className="text-xs text-muted-foreground">طلبات جديدة</span>
             <span className="font-bold text-sm">{orders.filter(o => o.status === "new").length}</span>
           </div>
