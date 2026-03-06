@@ -141,16 +141,27 @@ export default function Dashboard() {
     }
   };
 
-  const uploadImage = async (file: File, folder: string) => {
-    // Compress image before upload to save storage space
-    const compressedFile = await compressImage(file);
-    const ext = "webp";
-    const name = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from("product-images").upload(name, compressedFile, {
-      contentType: "image/webp",
+  const uploadImage = async (file: File, _folder: string) => {
+    // Compress then upload to imgbb via edge function
+    const compressedBlob = await compressImage(file);
+    const base64 = await blobToBase64(compressedBlob);
+
+    const res = await supabase.functions.invoke("upload-image", {
+      body: { image: base64 },
     });
-    if (error) throw error;
-    return supabase.storage.from("product-images").getPublicUrl(name).data.publicUrl;
+
+    if (res.error) throw new Error(res.error.message || "فشل رفع الصورة");
+    if (res.data?.error) throw new Error(res.data.error);
+    return res.data.url;
+  };
+
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   };
 
   const compressImage = (file: File): Promise<Blob> => {
@@ -375,6 +386,22 @@ export default function Dashboard() {
   return (
     <Layout>
       <div className="container py-6">
+        {/* Store Link Banner */}
+        <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="flex-1">
+            <p className="text-sm font-semibold">🔗 رابط متجرك — ابعته لكل الناس يسطا!</p>
+            <code className="text-xs bg-muted px-2 py-1 rounded mt-1 inline-block break-all" dir="ltr">
+              {window.location.origin}/store/{store.store_slug}
+            </code>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => {
+            navigator.clipboard.writeText(`${window.location.origin}/store/${store.store_slug}`);
+            toast({ title: "تم نسخ الرابط يسطا! 📋" });
+          }}>
+            📋 انسخ الرابط
+          </Button>
+        </div>
+
         <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold">أهلاً يسطا! 👋 {store.store_name}</h1>
