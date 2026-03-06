@@ -354,12 +354,12 @@ export default function Dashboard() {
                 <Coins className="h-5 w-5 text-destructive" />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-destructive text-lg mb-1">⚠️ المتجر متوقف عن استقبال الطلبات</h3>
-                <p className="text-sm text-muted-foreground mb-1">رصيد النقاط بتاعك خلص. كل طلب بيخصم نقطة واحدة من رصيدك، ولما النقاط تخلص المتجر بيقف تلقائياً.</p>
-                <p className="text-sm text-muted-foreground mb-3">العملاء اللي بيزوروا متجرك هيشوفوا رسالة إن المتجر مش بيستقبل طلبات ومش هيقدروا يشتروا حاجة.</p>
+                <h3 className="font-bold text-destructive text-lg mb-1">⚠️ يسطا المتجر واقف!</h3>
+                <p className="text-sm text-muted-foreground mb-1">النقاط بتاعتك خلصت يا اخويا. الموضوع بسيط — كل طلب بيجيلك بيخصم نقطة واحدة بس (يعني جنيه واحد).</p>
+                <p className="text-sm text-muted-foreground mb-3">دلوقتي العملاء بتوعك لما يدخلوا المتجر هيلاقوا رسالة إن المتجر مش شغال 😕 اشحن نقاط وهيرجع يشتغل فوراً!</p>
                 <div className="flex items-center gap-2">
-                  <a href={whatsappUrl} target="_blank"><Button size="sm">اشحن نقاط دلوقتي</Button></a>
-                  <p className="text-xs text-muted-foreground">الباقات بتبدأ من 100 نقطة = 100 جنيه</p>
+                  <a href={whatsappUrl} target="_blank"><Button size="sm">اشحن نقاط دلوقتي 💰</Button></a>
+                  <p className="text-xs text-muted-foreground">100 نقطة = 100 جنيه (يعني 100 طلب!)</p>
                 </div>
               </div>
             </div>
