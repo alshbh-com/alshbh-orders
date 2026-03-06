@@ -222,6 +222,7 @@ export type Database = {
           customer_phone: string
           discount_amount: number | null
           id: string
+          order_number: number | null
           shipping_cost: number
           status: Database["public"]["Enums"]["order_status"]
           store_id: string
@@ -236,6 +237,7 @@ export type Database = {
           customer_phone: string
           discount_amount?: number | null
           id?: string
+          order_number?: number | null
           shipping_cost?: number
           status?: Database["public"]["Enums"]["order_status"]
           store_id: string
@@ -250,6 +252,7 @@ export type Database = {
           customer_phone?: string
           discount_amount?: number | null
           id?: string
+          order_number?: number | null
           shipping_cost?: number
           status?: Database["public"]["Enums"]["order_status"]
           store_id?: string
