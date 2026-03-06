@@ -442,6 +442,21 @@ export default function Dashboard() {
   return (
     <Layout>
       <div className="container py-6">
+        {/* Store Switcher */}
+        {allStores.length > 1 && (
+          <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
+            {allStores.map(s => (
+              <Button key={s.id} size="sm" variant={s.id === store.id ? "default" : "outline"}
+                onClick={() => fetchData(s.id)} className="shrink-0">
+                {s.store_name}
+              </Button>
+            ))}
+            <Button size="sm" variant="ghost" onClick={() => setShowCreateStore(true)} className="shrink-0">
+              <Plus className="h-4 w-4 ml-1" />متجر جديد
+            </Button>
+          </div>
+        )}
+
         <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold">أهلاً يسطا! 👋 {store.store_name}</h1>
@@ -466,8 +481,23 @@ export default function Dashboard() {
             <a href={`/store/${store.store_slug}`} target="_blank">
               <Button variant="outline" size="sm"><Eye className="h-4 w-4 ml-1" />شوف المتجر</Button>
             </a>
+            {allStores.length <= 1 && (
+              <Button variant="outline" size="sm" onClick={() => setShowCreateStore(true)}>
+                <Plus className="h-4 w-4 ml-1" />متجر جديد
+              </Button>
+            )}
           </div>
         </div>
+
+        {/* Create New Store Dialog */}
+        <Dialog open={showCreateStore} onOpenChange={setShowCreateStore}>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>يلا نعمل متجر جديد! 🚀</DialogTitle>
+            </DialogHeader>
+            {storeFormContent}
+          </DialogContent>
+        </Dialog>
 
         {store.points_balance <= 0 && (
           <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-6 mb-6">
