@@ -102,8 +102,12 @@ export default function ProductDetail() {
 
     const availableSizes = [...new Set((variantsRes.data || []).map(v => v.size).filter(Boolean))];
     const availableColors = [...new Set((variantsRes.data || []).map(v => v.color).filter(Boolean))];
-    if (availableSizes.length > 0) setSelectedSize(availableSizes[0]);
-    if (availableColors.length > 0) setSelectedColor(availableColors[0]);
+    // Initialize first selection with defaults
+    setSelections([{
+      size: availableSizes[0] || undefined,
+      color: availableColors[0] || undefined,
+      quantity: 1,
+    }]);
 
     setLoading(false);
   };
