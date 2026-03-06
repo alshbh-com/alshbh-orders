@@ -13,6 +13,7 @@ import Layout from "@/components/Layout";
 // Save referral code from URL to localStorage
 
 export default function Auth() {
+  const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,6 +23,14 @@ export default function Auth() {
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Capture referral param on mount
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref) {
+      localStorage.setItem("referral_store_id", ref);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

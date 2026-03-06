@@ -127,15 +127,21 @@ export default function Dashboard() {
   const createStore = async () => {
     if (!storeName || !storeSlug) return;
     const slug = storeSlug.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+    
+    // Check for referral
+    const referralStoreId = localStorage.getItem("referral_store_id") || null;
+    
     const { error } = await supabase.from("stores").insert({
       owner_id: user!.id, store_name: storeName, store_slug: slug,
       whatsapp_number: whatsappNumber,
       shipping_cost: parseFloat(storeShippingCost) || 70,
-    });
+      referred_by: referralStoreId,
+    } as any);
     if (error) {
       toast({ title: "حصل مشكلة", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "تم إنشاء المتجر!" });
+      toast({ title: "تم إنشاء المتجر! 🎉 وأخدت 3 نقاط مجانية" });
+      localStorage.removeItem("referral_store_id");
       setShowCreateStore(false);
       fetchData();
     }
