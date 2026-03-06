@@ -136,11 +136,36 @@ export default function Dashboard() {
   };
 
   const uploadImage = async (file: File, folder: string) => {
-    const ext = file.name.split(".").pop();
+    // Compress image before upload to save storage space
+    const compressedFile = await compressImage(file);
+    const ext = "webp";
     const name = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from("product-images").upload(name, file);
+    const { error } = await supabase.storage.from("product-images").upload(name, compressedFile, {
+      contentType: "image/webp",
+    });
     if (error) throw error;
     return supabase.storage.from("product-images").getPublicUrl(name).data.publicUrl;
+  };
+
+  const compressImage = (file: File): Promise<Blob> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_SIZE = 800;
+        let { width, height } = img;
+        if (width > MAX_SIZE || height > MAX_SIZE) {
+          if (width > height) { height = (height / width) * MAX_SIZE; width = MAX_SIZE; }
+          else { width = (width / height) * MAX_SIZE; height = MAX_SIZE; }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => resolve(blob!), "image/webp", 0.75);
+      };
+      img.src = URL.createObjectURL(file);
+    });
   };
 
   const saveProduct = async () => {
@@ -298,13 +323,14 @@ export default function Dashboard() {
           <Card>
             <CardHeader className="text-center">
               <Store className="h-12 w-12 text-primary mx-auto mb-2" />
-              <CardTitle>اعمل متجرك دلوقتي!</CardTitle>
-              <p className="text-muted-foreground">اكتب بيانات متجرك وابدأ استقبل طلبات</p>
+              <CardTitle>يلا نعملك متجرك يسطا! 🚀</CardTitle>
+              <p className="text-muted-foreground">اكتب بيانات متجرك وفي ثانيتين هتبقى جاهز تبيع</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>اسم المتجر</Label>
-                <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="مثال: مطعم الشبح" />
+                <Label>اسم المتجر بتاعك</Label>
+                <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="مثال: مطعم الشبح 🍔" />
+                <p className="text-xs text-muted-foreground">الاسم ده هو اللي هيظهر للعملاء بتوعك</p>
               </div>
               <div className="space-y-2">
                 <Label>رابط المتجر (بالإنجليزي)</Label>
@@ -312,15 +338,15 @@ export default function Dashboard() {
                 <p className="text-xs text-muted-foreground">هيبقى الرابط: alshbh.store/store/{storeSlug || "اسم-متجرك"}</p>
               </div>
               <div className="space-y-2">
-                <Label>رقم الواتساب</Label>
+                <Label>رقم الواتساب (عشان العملاء يكلموك)</Label>
                 <Input value={whatsappNumber} onChange={(e) => setWhatsappNumber(e.target.value)} placeholder="201xxxxxxxxx" dir="ltr" />
               </div>
               <div className="space-y-2">
                 <Label>سعر التوصيل (جنيه)</Label>
                 <Input type="number" value={storeShippingCost} onChange={(e) => setStoreShippingCost(e.target.value)} placeholder="70" dir="ltr" />
               </div>
-              <Button className="w-full" onClick={createStore}>إنشاء المتجر</Button>
-              <p className="text-xs text-center text-muted-foreground">⚠️ المتجر مش هيتفعل إلا لما يكون معاك نقاط</p>
+              <Button className="w-full h-11 text-base" onClick={createStore}>يلا نبدأ! 🎉</Button>
+              <p className="text-xs text-center text-muted-foreground">💡 يا اخويا المتجر هيشتغل لما يكون معاك نقاط — كل طلب = نقطة = جنيه واحد بس</p>
             </CardContent>
           </Card>
         </div>
@@ -333,8 +359,8 @@ export default function Dashboard() {
       <div className="container py-6">
         <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold">لوحة التحكم - {store.store_name}</h1>
-            <p className="text-muted-foreground">إدارة متجرك ومنتجاتك وطلباتك</p>
+            <h1 className="text-2xl font-bold">أهلاً يسطا! 👋 {store.store_name}</h1>
+            <p className="text-muted-foreground">هنا بتدير كل حاجة في متجرك — منتجات وطلبات وكل الحاجات</p>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant={store.points_balance > 0 ? "default" : "destructive"} className="text-base px-4 py-1">
@@ -353,12 +379,12 @@ export default function Dashboard() {
                 <Coins className="h-5 w-5 text-destructive" />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-destructive text-lg mb-1">⚠️ المتجر متوقف عن استقبال الطلبات</h3>
-                <p className="text-sm text-muted-foreground mb-1">رصيد النقاط بتاعك خلص. كل طلب بيخصم نقطة واحدة من رصيدك، ولما النقاط تخلص المتجر بيقف تلقائياً.</p>
-                <p className="text-sm text-muted-foreground mb-3">العملاء اللي بيزوروا متجرك هيشوفوا رسالة إن المتجر مش بيستقبل طلبات ومش هيقدروا يشتروا حاجة.</p>
+                <h3 className="font-bold text-destructive text-lg mb-1">⚠️ يسطا المتجر واقف!</h3>
+                <p className="text-sm text-muted-foreground mb-1">النقاط بتاعتك خلصت يا اخويا. الموضوع بسيط — كل طلب بيجيلك بيخصم نقطة واحدة بس (يعني جنيه واحد).</p>
+                <p className="text-sm text-muted-foreground mb-3">دلوقتي العملاء بتوعك لما يدخلوا المتجر هيلاقوا رسالة إن المتجر مش شغال 😕 اشحن نقاط وهيرجع يشتغل فوراً!</p>
                 <div className="flex items-center gap-2">
-                  <a href={whatsappUrl} target="_blank"><Button size="sm">اشحن نقاط دلوقتي</Button></a>
-                  <p className="text-xs text-muted-foreground">الباقات بتبدأ من 100 نقطة = 100 جنيه</p>
+                  <a href={whatsappUrl} target="_blank"><Button size="sm">اشحن نقاط دلوقتي 💰</Button></a>
+                  <p className="text-xs text-muted-foreground">100 نقطة = 100 جنيه (يعني 100 طلب!)</p>
                 </div>
               </div>
             </div>
@@ -455,14 +481,15 @@ export default function Dashboard() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>صورة المنتج الرئيسية</Label>
+                    <Label>صورة المنتج الرئيسية 📸</Label>
+                    <p className="text-xs text-muted-foreground">الصورة هتتضغط تلقائياً عشان متاخدش مساحة كبيرة يسطا 💡</p>
                     {productImagePreview && <img src={productImagePreview} alt="preview" className="w-32 h-32 object-cover rounded-lg" />}
                     <Input type="file" accept="image/*" onChange={handleMainImageChange} />
                   </div>
                   <div className="space-y-2">
-                    <Label>صور إضافية</Label>
+                    <Label>صور إضافية (لو عايز)</Label>
                     <Input type="file" accept="image/*" multiple onChange={(e) => setAdditionalImages(Array.from(e.target.files || []))} />
-                    {additionalImages.length > 0 && <p className="text-xs text-muted-foreground">{additionalImages.length} صور محددة</p>}
+                    {additionalImages.length > 0 && <p className="text-xs text-muted-foreground">✅ {additionalImages.length} صور جاهزة للرفع</p>}
                   </div>
                   <Button className="w-full" onClick={saveProduct} disabled={savingProduct}>
                     {savingProduct ? "جاري الحفظ..." : editingProduct ? "حفظ التعديلات" : "ضيف المنتج"}
@@ -472,7 +499,7 @@ export default function Dashboard() {
             </Dialog>
 
             {products.length === 0 ? (
-              <Card><CardContent className="p-12 text-center"><Package className="h-12 w-12 text-muted-foreground mx-auto mb-3" /><p className="text-muted-foreground">مفيش منتجات لسه — ضيف أول منتج!</p></CardContent></Card>
+              <Card><CardContent className="p-12 text-center"><Package className="h-12 w-12 text-muted-foreground mx-auto mb-3" /><p className="text-muted-foreground">مفيش منتجات لسه يسطا — يلا ضيف أول منتج! 🎯</p></CardContent></Card>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {products.map(p => (

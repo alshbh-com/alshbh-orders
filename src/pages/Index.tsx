@@ -51,8 +51,8 @@ export default function Index() {
             مع ALSHBH هتقدر تعمل متجرك الإلكتروني وتعرض منتجاتك وتستقبل طلبات عملائك — كل ده من غير ما تحتاج أي خبرة تقنية
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth">
-              <Button size="lg" className="text-lg px-8 py-6">ابدأ دلوقتي - مجانًا</Button>
+            <Link to="/dashboard">
+              <Button size="lg" className="text-lg px-8 py-6">يلا نبدأ - مجاناً! 🚀</Button>
             </Link>
             <Link to="/about">
               <Button variant="outline" size="lg" className="text-lg px-8 py-6">اعرف أكتر</Button>
@@ -137,8 +137,8 @@ export default function Index() {
         <div className="container text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">جاهز تبدأ متجرك الإلكتروني؟</h2>
           <p className="text-lg opacity-90 mb-8 max-w-xl mx-auto">سجل دلوقتي واعمل متجرك الإلكتروني في أقل من 5 دقايق - مجاناً مع ALSHBH الشبح</p>
-          <Link to="/auth">
-            <Button size="lg" variant="secondary" className="text-lg px-8 py-6">ابدأ مجانًا</Button>
+          <Link to="/dashboard">
+            <Button size="lg" variant="secondary" className="text-lg px-8 py-6">يلا ابدأ مجاناً! 💪</Button>
           </Link>
         </div>
       </section>
