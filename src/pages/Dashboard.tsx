@@ -701,6 +701,7 @@ export default function Dashboard() {
                         <div className="flex justify-between items-start">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">#{order.order_number || '—'}</Badge>
                               <span className="font-semibold">{order.customer_name}</span>
                               <span className={`text-xs px-2 py-0.5 rounded-full ${s.color}`}>{s.label}</span>
                             </div>
@@ -708,13 +709,24 @@ export default function Dashboard() {
                             <p className="text-sm font-semibold text-primary">الإجمالي: {order.total_price} جنيه</p>
                             <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleString("ar-EG")}</p>
                           </div>
-                          <div className="flex flex-wrap gap-1">
-                            {["new", "processing", "delivered", "cancelled"].map(st => (
-                              <Button key={st} size="sm" variant={order.status === st ? "default" : "outline"} className="text-xs"
-                                onClick={(e) => { e.stopPropagation(); updateOrderStatus(order.id, st); }}>
-                                {statusMap[st].label}
-                              </Button>
-                            ))}
+                          <div className="flex flex-col gap-1 items-end">
+                            <div className="flex flex-wrap gap-1">
+                              {["new", "processing", "delivered", "cancelled"].map(st => (
+                                <Button key={st} size="sm" variant={order.status === st ? "default" : "outline"} className="text-xs"
+                                  onClick={(e) => { e.stopPropagation(); updateOrderStatus(order.id, st); }}>
+                                  {statusMap[st].label}
+                                </Button>
+                              ))}
+                            </div>
+                            <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={async (e) => {
+                              e.stopPropagation();
+                              await supabase.from("order_items").delete().eq("order_id", order.id);
+                              await supabase.from("orders").delete().eq("id", order.id);
+                              toast({ title: "تم حذف الطلب" });
+                              fetchData();
+                            }}>
+                              <Trash2 className="h-3 w-3 ml-1" />حذف
+                            </Button>
                           </div>
                         </div>
                       </CardContent>
