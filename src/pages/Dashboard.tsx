@@ -202,10 +202,16 @@ export default function Dashboard() {
         productId = data.id;
       }
 
-      // Upload additional images
+      // Upload additional image files
       for (const img of additionalImages) {
         const url = await uploadImage(img, store.id);
         await supabase.from("product_images").insert({ product_id: productId, image_url: url });
+      }
+      // Add additional image URLs
+      for (const url of additionalImageUrls) {
+        if (url.trim()) {
+          await supabase.from("product_images").insert({ product_id: productId, image_url: url.trim() });
+        }
       }
 
       // Save variants (sizes × colors)
