@@ -34,6 +34,8 @@ export default function Dashboard() {
   const [orderFilter, setOrderFilter] = useState("all");
   const [orderSearch, setOrderSearch] = useState("");
   const [coupons, setCoupons] = useState<any[]>([]);
+  const [storeShipping, setStoreShipping] = useState<any[]>([]);
+  const [savingShipping, setSavingShipping] = useState(false);
 
   // Create store form
   const [showCreateStore, setShowCreateStore] = useState(false);
