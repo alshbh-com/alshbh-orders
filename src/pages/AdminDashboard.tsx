@@ -467,25 +467,35 @@ export default function AdminDashboard() {
                 ) : (
                   <div className="space-y-3">
                     {complaints.map(c => (
-                      <Card key={c.id}>
+                       <Card key={c.id}>
                         <CardContent className="p-4">
                           <div className="flex justify-between items-start">
                             <div>
                               <p className="font-semibold">{c.name}</p>
+                              {c.store_name && <p className="text-xs text-muted-foreground">متجر: {c.store_name}</p>}
                               {c.email && <p className="text-xs text-muted-foreground">{c.email}</p>}
                               {c.phone && <p className="text-xs text-muted-foreground">{c.phone}</p>}
                               <p className="text-sm mt-2">{c.message}</p>
                               <p className="text-xs text-muted-foreground mt-1">{new Date(c.created_at).toLocaleString("ar-EG")}</p>
                             </div>
-                            <Select value={c.status} onValueChange={(v) => updateComplaintStatus(c.id, v)}>
-                              <SelectTrigger className="w-24 h-8">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="pending">معلق</SelectItem>
-                                <SelectItem value="resolved">تم الحل</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <div className="flex gap-1 items-start">
+                              <Select value={c.status} onValueChange={(v) => updateComplaintStatus(c.id, v)}>
+                                <SelectTrigger className="w-24 h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pending">معلق</SelectItem>
+                                  <SelectItem value="resolved">تم الحل</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Button size="sm" variant="destructive" onClick={async () => {
+                                await supabase.from("complaints").delete().eq("id", c.id);
+                                toast({ title: "تم حذف الشكوى" });
+                                fetchAll();
+                              }}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
