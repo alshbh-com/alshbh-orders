@@ -522,6 +522,9 @@ export default function Dashboard() {
             }}>
               🎁 لينك الإحالة
             </Button>
+            <Button variant="outline" size="sm" onClick={() => setShowNotifPrompt(true)}>
+              <Bell className="h-4 w-4 ml-1" />فعّل الإشعارات
+            </Button>
             <a href={`/store/${store.store_slug}`} target="_blank">
               <Button variant="outline" size="sm"><Eye className="h-4 w-4 ml-1" />شوف المتجر</Button>
             </a>
