@@ -37,6 +37,7 @@ export default function Dashboard() {
   const [coupons, setCoupons] = useState<any[]>([]);
   const [storeShipping, setStoreShipping] = useState<any[]>([]);
   const [savingShipping, setSavingShipping] = useState(false);
+  const [showNotifPrompt, setShowNotifPrompt] = useState(false);
 
   // Create store form
   const [showCreateStore, setShowCreateStore] = useState(false);
@@ -87,17 +88,38 @@ export default function Dashboard() {
   const [showOrderDetail, setShowOrderDetail] = useState<any>(null);
 
   // Register OneSignal external_id for push notifications
-  useEffect(() => {
-    if (user && typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
-      (window as any).OneSignalDeferred.push(async function(OneSignal: any) {
-        try {
-          await OneSignal.login(user.id);
-          console.log('OneSignal: registered external_id', user.id);
-        } catch (e) {
-          console.log('OneSignal login error:', e);
-        }
-      });
+  const registerOneSignal = async () => {
+    if (typeof window === 'undefined' || !(window as any).OneSignalDeferred) return;
+    (window as any).OneSignalDeferred.push(async function(OneSignal: any) {
+      try {
+        await OneSignal.login(user!.id);
+        console.log('OneSignal: registered external_id', user!.id);
+      } catch (e) {
+        console.log('OneSignal login error (expected on non-production domains):', e);
+      }
+    });
+  };
+
+  const requestNotificationPermission = async () => {
+    if (typeof window === 'undefined' || !(window as any).OneSignalDeferred) {
+      setShowNotifPrompt(false);
+      return;
     }
+    (window as any).OneSignalDeferred.push(async function(OneSignal: any) {
+      try {
+        await OneSignal.Notifications.requestPermission();
+        await OneSignal.login(user!.id);
+        toast({ title: "تم تفعيل الإشعارات! 🔔", description: "هتوصلك إشعارات لكل طلب جديد" });
+      } catch (e) {
+        console.log('OneSignal permission error:', e);
+        toast({ title: "مقدرناش نفعّل الإشعارات", description: "حاول تاني من إعدادات المتصفح", variant: "destructive" });
+      }
+    });
+    setShowNotifPrompt(false);
+  };
+
+  useEffect(() => {
+    if (user) registerOneSignal();
   }, [user]);
 
   useEffect(() => { if (user) fetchData(); }, [user]);
@@ -175,6 +197,8 @@ export default function Dashboard() {
       setStoreName(""); setStoreSlug(""); setWhatsappNumber("");
       setNewStorePrimaryColor("#D97706"); setNewStoreSecondaryColor("#F59E0B");
       fetchData(newStore?.id);
+      // Show notification prompt after store creation
+      setTimeout(() => setShowNotifPrompt(true), 1000);
     }
   };
 
@@ -498,6 +522,9 @@ export default function Dashboard() {
             }}>
               🎁 لينك الإحالة
             </Button>
+            <Button variant="outline" size="sm" onClick={() => setShowNotifPrompt(true)}>
+              <Bell className="h-4 w-4 ml-1" />فعّل الإشعارات
+            </Button>
             <a href={`/store/${store.store_slug}`} target="_blank">
               <Button variant="outline" size="sm"><Eye className="h-4 w-4 ml-1" />شوف المتجر</Button>
             </a>
@@ -516,6 +543,25 @@ export default function Dashboard() {
               <DialogTitle>يلا نعمل متجر جديد! 🚀</DialogTitle>
             </DialogHeader>
             {storeFormContent}
+          </DialogContent>
+        </Dialog>
+
+        {/* Notification Permission Prompt */}
+        <Dialog open={showNotifPrompt} onOpenChange={setShowNotifPrompt}>
+          <DialogContent className="max-w-sm text-center">
+            <DialogHeader>
+              <DialogTitle className="text-xl">🔔 فعّل الإشعارات</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="mx-auto h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <Bell className="h-8 w-8 text-primary" />
+              </div>
+              <p className="text-muted-foreground">عشان توصلك إشعارات فورية لكل طلب جديد على متجرك، لازم تفعّل الإشعارات.</p>
+              <p className="text-sm text-muted-foreground">مش هنزعجك — بس هنبلّغك لما يجيلك طلب جديد! 🛒</p>
+              <Button className="w-full" onClick={requestNotificationPermission}>
+                <Bell className="h-4 w-4 ml-2" />فعّل الإشعارات دلوقتي
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
 
