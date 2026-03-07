@@ -543,6 +543,25 @@ export default function Dashboard() {
           </DialogContent>
         </Dialog>
 
+        {/* Notification Permission Prompt */}
+        <Dialog open={showNotifPrompt} onOpenChange={setShowNotifPrompt}>
+          <DialogContent className="max-w-sm text-center">
+            <DialogHeader>
+              <DialogTitle className="text-xl">🔔 فعّل الإشعارات</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="mx-auto h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <Bell className="h-8 w-8 text-primary" />
+              </div>
+              <p className="text-muted-foreground">عشان توصلك إشعارات فورية لكل طلب جديد على متجرك، لازم تفعّل الإشعارات.</p>
+              <p className="text-sm text-muted-foreground">مش هنزعجك — بس هنبلّغك لما يجيلك طلب جديد! 🛒</p>
+              <Button className="w-full" onClick={requestNotificationPermission}>
+                <Bell className="h-4 w-4 ml-2" />فعّل الإشعارات دلوقتي
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {store.points_balance <= 0 && (
           <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-6 mb-6">
             <div className="flex items-start gap-3">
