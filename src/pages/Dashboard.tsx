@@ -171,8 +171,24 @@ export default function Dashboard() {
     setLoading(false);
   };
 
+  const [slugTaken, setSlugTaken] = useState(false);
+  const [checkingSlug, setCheckingSlug] = useState(false);
+
+  const checkSlugAvailability = async (value: string) => {
+    const slug = value.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+    if (!slug || slug.length < 2) { setSlugTaken(false); return; }
+    setCheckingSlug(true);
+    const { data } = await supabase.from("stores").select("id").eq("store_slug", slug).maybeSingle();
+    setSlugTaken(!!data);
+    setCheckingSlug(false);
+  };
+
   const createStore = async () => {
     if (!storeName || !storeSlug) return;
+    if (slugTaken) {
+      toast({ title: "الاسم محجوز!", description: "جرب تزود حرف أو رقم لأن الاسم دا متاخد", variant: "destructive" });
+      return;
+    }
     if (allStores.length >= 4) {
       toast({ title: "وصلت الحد الأقصى", description: "مينفعش تضيف أكتر من 4 متاجر", variant: "destructive" });
       return;
