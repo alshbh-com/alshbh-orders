@@ -86,6 +86,20 @@ export default function Dashboard() {
   // Order detail
   const [showOrderDetail, setShowOrderDetail] = useState<any>(null);
 
+  // Register OneSignal external_id for push notifications
+  useEffect(() => {
+    if (user && typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
+      (window as any).OneSignalDeferred.push(async function(OneSignal: any) {
+        try {
+          await OneSignal.login(user.id);
+          console.log('OneSignal: registered external_id', user.id);
+        } catch (e) {
+          console.log('OneSignal login error:', e);
+        }
+      });
+    }
+  }, [user]);
+
   useEffect(() => { if (user) fetchData(); }, [user]);
 
   const fetchData = async (selectedStoreId?: string) => {
