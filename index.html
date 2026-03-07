@@ -124,6 +124,15 @@
       ]
     }
     </script>
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "e1ee5f4c-8496-422e-8bd7-f3aeac59ca2e",
+        });
+      });
+    </script>
     <meta property="og:title" content="Alshbh - متاجر إلكترونية">
   <meta name="twitter:title" content="Alshbh - متاجر إلكترونية">
   <meta property="og:description" content="ALSHBH الشبح - أسهل منصة لإنشاء متجر إلكتروني في مصر. اعمل متجرك في دقايق، استقبل طلباتك بسهولة، بدون خبرة تقنية. بديل سلة وزد المصري. إيزي أوردر وإدارة متجرك من موبايلك.">
