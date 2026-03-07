@@ -197,6 +197,8 @@ export default function Dashboard() {
       setStoreName(""); setStoreSlug(""); setWhatsappNumber("");
       setNewStorePrimaryColor("#D97706"); setNewStoreSecondaryColor("#F59E0B");
       fetchData(newStore?.id);
+      // Show notification prompt after store creation
+      setTimeout(() => setShowNotifPrompt(true), 1000);
     }
   };
 
