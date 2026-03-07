@@ -88,17 +88,38 @@ export default function Dashboard() {
   const [showOrderDetail, setShowOrderDetail] = useState<any>(null);
 
   // Register OneSignal external_id for push notifications
-  useEffect(() => {
-    if (user && typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
-      (window as any).OneSignalDeferred.push(async function(OneSignal: any) {
-        try {
-          await OneSignal.login(user.id);
-          console.log('OneSignal: registered external_id', user.id);
-        } catch (e) {
-          console.log('OneSignal login error:', e);
-        }
-      });
+  const registerOneSignal = async () => {
+    if (typeof window === 'undefined' || !(window as any).OneSignalDeferred) return;
+    (window as any).OneSignalDeferred.push(async function(OneSignal: any) {
+      try {
+        await OneSignal.login(user!.id);
+        console.log('OneSignal: registered external_id', user!.id);
+      } catch (e) {
+        console.log('OneSignal login error (expected on non-production domains):', e);
+      }
+    });
+  };
+
+  const requestNotificationPermission = async () => {
+    if (typeof window === 'undefined' || !(window as any).OneSignalDeferred) {
+      setShowNotifPrompt(false);
+      return;
     }
+    (window as any).OneSignalDeferred.push(async function(OneSignal: any) {
+      try {
+        await OneSignal.Notifications.requestPermission();
+        await OneSignal.login(user!.id);
+        toast({ title: "تم تفعيل الإشعارات! 🔔", description: "هتوصلك إشعارات لكل طلب جديد" });
+      } catch (e) {
+        console.log('OneSignal permission error:', e);
+        toast({ title: "مقدرناش نفعّل الإشعارات", description: "حاول تاني من إعدادات المتصفح", variant: "destructive" });
+      }
+    });
+    setShowNotifPrompt(false);
+  };
+
+  useEffect(() => {
+    if (user) registerOneSignal();
   }, [user]);
 
   useEffect(() => { if (user) fetchData(); }, [user]);
