@@ -37,6 +37,7 @@ export default function Dashboard() {
   const [coupons, setCoupons] = useState<any[]>([]);
   const [storeShipping, setStoreShipping] = useState<any[]>([]);
   const [savingShipping, setSavingShipping] = useState(false);
+  const [showNotifPrompt, setShowNotifPrompt] = useState(false);
 
   // Create store form
   const [showCreateStore, setShowCreateStore] = useState(false);
