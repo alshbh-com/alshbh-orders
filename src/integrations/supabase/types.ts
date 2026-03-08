@@ -626,6 +626,7 @@ export type Database = {
       }
       stores: {
         Row: {
+          banner_url: string | null
           created_at: string
           facebook_pixel: string | null
           google_analytics: string | null
@@ -646,6 +647,7 @@ export type Database = {
           whatsapp_number: string | null
         }
         Insert: {
+          banner_url?: string | null
           created_at?: string
           facebook_pixel?: string | null
           google_analytics?: string | null
@@ -666,6 +668,7 @@ export type Database = {
           whatsapp_number?: string | null
         }
         Update: {
+          banner_url?: string | null
           created_at?: string
           facebook_pixel?: string | null
           google_analytics?: string | null

@@ -3,10 +3,11 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AlshbhWatermark from "@/components/AlshbhWatermark";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
-import RestaurantsTheme from "@/components/themes/RestaurantsTheme";
-import ClothesTheme from "@/components/themes/ClothesTheme";
-import PerfumesTheme from "@/components/themes/PerfumesTheme";
-import SupermarketTheme from "@/components/themes/SupermarketTheme";
+import ElegantTheme from "@/components/themes/ElegantTheme";
+import ModernTheme from "@/components/themes/ModernTheme";
+import ClassicTheme from "@/components/themes/ClassicTheme";
+import MinimalTheme from "@/components/themes/MinimalTheme";
+import BoldTheme from "@/components/themes/BoldTheme";
 import { Store, ShoppingCart, Search, Star, Plus, Minus, Trash2, MessageCircle, Share2, X, AlertTriangle, Tag, Sparkles, TrendingUp, MapPin, FileText, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -326,11 +327,12 @@ export default function StoreFront() {
 
   const renderTheme = () => {
     switch (store.theme) {
-      case 'clothes': return <ClothesTheme {...themeProps} />;
-      case 'perfumes': return <PerfumesTheme {...themeProps} />;
-      case 'supermarket': return <SupermarketTheme {...themeProps} />;
-      case 'restaurants':
-      default: return <RestaurantsTheme {...themeProps} />;
+      case 'modern': return <ModernTheme {...themeProps} />;
+      case 'classic': return <ClassicTheme {...themeProps} />;
+      case 'minimal': return <MinimalTheme {...themeProps} />;
+      case 'bold': return <BoldTheme {...themeProps} />;
+      case 'elegant':
+      default: return <ElegantTheme {...themeProps} />;
     }
   };
 
