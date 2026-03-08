@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import VisitorAnalytics from "@/components/VisitorAnalytics";
 
 const SIZES = ["S", "M", "L", "XL", "XXL"];
 const COLORS = ["أسود", "أبيض", "أحمر", "أزرق", "أخضر", "رمادي"];
