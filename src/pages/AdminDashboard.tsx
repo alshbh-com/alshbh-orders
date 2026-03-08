@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 
-export default function AdminDashboard() {
+export default function AdminDashboard() { 
   const { toast } = useToast();
   const [stores, setStores] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
