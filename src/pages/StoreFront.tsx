@@ -3,11 +3,6 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AlshbhWatermark from "@/components/AlshbhWatermark";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
-import ElegantTheme from "@/components/themes/ElegantTheme";
-import ModernTheme from "@/components/themes/ModernTheme";
-import ClassicTheme from "@/components/themes/ClassicTheme";
-import MinimalTheme from "@/components/themes/MinimalTheme";
-import BoldTheme from "@/components/themes/BoldTheme";
 import { Store, ShoppingCart, Search, Star, Plus, Minus, Trash2, MessageCircle, Share2, X, AlertTriangle, Tag, Sparkles, TrendingUp, MapPin, FileText, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -129,7 +124,6 @@ export default function StoreFront() {
     setCart(prev => prev.filter((_, idx) => idx !== index));
   };
 
-  // Get shipping cost based on selected governorate
   const getShippingCost = () => {
     if (selectedGovernorate && storeShipping.length > 0) {
       const found = storeShipping.find(s => s.governorate === selectedGovernorate);
@@ -180,54 +174,44 @@ export default function StoreFront() {
       toast({ title: "اختار المحافظة بتاعتك يا اخويا! 📍", variant: "destructive" });
       return;
     }
-    if (store.points_balance <= 0) {
-      toast({ title: "المتجر ده مش بيستقبل طلبات دلوقتي 😕", variant: "destructive" });
-      return;
-    }
     setSubmitting(true);
-    try {
-      const addressWithGov = selectedGovernorate ? `${selectedGovernorate} - ${customerAddress}` : customerAddress;
-      const { data: order, error } = await supabase.from("orders").insert({
-        store_id: store.id,
-        customer_name: customerName,
-        customer_phone: customerPhone,
-        customer_address: addressWithGov,
-        customer_notes: customerNotes || null,
-        total_price: cartTotal,
-        shipping_cost: shippingCost,
-        coupon_code: appliedCoupon?.code || null,
-        discount_amount: discountAmount,
-      }).select().single();
-      if (error) throw error;
-
-      if (appliedCoupon) {
-        await supabase.from("coupons").update({ used_count: appliedCoupon.used_count + 1 }).eq("id", appliedCoupon.id);
-      }
-
-      const items = cart.map(i => ({
-        order_id: order.id,
-        product_id: i.product.id,
-        quantity: i.quantity,
-        price: i.product.discount_price || i.product.price,
-        selected_size: i.selectedSize || null,
-        selected_color: i.selectedColor || null,
-      }));
-      await supabase.from("order_items").insert(items);
-
-      setOrderSuccess(order.id);
-      setCart([]);
-      setShowCheckout(false);
-      setShowCart(false);
-      localStorage.removeItem(`cart_${store.id}`);
-    } catch (e: any) {
-      toast({ title: "حصلت مشكلة يسطا 😕", description: e.message, variant: "destructive" });
+    const { data: order, error } = await supabase.from("orders").insert({
+      store_id: store.id, customer_name: customerName,
+      customer_phone: customerPhone, customer_address: customerAddress,
+      customer_notes: customerNotes || null, total_price: cartTotal,
+      shipping_cost: shippingCost,
+      coupon_code: appliedCoupon?.code || null,
+      discount_amount: discountAmount || 0,
+    }).select().single();
+    if (error || !order) {
+      toast({ title: "حصلت مشكلة يسطا 😕", description: error?.message, variant: "destructive" });
+      setSubmitting(false); return;
     }
+    await supabase.from("order_items").insert(
+      cart.map(i => ({
+        order_id: order.id, product_id: i.product.id,
+        quantity: i.quantity, price: i.product.discount_price || i.product.price,
+        selected_size: i.selectedSize || null, selected_color: i.selectedColor || null,
+      }))
+    );
+    if (appliedCoupon) {
+      await supabase.from("coupons").update({ used_count: appliedCoupon.used_count + 1 }).eq("id", appliedCoupon.id);
+    }
+    // Update sales count
+    for (const item of cart) {
+      await supabase.from("products").update({ sales_count: (item.product.sales_count || 0) + item.quantity } as any).eq("id", item.product.id);
+    }
+    setCart([]); setShowCheckout(false); setOrderSuccess(order.id);
+    setCustomerName(""); setCustomerPhone(""); setCustomerAddress(""); setCustomerNotes("");
+    setCouponCode(""); setAppliedCoupon(null); setSelectedGovernorate("");
     setSubmitting(false);
   };
 
   const getAvgRating = (productId: string) => {
-    const r = reviews.filter(rv => rv.product_id === productId);
-    return r.length ? (r.reduce((s, x) => s + x.rating, 0) / r.length).toFixed(1) : null;
+    const productReviews = reviews.filter(r => r.product_id === productId);
+    if (productReviews.length === 0) return null;
+    const avg = productReviews.reduce((s, r) => s + r.rating, 0) / productReviews.length;
+    return avg.toFixed(1);
   };
 
   const shareStore = () => {
@@ -311,34 +295,155 @@ export default function StoreFront() {
     );
   }
 
-  const storeStyle = {
-    "--store-primary": store.primary_color || "#D97706",
-    "--store-secondary": store.secondary_color || "#F59E0B",
-  } as React.CSSProperties;
-
+  const pc = store.primary_color || "#D97706";
+  const sc = store.secondary_color || "#F59E0B";
   const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
-
-  const themeProps = {
-    store, products, categories, filteredProducts, featuredProducts, bestSellers,
-    searchQuery, setSearchQuery, selectedCategory, setSelectedCategory,
-    getAvgRating, onProductClick: (productId: string) => navigate(`/store/${slug}/product/${productId}`),
-    cartCount, onCartOpen: () => setShowCart(true), onShare: shareStore,
-  };
-
-  const renderTheme = () => {
-    switch (store.theme) {
-      case 'modern': return <ModernTheme {...themeProps} />;
-      case 'classic': return <ClassicTheme {...themeProps} />;
-      case 'minimal': return <MinimalTheme {...themeProps} />;
-      case 'bold': return <BoldTheme {...themeProps} />;
-      case 'elegant':
-      default: return <ElegantTheme {...themeProps} />;
-    }
-  };
+  const onProductClick = (productId: string) => navigate(`/store/${slug}/product/${productId}`);
 
   return (
-    <div className="min-h-screen flex flex-col bg-muted/30" style={storeStyle}>
-      {renderTheme()}
+    <div className="min-h-screen flex flex-col bg-background">
+      {/* ===== HEADER ===== */}
+      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-md border-b border-border shadow-sm">
+        <div className="container py-3">
+          <div className="flex items-center gap-3">
+            {store.logo_url ? (
+              <img src={store.logo_url} alt={store.store_name} className="h-10 w-10 rounded-xl object-cover shadow-sm" />
+            ) : (
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-sm" style={{ backgroundColor: pc }}>
+                {store.store_name?.charAt(0)}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <h1 className="font-bold text-base truncate">{store.store_name}</h1>
+              <p className="text-[11px] text-muted-foreground">{products.length} منتج</p>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full" onClick={shareStore}><Share2 className="h-4 w-4" /></Button>
+              {store.whatsapp_number && (
+                <a href={`https://wa.me/${store.whatsapp_number}`} target="_blank">
+                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full"><MessageCircle className="h-4 w-4" /></Button>
+                </a>
+              )}
+              <Button size="icon" className="h-9 w-9 rounded-full relative text-white shadow-sm" style={{ backgroundColor: pc }} onClick={() => setShowCart(true)}>
+                <ShoppingCart className="h-4 w-4" />
+                {cartCount > 0 && <span className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-destructive text-white text-[10px] flex items-center justify-center font-bold animate-in zoom-in">{cartCount}</span>}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* ===== BANNER ===== */}
+      {(store as any).banner_url ? (
+        <div className="h-40 sm:h-48 overflow-hidden">
+          <img src={(store as any).banner_url} alt="" className="w-full h-full object-cover" />
+        </div>
+      ) : (
+        <div className="h-28 sm:h-36 flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${pc}, ${sc})` }}>
+          <div className="text-center text-white">
+            <h2 className="text-xl font-bold drop-shadow">{store.store_name}</h2>
+            <p className="text-white/70 text-sm mt-1">أهلاً بيك! نورتنا 😍</p>
+          </div>
+        </div>
+      )}
+
+      {/* ===== SEARCH ===== */}
+      <div className="container mt-4">
+        <div className="relative">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="ابحث عن منتج..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pr-10 rounded-xl h-10 bg-muted/50 border-0" />
+        </div>
+      </div>
+
+      {/* ===== CATEGORIES ===== */}
+      {categories.length > 0 && (
+        <div className="container mt-3">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <button onClick={() => setSelectedCategory(null)} className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all ${!selectedCategory ? 'text-white shadow-md' : 'bg-muted text-foreground'}`} style={!selectedCategory ? { backgroundColor: pc } : {}}>
+              الكل
+            </button>
+            {categories.map(c => (
+              <button key={c.id} onClick={() => setSelectedCategory(c.id)} className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedCategory === c.id ? 'text-white shadow-md' : 'bg-muted text-foreground'}`} style={selectedCategory === c.id ? { backgroundColor: pc } : {}}>
+                {c.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ===== FEATURED ===== */}
+      {featuredProducts.length > 0 && !searchQuery && !selectedCategory && (
+        <section className="container mt-5">
+          <h2 className="text-sm font-bold mb-3 flex items-center gap-1.5" style={{ color: pc }}>
+            <Sparkles className="h-4 w-4" />مميز
+          </h2>
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            {featuredProducts.map(p => (
+              <div key={p.id} className="w-44 shrink-0 cursor-pointer group" onClick={() => onProductClick(p.id)}>
+                <div className="aspect-square rounded-xl overflow-hidden mb-2 bg-muted">
+                  {p.main_image_url ? (
+                    <img src={p.main_image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                  ) : <div className="w-full h-full" />}
+                </div>
+                <h3 className="text-xs font-semibold truncate">{p.name}</h3>
+                <p className="text-xs font-bold mt-0.5" style={{ color: pc }}>{p.discount_price || p.price} جنيه</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ===== PRODUCTS GRID ===== */}
+      <main className="flex-1 container py-5 pb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-bold text-sm">{selectedCategory ? categories.find(c => c.id === selectedCategory)?.name : "كل المنتجات"}</h2>
+          <span className="text-xs text-muted-foreground">{filteredProducts.length} منتج</span>
+        </div>
+        {filteredProducts.length === 0 ? (
+          <div className="text-center py-20">
+            <Search className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+            <p className="font-semibold text-muted-foreground">مفيش منتجات</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {filteredProducts.map(p => {
+              const hasDiscount = p.discount_price && p.discount_price < p.price;
+              const discountPercent = hasDiscount ? Math.round((1 - p.discount_price / p.price) * 100) : 0;
+              return (
+                <div key={p.id} className="bg-card rounded-xl border border-border overflow-hidden cursor-pointer group hover:shadow-lg transition-all" onClick={() => onProductClick(p.id)}>
+                  <div className="relative aspect-square overflow-hidden bg-muted">
+                    {p.main_image_url ? (
+                      <img src={p.main_image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                    ) : <div className="w-full h-full" />}
+                    {hasDiscount && (
+                      <span className="absolute top-2 left-2 text-white text-[10px] font-bold px-2 py-0.5 rounded-md" style={{ backgroundColor: pc }}>
+                        -{discountPercent}%
+                      </span>
+                    )}
+                    {p.stock !== null && p.stock <= 0 && (
+                      <span className="absolute bottom-2 right-2 bg-destructive text-destructive-foreground text-[10px] font-bold px-2 py-0.5 rounded-md">نفذ</span>
+                    )}
+                  </div>
+                  <div className="p-2.5">
+                    <h3 className="text-[13px] font-semibold line-clamp-2 leading-tight mb-1">{p.name}</h3>
+                    {getAvgRating(p.id) && (
+                      <div className="flex items-center gap-0.5 mb-1">
+                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                        <span className="text-[11px] text-muted-foreground">{getAvgRating(p.id)}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-bold" style={{ color: pc }}>{p.discount_price || p.price} جنيه</span>
+                      {hasDiscount && <span className="text-[11px] text-muted-foreground line-through">{p.price}</span>}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </main>
+
 
       {/* Cart Sheet */}
       <Sheet open={showCart} onOpenChange={setShowCart}>
