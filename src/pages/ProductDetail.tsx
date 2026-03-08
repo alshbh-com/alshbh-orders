@@ -485,7 +485,7 @@ export default function ProductDetail() {
                   )}
                   <div className="p-2">
                     <h4 className="font-semibold text-sm truncate">{p.name}</h4>
-                    <span cl text-foreground">{p.discount_price || p.pr "var(--s text-foreground"ice} جنيه</span>
+                    <span className="text-sm font-bold text-foreground">{p.discount_price || p.price} جنيه</span>
                   </div>
                 </div>
               ))}
