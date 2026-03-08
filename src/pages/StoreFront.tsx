@@ -3,14 +3,10 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AlshbhWatermark from "@/components/AlshbhWatermark";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
-import { Store, ShoppingCart, Search, Star, Plus, Minus, Trash2, MessageCircle, Share2, X, AlertTriangle, Tag, MapPin, FileText, Truck, ChevronLeft, Heart, Eye } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Store, ShoppingCart, Search, Star, Plus, Minus, Trash2, MessageCircle, Share2, X, AlertTriangle, Tag, MapPin, FileText, Truck, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface CartItem {
@@ -46,7 +42,6 @@ export default function StoreFront() {
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [applyingCoupon, setApplyingCoupon] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
     const fetchStore = async () => {
@@ -103,7 +98,7 @@ export default function StoreFront() {
       if (existing) return prev.map(i => i.product.id === product.id && i.selectedSize === size && i.selectedColor === color ? { ...i, quantity: i.quantity + 1 } : i);
       return [...prev, { product, quantity: 1, selectedSize: size, selectedColor: color }];
     });
-    toast({ title: "تمت الإضافة للسلة", description: product.name });
+    toast({ title: "تمت الإضافة للسلة ✓", description: product.name });
   };
 
   const updateCartQuantity = (index: number, delta: number) => {
@@ -150,7 +145,7 @@ export default function StoreFront() {
       setAppliedCoupon(null);
     } else {
       setAppliedCoupon(data);
-      toast({ title: "تم تفعيل الكوبون بنجاح" });
+      toast({ title: "تم تفعيل الكوبون بنجاح ✓" });
     }
     setApplyingCoupon(false);
   };
@@ -210,10 +205,10 @@ export default function StoreFront() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#f8f9fa' }}>
         <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-foreground/20 border-t-foreground" />
-          <p className="text-xs text-muted-foreground">جاري التحميل...</p>
+          <div className="h-10 w-10 animate-spin rounded-full border-3" style={{ borderColor: '#e9ecef', borderTopColor: '#6c757d' }} />
+          <p className="text-sm" style={{ color: '#6c757d' }}>جاري التحميل...</p>
         </div>
       </div>
     );
@@ -221,50 +216,57 @@ export default function StoreFront() {
 
   if (!store) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
-        <Store className="h-12 w-12 text-muted-foreground" />
-        <h1 className="text-lg font-semibold text-foreground">المتجر غير موجود</h1>
-        <p className="text-sm text-muted-foreground">تأكد من صحة الرابط</p>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4" style={{ backgroundColor: '#f8f9fa' }}>
+        <Store className="h-14 w-14" style={{ color: '#adb5bd' }} />
+        <h1 className="text-xl font-bold" style={{ color: '#343a40' }}>المتجر غير موجود</h1>
+        <p className="text-sm" style={{ color: '#6c757d' }}>تأكد من صحة الرابط</p>
       </div>
     );
   }
 
   if (store.points_balance <= 0) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4 text-center bg-background">
-        <AlertTriangle className="h-12 w-12 text-muted-foreground" />
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4 text-center" style={{ backgroundColor: '#f8f9fa' }}>
+        <AlertTriangle className="h-14 w-14" style={{ color: '#adb5bd' }} />
         <div className="space-y-2">
-          <h1 className="text-lg font-semibold text-foreground">{store.store_name}</h1>
-          <p className="text-sm text-muted-foreground max-w-sm">المتجر متوقف مؤقتاً. يرجى المحاولة لاحقاً.</p>
+          <h1 className="text-xl font-bold" style={{ color: '#343a40' }}>{store.store_name}</h1>
+          <p className="text-sm max-w-sm" style={{ color: '#6c757d' }}>المتجر متوقف مؤقتاً. يرجى المحاولة لاحقاً.</p>
         </div>
         <AlshbhWatermark />
       </div>
     );
   }
 
-  const pc = store?.primary_color || "#e8c547";
-  const sc = store?.secondary_color || "#d4a843";
+  const pc = store?.primary_color || "#4f46e5";
+  const sc = store?.secondary_color || "#7c3aed";
   const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
   const onProductClick = (productId: string) => navigate(`/store/${slug}/product/${productId}`);
 
+  // Lighter version of primary for backgrounds
+  const pcLight = pc + "18";
+
   if (orderSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-        <div className="text-center max-w-sm space-y-5">
-          <div className="h-16 w-16 rounded-full bg-green-50 flex items-center justify-center mx-auto">
-            <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#f8f9fa' }}>
+        <div className="text-center max-w-sm space-y-6 bg-white rounded-2xl p-8 shadow-sm">
+          <div className="h-20 w-20 rounded-full flex items-center justify-center mx-auto" style={{ backgroundColor: '#d4edda' }}>
+            <svg className="h-10 w-10" style={{ color: '#28a745' }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
           </div>
-          <div className="space-y-1">
-            <h1 className="text-xl font-semibold text-foreground">تم تأكيد طلبك</h1>
-            <p className="text-sm text-muted-foreground">رقم الطلب</p>
-            <p className="font-mono text-lg font-semibold text-foreground">{orderSuccess.slice(0, 8).toUpperCase()}</p>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold" style={{ color: '#212529' }}>تم تأكيد طلبك بنجاح!</h1>
+            <p className="text-sm" style={{ color: '#6c757d' }}>رقم الطلب</p>
+            <p className="font-mono text-xl font-bold" style={{ color: '#212529' }}>{orderSuccess.slice(0, 8).toUpperCase()}</p>
           </div>
-          <p className="text-sm text-muted-foreground">سيتم التواصل معك قريباً لتأكيد التفاصيل</p>
-          <div className="flex gap-2 justify-center">
-            <Button onClick={() => setOrderSuccess(null)} variant="outline" className="rounded-lg text-sm">العودة للمتجر</Button>
+          <p className="text-sm" style={{ color: '#6c757d' }}>سيتم التواصل معك قريباً لتأكيد التفاصيل</p>
+          <div className="flex gap-3 justify-center">
+            <button onClick={() => setOrderSuccess(null)} className="px-5 py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors hover:bg-gray-50" style={{ borderColor: '#dee2e6', color: '#495057' }}>
+              العودة للمتجر
+            </button>
             {store.whatsapp_number && (
               <a href={`https://wa.me/${store.whatsapp_number}?text=${encodeURIComponent(`مرحباً، طلبي رقم ${orderSuccess.slice(0, 8)}`)}`} target="_blank">
-                <Button className="rounded-lg text-sm" style={{ backgroundColor: pc, color: '#1a1a1a' }}>تواصل واتساب</Button>
+                <button className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90" style={{ backgroundColor: '#25D366' }}>
+                  تواصل واتساب
+                </button>
               </a>
             )}
           </div>
@@ -274,63 +276,71 @@ export default function StoreFront() {
     );
   }
 
-
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#fafaf8' }}>
-      {/* ===== HEADER ===== */}
-      <header className="sticky top-0 z-40 border-b" style={{ backgroundColor: '#fafaf8', borderColor: '#e8e8e4' }}>
-        <div className="max-w-lg mx-auto px-4 py-3">
-          <div className="flex items-center gap-3">
-            {store.logo_url ? (
-              <img src={store.logo_url} alt={store.store_name} className="h-9 w-9 rounded-full object-cover" />
-            ) : (
-              <div className="h-9 w-9 rounded-full flex items-center justify-center text-xs font-semibold" style={{ backgroundColor: pc, color: '#1a1a1a' }}>
-                {store.store_name?.charAt(0)}
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#f8f9fa' }}>
+      
+      {/* ===== HERO HEADER ===== */}
+      <header className="relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${pc}, ${sc})` }}>
+        {/* Pattern overlay */}
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 25% 25%, white 1px, transparent 1px), radial-gradient(circle at 75% 75%, white 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
+        
+        <div className="relative max-w-lg mx-auto px-5 pt-5 pb-8">
+          {/* Top bar */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              {store.logo_url ? (
+                <img src={store.logo_url} alt={store.store_name} className="h-11 w-11 rounded-xl object-cover border-2 border-white/30 shadow-lg" />
+              ) : (
+                <div className="h-11 w-11 rounded-xl flex items-center justify-center text-sm font-bold bg-white/20 text-white border-2 border-white/30">
+                  {store.store_name?.charAt(0)}
+                </div>
+              )}
+              <div>
+                <h1 className="font-bold text-lg text-white leading-tight">{store.store_name}</h1>
               </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <h1 className="font-semibold text-sm" style={{ color: '#1a1a1a' }}>{store.store_name}</h1>
             </div>
             <div className="flex items-center gap-1">
-              <button onClick={() => setShowSearch(!showSearch)} className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-black/5 transition-colors">
-                <Search className="h-4 w-4" style={{ color: '#555' }} />
+              <button onClick={shareStore} className="h-10 w-10 rounded-xl flex items-center justify-center bg-white/15 hover:bg-white/25 transition-colors text-white">
+                <Share2 className="h-4.5 w-4.5" />
               </button>
-              <button onClick={shareStore} className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-black/5 transition-colors">
-                <Share2 className="h-4 w-4" style={{ color: '#555' }} />
-              </button>
-              <button onClick={() => setShowCart(true)} className="h-8 w-8 rounded-full flex items-center justify-center relative hover:bg-black/5 transition-colors">
-                <ShoppingCart className="h-4 w-4" style={{ color: '#1a1a1a' }} />
+              <button onClick={() => setShowCart(true)} className="h-10 w-10 rounded-xl flex items-center justify-center bg-white/15 hover:bg-white/25 transition-colors text-white relative">
+                <ShoppingCart className="h-4.5 w-4.5" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full text-[9px] flex items-center justify-center font-bold" style={{ backgroundColor: pc, color: '#1a1a1a' }}>{cartCount}</span>
+                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-white text-[10px] flex items-center justify-center font-bold" style={{ color: pc }}>
+                    {cartCount}
+                  </span>
                 )}
               </button>
             </div>
           </div>
+
+          {/* Welcome text */}
+          <div className="mb-5">
+            <p className="text-white/80 text-sm">مرحباً بك في</p>
+            <h2 className="text-2xl font-bold text-white mt-1">{store.store_name}</h2>
+            <p className="text-white/70 text-sm mt-1">اختر من منتجاتنا المميزة</p>
+          </div>
+
           {/* Search bar */}
-          {showSearch && (
-            <div className="mt-3">
-              <div className="relative">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5" style={{ color: '#999' }} />
-                <input
-                  type="text"
-                  placeholder="بحث..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pr-9 pl-3 py-2 text-sm rounded-lg border outline-none focus:ring-1"
-                  style={{ backgroundColor: '#f5f5f2', borderColor: '#e8e8e4', color: '#1a1a1a' }}
-                  autoFocus
-                />
-              </div>
-            </div>
-          )}
+          <div className="relative">
+            <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="ابحث عن منتج..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pr-11 pl-4 py-3.5 text-sm rounded-2xl border-0 outline-none shadow-lg placeholder:text-gray-400"
+              style={{ backgroundColor: 'white', color: '#212529' }}
+            />
+          </div>
         </div>
       </header>
 
       {/* ===== BANNER ===== */}
       {(store as any).banner_url && (
-        <div className="max-w-lg mx-auto w-full">
-          <div className="aspect-[2.5/1] overflow-hidden">
-            <img src={(store as any).banner_url} alt="" className="w-full h-full object-cover" />
+        <div className="max-w-lg mx-auto w-full px-4 -mt-2 relative z-10">
+          <div className="rounded-2xl overflow-hidden shadow-md">
+            <img src={(store as any).banner_url} alt="" className="w-full h-40 object-cover" />
           </div>
         </div>
       )}
@@ -339,12 +349,15 @@ export default function StoreFront() {
 
         {/* ===== CATEGORIES ===== */}
         {categories.length > 0 && (
-          <div className="px-4 pt-4">
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="px-4 pt-5">
+            <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-hide">
               <button
                 onClick={() => setSelectedCategory(null)}
-                className="shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-all border"
-                style={!selectedCategory ? { backgroundColor: '#1a1a1a', color: '#fafaf8', borderColor: '#1a1a1a' } : { backgroundColor: 'transparent', color: '#666', borderColor: '#ddd' }}
+                className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
+                style={!selectedCategory
+                  ? { backgroundColor: pc, color: 'white', boxShadow: `0 4px 14px ${pc}40` }
+                  : { backgroundColor: 'white', color: '#495057', border: '1.5px solid #e9ecef' }
+                }
               >
                 الكل
               </button>
@@ -352,8 +365,11 @@ export default function StoreFront() {
                 <button
                   key={c.id}
                   onClick={() => setSelectedCategory(c.id)}
-                  className="shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-all border"
-                  style={selectedCategory === c.id ? { backgroundColor: '#1a1a1a', color: '#fafaf8', borderColor: '#1a1a1a' } : { backgroundColor: 'transparent', color: '#666', borderColor: '#ddd' }}
+                  className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
+                  style={selectedCategory === c.id
+                    ? { backgroundColor: pc, color: 'white', boxShadow: `0 4px 14px ${pc}40` }
+                    : { backgroundColor: 'white', color: '#495057', border: '1.5px solid #e9ecef' }
+                  }
                 >
                   {c.name}
                 </button>
@@ -362,80 +378,106 @@ export default function StoreFront() {
           </div>
         )}
 
-        {/* ===== FEATURED ===== */}
+        {/* ===== FEATURED PRODUCTS (Horizontal scroll) ===== */}
         {featuredProducts.length > 0 && !searchQuery && !selectedCategory && (
-          <section className="px-4 pt-4">
-            <h2 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#999' }}>مميز</h2>
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {featuredProducts.map(p => (
-                <div key={p.id} className="w-36 shrink-0 cursor-pointer group" onClick={() => onProductClick(p.id)}>
-                  <div className="aspect-[3/4] rounded-lg overflow-hidden mb-2" style={{ backgroundColor: '#f0efe9' }}>
-                    {p.main_image_url ? (
-                      <img src={p.main_image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                    ) : <div className="w-full h-full" />}
+          <section className="px-4 pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold" style={{ color: '#212529' }}>منتجات مميزة ⭐</h2>
+            </div>
+            <div className="flex gap-3.5 overflow-x-auto pb-3 scrollbar-hide">
+              {featuredProducts.map(p => {
+                const hasDiscount = p.discount_price && p.discount_price < p.price;
+                return (
+                  <div key={p.id} className="w-44 shrink-0 cursor-pointer group" onClick={() => onProductClick(p.id)}>
+                    <div className="relative aspect-square rounded-2xl overflow-hidden mb-2.5 bg-white shadow-sm">
+                      {p.main_image_url ? (
+                        <img src={p.main_image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: '#f1f3f5' }}>
+                          <Package className="h-8 w-8" style={{ color: '#ced4da' }} />
+                        </div>
+                      )}
+                      {hasDiscount && (
+                        <span className="absolute top-2.5 right-2.5 text-[11px] font-bold px-2 py-1 rounded-lg text-white" style={{ backgroundColor: '#dc3545' }}>
+                          -{Math.round((1 - p.discount_price / p.price) * 100)}%
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-sm font-semibold truncate" style={{ color: '#212529' }}>{p.name}</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm font-bold" style={{ color: pc }}>{p.discount_price || p.price} جنيه</span>
+                      {hasDiscount && <span className="text-xs line-through" style={{ color: '#adb5bd' }}>{p.price}</span>}
+                    </div>
                   </div>
-                  <h3 className="text-xs font-medium truncate" style={{ color: '#1a1a1a' }}>{p.name}</h3>
-                  <p className="text-xs mt-0.5" style={{ color: '#666' }}>{p.discount_price || p.price} جنيه</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
 
-        {/* ===== PRODUCTS GRID ===== */}
+        {/* ===== ALL PRODUCTS GRID ===== */}
         <main className="flex-1 px-4 py-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#999' }}>
-              {selectedCategory ? categories.find(c => c.id === selectedCategory)?.name : "المنتجات"}
+            <h2 className="text-lg font-bold" style={{ color: '#212529' }}>
+              {selectedCategory ? categories.find(c => c.id === selectedCategory)?.name : "جميع المنتجات"}
             </h2>
-            <span className="text-[11px]" style={{ color: '#bbb' }}>{filteredProducts.length}</span>
+            <span className="text-xs font-medium px-2.5 py-1 rounded-lg" style={{ backgroundColor: '#e9ecef', color: '#495057' }}>
+              {filteredProducts.length} منتج
+            </span>
           </div>
+
           {filteredProducts.length === 0 ? (
-            <div className="text-center py-16">
-              <Search className="h-8 w-8 mx-auto mb-2" style={{ color: '#ccc' }} />
-              <p className="text-sm" style={{ color: '#999' }}>لا توجد منتجات</p>
+            <div className="text-center py-20">
+              <Search className="h-12 w-12 mx-auto mb-3" style={{ color: '#dee2e6' }} />
+              <p className="text-sm font-medium" style={{ color: '#6c757d' }}>لا توجد منتجات</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3.5">
               {filteredProducts.map(p => {
                 const hasDiscount = p.discount_price && p.discount_price < p.price;
                 const discountPercent = hasDiscount ? Math.round((1 - p.discount_price / p.price) * 100) : 0;
                 const rating = getAvgRating(p.id);
                 return (
-                  <div key={p.id} className="cursor-pointer group" onClick={() => onProductClick(p.id)}>
-                    <div className="relative aspect-[3/4] rounded-lg overflow-hidden mb-2" style={{ backgroundColor: '#f0efe9' }}>
+                  <div key={p.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer group" onClick={() => onProductClick(p.id)}>
+                    <div className="relative aspect-square overflow-hidden">
                       {p.main_image_url ? (
                         <img src={p.main_image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                      ) : <div className="w-full h-full" />}
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: '#f1f3f5' }}>
+                          <Package className="h-10 w-10" style={{ color: '#dee2e6' }} />
+                        </div>
+                      )}
                       {hasDiscount && (
-                        <span className="absolute top-2 right-2 text-[10px] font-semibold px-2 py-0.5 rounded" style={{ backgroundColor: '#1a1a1a', color: '#fafaf8' }}>
+                        <span className="absolute top-2.5 right-2.5 text-[11px] font-bold px-2 py-1 rounded-lg text-white" style={{ backgroundColor: '#dc3545' }}>
                           -{discountPercent}%
                         </span>
                       )}
                       {p.stock !== null && p.stock <= 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: 'rgba(250,250,248,0.7)' }}>
-                          <span className="text-xs font-medium" style={{ color: '#999' }}>نفذت الكمية</span>
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/70">
+                          <span className="text-sm font-semibold px-3 py-1.5 rounded-lg" style={{ backgroundColor: '#f8d7da', color: '#842029' }}>نفذت الكمية</span>
                         </div>
                       )}
-                      {/* Quick add button */}
+                      {/* Quick add */}
                       <button
                         onClick={(e) => { e.stopPropagation(); addToCart(p); }}
-                        className="absolute bottom-2 left-2 h-7 w-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
-                        style={{ backgroundColor: '#1a1a1a', color: '#fafaf8' }}
+                        className="absolute bottom-2.5 left-2.5 h-9 w-9 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg text-white"
+                        style={{ backgroundColor: pc }}
                       >
-                        <Plus className="h-3.5 w-3.5" />
+                        <Plus className="h-4 w-4" />
                       </button>
                     </div>
-                    <h3 className="text-xs font-medium line-clamp-1 leading-tight" style={{ color: '#1a1a1a' }}>{p.name}</h3>
-                    {rating && (
-                      <div className="flex items-center gap-0.5 mt-0.5">
-                        <Star className="h-2.5 w-2.5 fill-amber-500 text-amber-500" />
-                        <span className="text-[10px]" style={{ color: '#999' }}>{rating}</span>
+                    <div className="p-3">
+                      <h3 className="text-sm font-semibold line-clamp-2 leading-snug mb-1.5" style={{ color: '#212529' }}>{p.name}</h3>
+                      {rating && (
+                        <div className="flex items-center gap-1 mb-1.5">
+                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                          <span className="text-xs font-medium" style={{ color: '#495057' }}>{rating}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold" style={{ color: pc }}>{p.discount_price || p.price} جنيه</span>
+                        {hasDiscount && <span className="text-xs line-through" style={{ color: '#adb5bd' }}>{p.price}</span>}
                       </div>
-                    )}
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>{p.discount_price || p.price} جنيه</span>
-                      {hasDiscount && <span className="text-[10px] line-through" style={{ color: '#bbb' }}>{p.price}</span>}
                     </div>
                   </div>
                 );
@@ -444,105 +486,132 @@ export default function StoreFront() {
           )}
         </main>
 
-        {/* Policies & Track */}
+        {/* ===== FOOTER SECTION ===== */}
         <section className="px-4 pb-4 space-y-3">
+          {/* Policies */}
           {storePolicies && (storePolicies.return_policy || storePolicies.shipping_policy || storePolicies.privacy_policy) && (
-            <details className="rounded-lg p-3 border" style={{ borderColor: '#e8e8e4', backgroundColor: '#fafaf8' }}>
-              <summary className="text-xs font-medium cursor-pointer flex items-center gap-1.5" style={{ color: '#666' }}>
-                <FileText className="h-3 w-3" />
+            <details className="bg-white rounded-2xl p-4 shadow-sm">
+              <summary className="text-sm font-semibold cursor-pointer flex items-center gap-2" style={{ color: '#495057' }}>
+                <FileText className="h-4 w-4" style={{ color: pc }} />
                 سياسات المتجر
               </summary>
-              <div className="mt-3 space-y-3 text-xs" style={{ color: '#666' }}>
+              <div className="mt-3 space-y-3 text-sm" style={{ color: '#6c757d' }}>
                 {storePolicies.return_policy && (
-                  <div><h4 className="font-semibold mb-0.5" style={{ color: '#333' }}>سياسة الاسترجاع</h4><p className="whitespace-pre-line">{storePolicies.return_policy}</p></div>
+                  <div><h4 className="font-semibold mb-1" style={{ color: '#343a40' }}>سياسة الاسترجاع</h4><p className="whitespace-pre-line leading-relaxed">{storePolicies.return_policy}</p></div>
                 )}
                 {storePolicies.shipping_policy && (
-                  <div><h4 className="font-semibold mb-0.5" style={{ color: '#333' }}>سياسة الشحن</h4><p className="whitespace-pre-line">{storePolicies.shipping_policy}</p></div>
+                  <div><h4 className="font-semibold mb-1" style={{ color: '#343a40' }}>سياسة الشحن</h4><p className="whitespace-pre-line leading-relaxed">{storePolicies.shipping_policy}</p></div>
                 )}
                 {storePolicies.privacy_policy && (
-                  <div><h4 className="font-semibold mb-0.5" style={{ color: '#333' }}>سياسة الخصوصية</h4><p className="whitespace-pre-line">{storePolicies.privacy_policy}</p></div>
+                  <div><h4 className="font-semibold mb-1" style={{ color: '#343a40' }}>سياسة الخصوصية</h4><p className="whitespace-pre-line leading-relaxed">{storePolicies.privacy_policy}</p></div>
                 )}
               </div>
             </details>
           )}
-          <div className="flex justify-center">
-            <Link to="/track">
-              <button className="text-xs font-medium flex items-center gap-1 px-3 py-1.5 rounded-full border hover:bg-black/5 transition-colors" style={{ color: '#666', borderColor: '#ddd' }}>
-                <Truck className="h-3 w-3" />تتبع طلبك
-              </button>
+
+          {/* Track order + Contact */}
+          <div className="flex gap-3">
+            <Link to="/track" className="flex-1">
+              <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: pcLight }}>
+                  <Truck className="h-5 w-5" style={{ color: pc }} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: '#212529' }}>تتبع طلبك</p>
+                  <p className="text-xs" style={{ color: '#6c757d' }}>تابع حالة طلبك</p>
+                </div>
+              </div>
             </Link>
+            {store.whatsapp_number && (
+              <a href={`https://wa.me/${store.whatsapp_number}`} target="_blank" className="flex-1">
+                <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3 hover:shadow-md transition-shadow cursor-pointer">
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#d4edda' }}>
+                    <MessageCircle className="h-5 w-5" style={{ color: '#28a745' }} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: '#212529' }}>تواصل معنا</p>
+                    <p className="text-xs" style={{ color: '#6c757d' }}>واتساب</p>
+                  </div>
+                </div>
+              </a>
+            )}
           </div>
         </section>
 
         {/* Complaint */}
         <section className="px-4 pb-6">
-          <details className="rounded-lg p-3 border" style={{ borderColor: '#e8e8e4' }}>
-            <summary className="text-xs font-medium cursor-pointer flex items-center gap-1.5" style={{ color: '#666' }}>
-              <MessageCircle className="h-3 w-3" />
-              تواصل معنا
+          <details className="bg-white rounded-2xl p-4 shadow-sm">
+            <summary className="text-sm font-semibold cursor-pointer flex items-center gap-2" style={{ color: '#495057' }}>
+              <MessageCircle className="h-4 w-4" style={{ color: pc }} />
+              شكوى أو استفسار
             </summary>
             <ComplaintForm storeId={store.id} storeName={store.store_name} whatsappNumber={store.whatsapp_number} pc={pc} />
           </details>
         </section>
       </div>
 
-      {/* Cart Sheet */}
+      {/* ===== CART SHEET ===== */}
       <Sheet open={showCart} onOpenChange={setShowCart}>
-        <SheetContent side="left" className="w-full sm:max-w-md overflow-y-auto p-0">
-          <div className="p-4 border-b" style={{ borderColor: '#e8e8e4' }}>
-            <SheetTitle className="text-sm font-semibold" style={{ color: '#1a1a1a' }}>السلة ({cartCount})</SheetTitle>
+        <SheetContent side="left" className="w-full sm:max-w-md overflow-y-auto p-0" style={{ backgroundColor: '#f8f9fa' }}>
+          <div className="bg-white p-5 border-b" style={{ borderColor: '#e9ecef' }}>
+            <SheetTitle className="text-lg font-bold" style={{ color: '#212529' }}>سلة المشتريات ({cartCount})</SheetTitle>
           </div>
           <div className="p-4 space-y-3">
             {cart.length === 0 ? (
-              <div className="text-center py-16">
-                <ShoppingCart className="h-8 w-8 mx-auto mb-2" style={{ color: '#ccc' }} />
-                <p className="text-sm" style={{ color: '#999' }}>السلة فارغة</p>
+              <div className="text-center py-20">
+                <div className="h-16 w-16 rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: '#e9ecef' }}>
+                  <ShoppingCart className="h-7 w-7" style={{ color: '#adb5bd' }} />
+                </div>
+                <p className="text-sm font-medium" style={{ color: '#6c757d' }}>السلة فارغة</p>
+                <p className="text-xs mt-1" style={{ color: '#adb5bd' }}>أضف منتجات للبدء</p>
               </div>
             ) : (
               <>
                 {cart.map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-3 py-3 border-b" style={{ borderColor: '#f0f0ec' }}>
+                  <div key={idx} className="bg-white rounded-2xl p-3.5 shadow-sm flex items-center gap-3">
                     {item.product.main_image_url ? (
-                      <img src={item.product.main_image_url} alt="" className="h-16 w-16 rounded-lg object-cover" />
+                      <img src={item.product.main_image_url} alt="" className="h-20 w-20 rounded-xl object-cover" />
                     ) : (
-                      <div className="h-16 w-16 rounded-lg" style={{ backgroundColor: '#f0efe9' }} />
+                      <div className="h-20 w-20 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#f1f3f5' }}>
+                        <Package className="h-6 w-6" style={{ color: '#ced4da' }} />
+                      </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-xs font-medium truncate" style={{ color: '#1a1a1a' }}>{item.product.name}</h4>
-                      {item.selectedSize && <p className="text-[11px]" style={{ color: '#999' }}>المقاس: {item.selectedSize}</p>}
-                      {item.selectedColor && <p className="text-[11px]" style={{ color: '#999' }}>اللون: {item.selectedColor}</p>}
-                      <p className="text-xs font-semibold mt-0.5" style={{ color: '#1a1a1a' }}>{item.product.discount_price || item.product.price} جنيه</p>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <button className="h-6 w-6 rounded-full border flex items-center justify-center" style={{ borderColor: '#ddd' }} onClick={() => updateCartQuantity(idx, -1)}>
-                          <Minus className="h-2.5 w-2.5" style={{ color: '#666' }} />
+                      <h4 className="text-sm font-semibold truncate" style={{ color: '#212529' }}>{item.product.name}</h4>
+                      {item.selectedSize && <p className="text-xs mt-0.5" style={{ color: '#6c757d' }}>المقاس: {item.selectedSize}</p>}
+                      {item.selectedColor && <p className="text-xs" style={{ color: '#6c757d' }}>اللون: {item.selectedColor}</p>}
+                      <p className="text-sm font-bold mt-1" style={{ color: pc }}>{item.product.discount_price || item.product.price} جنيه</p>
+                      <div className="flex items-center gap-2.5 mt-2">
+                        <button className="h-7 w-7 rounded-lg flex items-center justify-center border" style={{ borderColor: '#dee2e6' }} onClick={() => updateCartQuantity(idx, -1)}>
+                          <Minus className="h-3 w-3" style={{ color: '#495057' }} />
                         </button>
-                        <span className="text-xs font-semibold" style={{ color: '#1a1a1a' }}>{item.quantity}</span>
-                        <button className="h-6 w-6 rounded-full border flex items-center justify-center" style={{ borderColor: '#ddd' }} onClick={() => updateCartQuantity(idx, 1)}>
-                          <Plus className="h-2.5 w-2.5" style={{ color: '#666' }} />
+                        <span className="text-sm font-bold" style={{ color: '#212529' }}>{item.quantity}</span>
+                        <button className="h-7 w-7 rounded-lg flex items-center justify-center text-white" style={{ backgroundColor: pc }} onClick={() => updateCartQuantity(idx, 1)}>
+                          <Plus className="h-3 w-3" />
                         </button>
                       </div>
                     </div>
-                    <button onClick={() => removeFromCart(idx)} className="p-1.5 hover:bg-black/5 rounded-full transition-colors">
-                      <X className="h-3.5 w-3.5" style={{ color: '#999' }} />
+                    <button onClick={() => removeFromCart(idx)} className="p-2 rounded-lg hover:bg-red-50 transition-colors">
+                      <Trash2 className="h-4 w-4" style={{ color: '#dc3545' }} />
                     </button>
                   </div>
                 ))}
-                <div className="pt-3 space-y-2">
-                  <div className="flex justify-between text-xs">
-                    <span style={{ color: '#999' }}>المجموع</span>
-                    <span style={{ color: '#1a1a1a' }}>{cartSubtotal} جنيه</span>
+                <div className="bg-white rounded-2xl p-4 shadow-sm space-y-2.5 mt-2">
+                  <div className="flex justify-between text-sm">
+                    <span style={{ color: '#6c757d' }}>المجموع</span>
+                    <span className="font-semibold" style={{ color: '#212529' }}>{cartSubtotal} جنيه</span>
                   </div>
-                  <div className="flex justify-between text-xs">
-                    <span style={{ color: '#999' }}>التوصيل</span>
-                    <span style={{ color: '#1a1a1a' }}>{shippingCost} جنيه</span>
+                  <div className="flex justify-between text-sm">
+                    <span style={{ color: '#6c757d' }}>التوصيل</span>
+                    <span className="font-semibold" style={{ color: '#212529' }}>{shippingCost} جنيه</span>
                   </div>
-                  <div className="flex justify-between font-semibold text-sm border-t pt-2" style={{ borderColor: '#e8e8e4', color: '#1a1a1a' }}>
+                  <div className="flex justify-between text-base font-bold border-t pt-2.5" style={{ borderColor: '#e9ecef', color: '#212529' }}>
                     <span>الإجمالي</span>
                     <span>{cartTotal} جنيه</span>
                   </div>
                   <button
-                    className="w-full py-2.5 rounded-lg text-sm font-medium mt-2 transition-colors"
-                    style={{ backgroundColor: '#1a1a1a', color: '#fafaf8' }}
+                    className="w-full py-3.5 rounded-xl text-sm font-bold mt-3 transition-opacity hover:opacity-90 text-white shadow-lg"
+                    style={{ backgroundColor: pc, boxShadow: `0 4px 14px ${pc}40` }}
                     onClick={() => { setShowCart(false); setShowCheckout(true); }}
                   >
                     إتمام الطلب
@@ -554,25 +623,27 @@ export default function StoreFront() {
         </SheetContent>
       </Sheet>
 
-      {/* Checkout Dialog */}
+      {/* ===== CHECKOUT DIALOG ===== */}
       <Dialog open={showCheckout} onOpenChange={setShowCheckout}>
-        <DialogContent className="rounded-xl max-h-[90vh] overflow-y-auto sm:max-w-md">
-          <DialogHeader><DialogTitle className="text-sm font-semibold" style={{ color: '#1a1a1a' }}>إتمام الطلب</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <label className="text-xs font-medium" style={{ color: '#666' }}>الاسم</label>
-              <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="الاسم الكامل" className="w-full px-3 py-2 text-sm rounded-lg border outline-none focus:ring-1" style={{ borderColor: '#e8e8e4', color: '#1a1a1a' }} />
+        <DialogContent className="rounded-2xl max-h-[90vh] overflow-y-auto sm:max-w-md p-0">
+          <div className="p-5 border-b" style={{ borderColor: '#e9ecef' }}>
+            <DialogTitle className="text-lg font-bold" style={{ color: '#212529' }}>إتمام الطلب</DialogTitle>
+          </div>
+          <div className="p-5 space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold" style={{ color: '#343a40' }}>الاسم الكامل</label>
+              <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="أدخل اسمك" className="w-full px-4 py-3 text-sm rounded-xl border-2 outline-none focus:border-current transition-colors" style={{ borderColor: '#e9ecef', color: '#212529' }} />
             </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium" style={{ color: '#666' }}>رقم الهاتف</label>
-              <input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="01xxxxxxxxx" dir="ltr" className="w-full px-3 py-2 text-sm rounded-lg border outline-none focus:ring-1" style={{ borderColor: '#e8e8e4', color: '#1a1a1a' }} />
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold" style={{ color: '#343a40' }}>رقم الهاتف</label>
+              <input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="01xxxxxxxxx" dir="ltr" className="w-full px-4 py-3 text-sm rounded-xl border-2 outline-none focus:border-current transition-colors" style={{ borderColor: '#e9ecef', color: '#212529' }} />
             </div>
 
             {storeShipping.length > 0 && (
-              <div className="space-y-1">
-                <label className="text-xs font-medium" style={{ color: '#666' }}>المحافظة</label>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold" style={{ color: '#343a40' }}>المحافظة</label>
                 <Select value={selectedGovernorate} onValueChange={setSelectedGovernorate}>
-                  <SelectTrigger className="rounded-lg text-sm"><SelectValue placeholder="اختر المحافظة" /></SelectTrigger>
+                  <SelectTrigger className="rounded-xl h-12 border-2" style={{ borderColor: '#e9ecef' }}><SelectValue placeholder="اختر المحافظة" /></SelectTrigger>
                   <SelectContent>
                     {storeShipping.map(s => (
                       <SelectItem key={s.id} value={s.governorate}>{s.governorate} — {s.shipping_cost} جنيه</SelectItem>
@@ -582,45 +653,45 @@ export default function StoreFront() {
               </div>
             )}
 
-            <div className="space-y-1">
-              <label className="text-xs font-medium" style={{ color: '#666' }}>العنوان بالتفصيل</label>
-              <textarea value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} placeholder="الشارع - المبنى - الشقة" rows={2} className="w-full px-3 py-2 text-sm rounded-lg border outline-none focus:ring-1 resize-none" style={{ borderColor: '#e8e8e4', color: '#1a1a1a' }} />
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold" style={{ color: '#343a40' }}>العنوان بالتفصيل</label>
+              <textarea value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} placeholder="الشارع - المبنى - الشقة" rows={2} className="w-full px-4 py-3 text-sm rounded-xl border-2 outline-none focus:border-current resize-none transition-colors" style={{ borderColor: '#e9ecef', color: '#212529' }} />
             </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium" style={{ color: '#666' }}>ملاحظات (اختياري)</label>
-              <input value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} placeholder="أي ملاحظات إضافية" className="w-full px-3 py-2 text-sm rounded-lg border outline-none focus:ring-1" style={{ borderColor: '#e8e8e4', color: '#1a1a1a' }} />
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold" style={{ color: '#343a40' }}>ملاحظات (اختياري)</label>
+              <input value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} placeholder="أي ملاحظات إضافية" className="w-full px-4 py-3 text-sm rounded-xl border-2 outline-none focus:border-current transition-colors" style={{ borderColor: '#e9ecef', color: '#212529' }} />
             </div>
 
             {/* Coupon */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium" style={{ color: '#666' }}>كوبون خصم</label>
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold" style={{ color: '#343a40' }}>كوبون خصم</label>
               <div className="flex gap-2">
-                <input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="أدخل الكود" dir="ltr" className="flex-1 px-3 py-2 text-sm rounded-lg border outline-none focus:ring-1" style={{ borderColor: '#e8e8e4', color: '#1a1a1a' }} />
-                <button onClick={applyCoupon} disabled={applyingCoupon} className="px-4 py-2 rounded-lg text-xs font-medium border transition-colors hover:bg-black/5" style={{ borderColor: '#ddd', color: '#1a1a1a' }}>
+                <input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="أدخل الكود" dir="ltr" className="flex-1 px-4 py-3 text-sm rounded-xl border-2 outline-none focus:border-current transition-colors" style={{ borderColor: '#e9ecef', color: '#212529' }} />
+                <button onClick={applyCoupon} disabled={applyingCoupon} className="px-5 py-3 rounded-xl text-sm font-bold border-2 transition-colors hover:bg-gray-50" style={{ borderColor: '#dee2e6', color: '#495057' }}>
                   {applyingCoupon ? "..." : "تفعيل"}
                 </button>
               </div>
               {appliedCoupon && (
-                <p className="text-[11px] px-2 py-1 rounded" style={{ color: '#2d7a3a', backgroundColor: '#f0faf2' }}>
+                <p className="text-xs px-3 py-2 rounded-xl font-medium" style={{ color: '#0f5132', backgroundColor: '#d1e7dd' }}>
                   ✓ كوبون {appliedCoupon.code} — خصم {appliedCoupon.discount_type === 'percentage' ? `${appliedCoupon.discount_value}%` : `${appliedCoupon.discount_value} جنيه`}
                 </p>
               )}
             </div>
 
             {/* Summary */}
-            <div className="rounded-lg p-3 space-y-1.5" style={{ backgroundColor: '#f5f5f2' }}>
-              <div className="flex justify-between text-xs"><span style={{ color: '#999' }}>المنتجات</span><span style={{ color: '#1a1a1a' }}>{cartSubtotal} جنيه</span></div>
+            <div className="rounded-2xl p-4 space-y-2" style={{ backgroundColor: '#f1f3f5' }}>
+              <div className="flex justify-between text-sm"><span style={{ color: '#6c757d' }}>المنتجات</span><span className="font-semibold" style={{ color: '#212529' }}>{cartSubtotal} جنيه</span></div>
               {discountAmount > 0 && (
-                <div className="flex justify-between text-xs" style={{ color: '#2d7a3a' }}><span>الخصم</span><span>-{discountAmount} جنيه</span></div>
+                <div className="flex justify-between text-sm" style={{ color: '#198754' }}><span>الخصم</span><span className="font-semibold">-{discountAmount} جنيه</span></div>
               )}
-              <div className="flex justify-between text-xs"><span style={{ color: '#999' }}>التوصيل {selectedGovernorate && `(${selectedGovernorate})`}</span><span style={{ color: '#1a1a1a' }}>{shippingCost} جنيه</span></div>
-              <div className="flex justify-between font-semibold text-sm border-t pt-1.5" style={{ borderColor: '#e8e8e4', color: '#1a1a1a' }}>
+              <div className="flex justify-between text-sm"><span style={{ color: '#6c757d' }}>التوصيل {selectedGovernorate && `(${selectedGovernorate})`}</span><span className="font-semibold" style={{ color: '#212529' }}>{shippingCost} جنيه</span></div>
+              <div className="flex justify-between text-base font-bold border-t pt-2" style={{ borderColor: '#dee2e6', color: '#212529' }}>
                 <span>الإجمالي</span><span>{cartTotal} جنيه</span>
               </div>
             </div>
             <button
-              className="w-full py-2.5 rounded-lg text-sm font-medium transition-opacity disabled:opacity-50"
-              style={{ backgroundColor: '#1a1a1a', color: '#fafaf8' }}
+              className="w-full py-3.5 rounded-xl text-sm font-bold transition-opacity disabled:opacity-50 hover:opacity-90 text-white shadow-lg"
+              style={{ backgroundColor: pc, boxShadow: `0 4px 14px ${pc}40` }}
               onClick={submitOrder} disabled={submitting}
             >
               {submitting ? "جاري التأكيد..." : "تأكيد الطلب"}
@@ -648,33 +719,23 @@ function ComplaintForm({ storeId, storeName, whatsappNumber, pc }: { storeId: st
   const { toast } = useToast();
 
   const submit = async () => {
-    if (!name || !message) return;
+    if (!name || !message) { toast({ title: "اكتب اسمك ورسالتك", variant: "destructive" }); return; }
     setSending(true);
-    const { error } = await supabase.from("complaints").insert({
-      name, phone: phone || null, message, store_id: storeId, store_name: storeName,
-    });
-    if (error) toast({ title: "حدث خطأ", variant: "destructive" });
-    else { setSent(true); toast({ title: "تم إرسال رسالتك بنجاح" }); }
-    setSending(false);
+    await supabase.from("complaints").insert({ store_id: storeId, store_name: storeName, name, phone: phone || null, message });
+    setSent(true); setSending(false);
+    toast({ title: "تم إرسال رسالتك بنجاح" });
   };
 
-  if (sent) return <p className="text-xs mt-3" style={{ color: '#2d7a3a' }}>تم إرسال رسالتك بنجاح. سنتواصل معك قريباً.</p>;
+  if (sent) return <p className="text-sm py-3" style={{ color: '#198754' }}>✓ تم إرسال رسالتك — سنتواصل معك قريباً</p>;
 
   return (
-    <div className="mt-3 space-y-2">
-      <input value={name} onChange={e => setName(e.target.value)} placeholder="الاسم" className="w-full px-3 py-2 text-sm rounded-lg border outline-none" style={{ borderColor: '#e8e8e4', color: '#1a1a1a' }} />
-      <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="رقم الهاتف (اختياري)" dir="ltr" className="w-full px-3 py-2 text-sm rounded-lg border outline-none" style={{ borderColor: '#e8e8e4', color: '#1a1a1a' }} />
-      <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="رسالتك..." rows={2} className="w-full px-3 py-2 text-sm rounded-lg border outline-none resize-none" style={{ borderColor: '#e8e8e4', color: '#1a1a1a' }} />
-      <div className="flex gap-2">
-        <button onClick={submit} disabled={sending} className="px-4 py-1.5 rounded-lg text-xs font-medium transition-opacity disabled:opacity-50" style={{ backgroundColor: '#1a1a1a', color: '#fafaf8' }}>
-          {sending ? "جاري الإرسال..." : "إرسال"}
-        </button>
-        {whatsappNumber && (
-          <a href={`https://wa.me/${whatsappNumber}`} target="_blank">
-            <button className="px-4 py-1.5 rounded-lg text-xs font-medium border" style={{ borderColor: '#ddd', color: '#666' }}>واتساب</button>
-          </a>
-        )}
-      </div>
+    <div className="mt-3 space-y-3">
+      <input value={name} onChange={e => setName(e.target.value)} placeholder="اسمك" className="w-full px-4 py-3 text-sm rounded-xl border-2 outline-none transition-colors" style={{ borderColor: '#e9ecef', color: '#212529' }} />
+      <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="رقم الهاتف (اختياري)" dir="ltr" className="w-full px-4 py-3 text-sm rounded-xl border-2 outline-none transition-colors" style={{ borderColor: '#e9ecef', color: '#212529' }} />
+      <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="اكتب رسالتك..." rows={3} className="w-full px-4 py-3 text-sm rounded-xl border-2 outline-none resize-none transition-colors" style={{ borderColor: '#e9ecef', color: '#212529' }} />
+      <button onClick={submit} disabled={sending} className="w-full py-3 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: pc }}>
+        {sending ? "جاري الإرسال..." : "إرسال"}
+      </button>
     </div>
   );
 }
