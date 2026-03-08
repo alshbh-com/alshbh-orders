@@ -119,7 +119,25 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    if (user) registerOneSignal();
+    if (user) {
+      registerOneSignal();
+      // Save pending whatsapp phone from registration
+      const pendingPhone = localStorage.getItem("pending_whatsapp_phone");
+      if (pendingPhone) {
+        supabase.from("profiles").update({ phone: pendingPhone }).eq("id", user.id).then(() => {
+          localStorage.removeItem("pending_whatsapp_phone");
+        });
+      }
+      // Check if notification permission needs to be requested
+      if (typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
+        (window as any).OneSignalDeferred.push(async function(OneSignal: any) {
+          const permission = await OneSignal.Notifications.permission;
+          if (!permission) {
+            setShowNotifPrompt(true);
+          }
+        });
+      }
+    }
   }, [user]);
 
   useEffect(() => { if (user) fetchData(); }, [user]);
