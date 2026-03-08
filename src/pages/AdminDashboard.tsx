@@ -94,7 +94,6 @@ export default function AdminDashboard() {
     setPageViews(data || []);
     setLoadingViews(false);
   };
-  };
 
   const toggleStore = async (storeId: string, isActive: boolean) => {
     await supabase.from("stores").update({ is_active: !isActive }).eq("id", storeId);
