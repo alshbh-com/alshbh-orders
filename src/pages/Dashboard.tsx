@@ -1254,51 +1254,23 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Theme Selection with Previews */}
-                <div className="space-y-2">
-                  <Label>اختر قالب المتجر</Label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {[
-                      { slug: 'elegant', name: 'أنيق', desc: 'هيدر بصورة بانر كبيرة', color: '#1a1a2e' },
-                      { slug: 'modern', name: 'عصري', desc: 'هيدر مثبت وشبكة 3 أعمدة', color: '#2d3436' },
-                      { slug: 'classic', name: 'كلاسيك', desc: 'هيدر متدرج وقائمة منتجات', color: '#6c5ce7' },
-                      { slug: 'minimal', name: 'بسيط', desc: 'تصميم نظيف بدون زحمة', color: '#00b894' },
-                      { slug: 'bold', name: 'جريء', desc: 'بطاقات كبيرة وخطوط عريضة', color: '#e17055' },
-                    ].map(t => (
-                      <div
-                        key={t.slug}
-                        onClick={() => setEditTheme(t.slug)}
-                        className={`relative rounded-xl border-2 p-3 cursor-pointer transition-all hover:shadow-md ${editTheme === t.slug ? 'ring-2 ring-offset-2' : 'border-border'}`}
-                        style={editTheme === t.slug ? { borderColor: store.primary_color, '--tw-ring-color': store.primary_color } as React.CSSProperties : {}}
-                      >
-                        {/* Mini preview */}
-                        <div className="rounded-lg overflow-hidden mb-2 h-16" style={{ backgroundColor: t.color }}>
-                          <div className="h-full flex flex-col justify-end p-2">
-                            <div className="h-1.5 w-12 bg-white/40 rounded-full mb-1" />
-                            <div className="h-1 w-8 bg-white/25 rounded-full" />
-                          </div>
-                        </div>
-                        <div className="flex gap-1 mb-2">
-                          <div className="h-8 w-8 rounded bg-muted" />
-                          <div className="h-8 w-8 rounded bg-muted" />
-                          <div className="h-8 w-8 rounded bg-muted" />
-                        </div>
-                        <p className="font-bold text-sm">{t.name}</p>
-                        <p className="text-[10px] text-muted-foreground">{t.desc}</p>
-                        {editTheme === t.slug && (
-                          <div className="absolute top-2 left-2 h-5 w-5 rounded-full flex items-center justify-center text-white" style={{ backgroundColor: store.primary_color }}>
-                            <Check className="h-3 w-3" />
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2"><Label>اللون الأساسي</Label><Input type="color" value={editPrimaryColor} onChange={(e) => setEditPrimaryColor(e.target.value)} className="h-10" /></div>
                   <div className="space-y-2"><Label>اللون الثانوي</Label><Input type="color" value={editSecondaryColor} onChange={(e) => setEditSecondaryColor(e.target.value)} className="h-10" /></div>
                 </div>
+                {/* Live Color Preview */}
+                <div className="rounded-xl overflow-hidden border border-border">
+                  <div className="py-4 px-4 text-white text-center" style={{ background: `linear-gradient(135deg, ${editPrimaryColor}, ${editSecondaryColor})` }}>
+                    <p className="font-bold text-lg">{editStoreName || store.store_name}</p>
+                    <p className="text-white/70 text-xs">أهلاً بيك! نورتنا 😍</p>
+                  </div>
+                  <div className="p-3 bg-card flex gap-2">
+                    <div className="h-8 rounded-full px-3 flex items-center text-white text-xs" style={{ backgroundColor: editPrimaryColor }}>الكل</div>
+                    <div className="h-8 rounded-full px-3 flex items-center text-xs border border-border">تصنيف</div>
+                    <div className="h-8 rounded-full px-3 flex items-center text-xs border border-border">تصنيف</div>
+                  </div>
+                </div>
+
                 <Button onClick={saveStoreSettings} disabled={savingSettings} className="w-full">
                   {savingSettings ? "جاري الحفظ..." : "حفظ الإعدادات"}
                 </Button>
