@@ -1,12 +1,16 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AlshbhWatermark from "@/components/AlshbhWatermark";
-import WhatsAppFloat from "@/components/WhatsAppFloat";
-import { Store, ShoppingCart, Search, Star, Plus, Minus, Trash2, MessageCircle, Share2, X, AlertTriangle, Tag, MapPin, FileText, Truck, Package } from "lucide-react";
+import { Store, ShoppingCart, Search, Star, Plus, Minus, Trash2, MessageCircle, Share2, X, AlertTriangle, Tag, Sparkles, TrendingUp, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface CartItem {
@@ -25,7 +29,6 @@ export default function StoreFront() {
   const [categories, setCategories] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [storeShipping, setStoreShipping] = useState<any[]>([]);
-  const [storePolicies, setStorePolicies] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -50,29 +53,23 @@ export default function StoreFront() {
 
       if (storeData) {
         setStore(storeData);
-        const visitorId = localStorage.getItem('visitor_id') || crypto.randomUUID();
-        localStorage.setItem('visitor_id', visitorId);
-        (supabase as any).from("page_views").insert({
-          store_id: storeData.id, page_path: `/store/${slug}`, visitor_id: visitorId,
-        }).then(() => {});
-
         const savedCart = localStorage.getItem(`cart_${storeData.id}`);
-        if (savedCart) { try { setCart(JSON.parse(savedCart)); } catch {} }
+        if (savedCart) {
+          try { setCart(JSON.parse(savedCart)); } catch {}
+        }
 
-        const [productsRes, categoriesRes, reviewsRes, shippingRes, policiesRes] = await Promise.all([
+        const [productsRes, categoriesRes, reviewsRes, shippingRes] = await Promise.all([
           supabase.from("products").select("*").eq("store_id", storeData.id).eq("is_active", true),
           supabase.from("categories").select("*").eq("store_id", storeData.id).order("sort_order"),
           supabase.from("reviews").select("*").in("product_id",
             (await supabase.from("products").select("id").eq("store_id", storeData.id)).data?.map(p => p.id) || []
           ),
           supabase.from("store_shipping").select("*").eq("store_id", storeData.id).eq("is_active", true),
-          (supabase as any).from("store_policies").select("*").eq("store_id", storeData.id).maybeSingle(),
         ]);
         setProducts(productsRes.data || []);
         setCategories(categoriesRes.data || []);
         setReviews(reviewsRes.data || []);
         setStoreShipping(shippingRes.data || []);
-        setStorePolicies(policiesRes.data || null);
       }
       setLoading(false);
     };
@@ -85,12 +82,17 @@ export default function StoreFront() {
 
   const filteredProducts = useMemo(() => {
     let result = products;
-    if (searchQuery) result = result.filter(p => p.name.includes(searchQuery) || p.description?.includes(searchQuery));
-    if (selectedCategory) result = result.filter(p => p.category_id === selectedCategory);
+    if (searchQuery) {
+      result = result.filter(p => p.name.includes(searchQuery) || p.description?.includes(searchQuery));
+    }
+    if (selectedCategory) {
+      result = result.filter(p => p.category_id === selectedCategory);
+    }
     return result;
   }, [products, searchQuery, selectedCategory]);
 
   const featuredProducts = useMemo(() => products.filter(p => p.is_featured), [products]);
+  const bestSellers = useMemo(() => [...products].sort((a, b) => (b.sales_count || 0) - (a.sales_count || 0)).slice(0, 4), [products]);
 
   const addToCart = (product: any, size?: string, color?: string) => {
     setCart(prev => {
@@ -98,7 +100,7 @@ export default function StoreFront() {
       if (existing) return prev.map(i => i.product.id === product.id && i.selectedSize === size && i.selectedColor === color ? { ...i, quantity: i.quantity + 1 } : i);
       return [...prev, { product, quantity: 1, selectedSize: size, selectedColor: color }];
     });
-    toast({ title: "تمت الإضافة للسلة ✓", description: product.name });
+    toast({ title: "حلو اوي! اتضاف في السلة 🛒", description: product.name });
   };
 
   const updateCartQuantity = (index: number, delta: number) => {
@@ -109,6 +111,7 @@ export default function StoreFront() {
     setCart(prev => prev.filter((_, idx) => idx !== index));
   };
 
+  // Get shipping cost based on selected governorate
   const getShippingCost = () => {
     if (selectedGovernorate && storeShipping.length > 0) {
       const found = storeShipping.find(s => s.governorate === selectedGovernorate);
@@ -132,83 +135,99 @@ export default function StoreFront() {
     const { data } = await supabase.from("coupons").select("*")
       .eq("store_id", store.id).eq("code", couponCode.trim().toUpperCase()).eq("is_active", true).maybeSingle();
     if (!data) {
-      toast({ title: "كوبون غير صالح", variant: "destructive" });
+      toast({ title: "الكوبون ده مش صح يسطا 😕", variant: "destructive" });
       setAppliedCoupon(null);
     } else if (data.max_uses && data.used_count >= data.max_uses) {
-      toast({ title: "الكوبون انتهى", variant: "destructive" });
+      toast({ title: "الكوبون ده خلص للأسف 😅", variant: "destructive" });
       setAppliedCoupon(null);
     } else if (data.expires_at && new Date(data.expires_at) < new Date()) {
-      toast({ title: "الكوبون منتهي الصلاحية", variant: "destructive" });
+      toast({ title: "الكوبون ده انتهت صلاحيته يا اخويا", variant: "destructive" });
       setAppliedCoupon(null);
     } else if (data.min_order_amount && cartSubtotal < data.min_order_amount) {
-      toast({ title: `الحد الأدنى للطلب ${data.min_order_amount} جنيه`, variant: "destructive" });
+      toast({ title: `لازم الطلب يكون ${data.min_order_amount} جنيه على الأقل عشان الكوبون يشتغل`, variant: "destructive" });
       setAppliedCoupon(null);
     } else {
       setAppliedCoupon(data);
-      toast({ title: "تم تفعيل الكوبون بنجاح ✓" });
+      toast({ title: "تمام! الكوبون اتفعّل 🎉" });
     }
     setApplyingCoupon(false);
   };
 
   const submitOrder = async () => {
     if (!customerName || !customerPhone || !customerAddress || cart.length === 0) {
-      toast({ title: "يرجى إكمال جميع البيانات", variant: "destructive" });
+      toast({ title: "يسطا اكتب كل البيانات الأول! 📝", variant: "destructive" });
       return;
     }
     if (storeShipping.length > 0 && !selectedGovernorate) {
-      toast({ title: "يرجى اختيار المحافظة", variant: "destructive" });
+      toast({ title: "اختار المحافظة بتاعتك يا اخويا! 📍", variant: "destructive" });
+      return;
+    }
+    if (store.points_balance <= 0) {
+      toast({ title: "المتجر ده مش بيستقبل طلبات دلوقتي 😕", variant: "destructive" });
       return;
     }
     setSubmitting(true);
-    const { data: order, error } = await supabase.from("orders").insert({
-      store_id: store.id, customer_name: customerName,
-      customer_phone: customerPhone, customer_address: customerAddress,
-      customer_notes: customerNotes || null, total_price: cartTotal,
-      shipping_cost: shippingCost,
-      coupon_code: appliedCoupon?.code || null,
-      discount_amount: discountAmount || 0,
-    }).select().single();
-    if (error || !order) {
-      toast({ title: "حدث خطأ", description: error?.message, variant: "destructive" });
-      setSubmitting(false); return;
+    try {
+      const addressWithGov = selectedGovernorate ? `${selectedGovernorate} - ${customerAddress}` : customerAddress;
+      const { data: order, error } = await supabase.from("orders").insert({
+        store_id: store.id,
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        customer_address: addressWithGov,
+        customer_notes: customerNotes || null,
+        total_price: cartTotal,
+        shipping_cost: shippingCost,
+        coupon_code: appliedCoupon?.code || null,
+        discount_amount: discountAmount,
+      }).select().single();
+      if (error) throw error;
+
+      if (appliedCoupon) {
+        await supabase.from("coupons").update({ used_count: appliedCoupon.used_count + 1 }).eq("id", appliedCoupon.id);
+      }
+
+      const items = cart.map(i => ({
+        order_id: order.id,
+        product_id: i.product.id,
+        quantity: i.quantity,
+        price: i.product.discount_price || i.product.price,
+        selected_size: i.selectedSize || null,
+        selected_color: i.selectedColor || null,
+      }));
+      await supabase.from("order_items").insert(items);
+
+      setOrderSuccess(order.id);
+      setCart([]);
+      setShowCheckout(false);
+      setShowCart(false);
+      localStorage.removeItem(`cart_${store.id}`);
+    } catch (e: any) {
+      toast({ title: "حصلت مشكلة يسطا 😕", description: e.message, variant: "destructive" });
     }
-    await supabase.from("order_items").insert(
-      cart.map(i => ({
-        order_id: order.id, product_id: i.product.id,
-        quantity: i.quantity, price: i.product.discount_price || i.product.price,
-        selected_size: i.selectedSize || null, selected_color: i.selectedColor || null,
-      }))
-    );
-    if (appliedCoupon) {
-      await supabase.from("coupons").update({ used_count: appliedCoupon.used_count + 1 }).eq("id", appliedCoupon.id);
-    }
-    for (const item of cart) {
-      await supabase.from("products").update({ sales_count: (item.product.sales_count || 0) + item.quantity } as any).eq("id", item.product.id);
-    }
-    setCart([]); setShowCheckout(false); setOrderSuccess(order.id);
-    setCustomerName(""); setCustomerPhone(""); setCustomerAddress(""); setCustomerNotes("");
-    setCouponCode(""); setAppliedCoupon(null); setSelectedGovernorate("");
     setSubmitting(false);
   };
 
   const getAvgRating = (productId: string) => {
-    const productReviews = reviews.filter(r => r.product_id === productId);
-    if (productReviews.length === 0) return null;
-    return (productReviews.reduce((s, r) => s + r.rating, 0) / productReviews.length).toFixed(1);
+    const r = reviews.filter(rv => rv.product_id === productId);
+    return r.length ? (r.reduce((s, x) => s + x.rating, 0) / r.length).toFixed(1) : null;
   };
 
   const shareStore = () => {
     const url = window.location.href;
-    if (navigator.share) navigator.share({ title: store?.store_name, url });
-    else { navigator.clipboard.writeText(url); toast({ title: "تم نسخ الرابط" }); }
+    if (navigator.share) {
+      navigator.share({ title: store?.store_name, url });
+    } else {
+      navigator.clipboard.writeText(url);
+      toast({ title: "تم نسخ الرابط يسطا! 📋" });
+    }
   };
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#f8f9fa' }}>
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-muted">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 animate-spin rounded-full border-3" style={{ borderColor: '#e9ecef', borderTopColor: '#6c757d' }} />
-          <p className="text-sm" style={{ color: '#6c757d' }}>جاري التحميل...</p>
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-sm text-muted-foreground animate-pulse">ثانية واحدة يسطا... ⏳</p>
         </div>
       </div>
     );
@@ -216,57 +235,55 @@ export default function StoreFront() {
 
   if (!store) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4" style={{ backgroundColor: '#f8f9fa' }}>
-        <Store className="h-14 w-14" style={{ color: '#adb5bd' }} />
-        <h1 className="text-xl font-bold" style={{ color: '#343a40' }}>المتجر غير موجود</h1>
-        <p className="text-sm" style={{ color: '#6c757d' }}>تأكد من صحة الرابط</p>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-gradient-to-br from-background to-muted">
+        <div className="rounded-3xl bg-muted p-6">
+          <Store className="h-16 w-16 text-muted-foreground" />
+        </div>
+        <h1 className="text-2xl font-bold">المتجر ده مش موجود يسطا 😕</h1>
+        <p className="text-muted-foreground">يمكن الرابط غلط أو المتجر اتوقف</p>
       </div>
     );
   }
 
   if (store.points_balance <= 0) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4 text-center" style={{ backgroundColor: '#f8f9fa' }}>
-        <AlertTriangle className="h-14 w-14" style={{ color: '#adb5bd' }} />
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4 text-center bg-gradient-to-br from-background to-muted">
+        <div className="rounded-3xl bg-destructive/10 p-6">
+          <AlertTriangle className="h-16 w-16 text-destructive" />
+        </div>
         <div className="space-y-2">
-          <h1 className="text-xl font-bold" style={{ color: '#343a40' }}>{store.store_name}</h1>
-          <p className="text-sm max-w-sm" style={{ color: '#6c757d' }}>المتجر متوقف مؤقتاً. يرجى المحاولة لاحقاً.</p>
+          <h1 className="text-2xl font-bold">{store.store_name}</h1>
+          <p className="text-muted-foreground max-w-md">
+            المتجر ده واقف شوية يا اخويا 😕 صاحب المتجر محتاج يشحن نقاط عشان يرجع يستقبل طلبات تاني.
+          </p>
+        </div>
+        <div className="bg-muted rounded-xl p-4 max-w-sm text-sm text-muted-foreground">
+          <p className="font-semibold text-foreground mb-1">❓ إيه الحكاية؟</p>
+          <p>كل طلب بياخد نقطة واحدة من صاحب المتجر. لما النقاط تخلص، المتجر بيوقف لحد ما يشحن تاني. الموضوع بسيط!</p>
         </div>
         <AlshbhWatermark />
       </div>
     );
   }
 
-  const pc = store?.primary_color || "#4f46e5";
-  const sc = store?.secondary_color || "#7c3aed";
-  const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
-  const onProductClick = (productId: string) => navigate(`/store/${slug}/product/${productId}`);
-
-  // Lighter version of primary for backgrounds
-  const pcLight = pc + "18";
-
   if (orderSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#f8f9fa' }}>
-        <div className="text-center max-w-sm space-y-6 bg-white rounded-2xl p-8 shadow-sm">
-          <div className="h-20 w-20 rounded-full flex items-center justify-center mx-auto" style={{ backgroundColor: '#d4edda' }}>
-            <svg className="h-10 w-10" style={{ color: '#28a745' }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-          </div>
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background to-muted">
+        <div className="text-center max-w-md space-y-6 bg-card rounded-3xl p-8 shadow-xl border border-border">
+          <div className="text-7xl">🎉</div>
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold" style={{ color: '#212529' }}>تم تأكيد طلبك بنجاح!</h1>
-            <p className="text-sm" style={{ color: '#6c757d' }}>رقم الطلب</p>
-            <p className="font-mono text-xl font-bold" style={{ color: '#212529' }}>{orderSuccess.slice(0, 8).toUpperCase()}</p>
+            <h1 className="text-2xl font-bold">تمام يسطا! طلبك اتسجل 🔥</h1>
+            <div className="bg-muted rounded-xl p-3">
+              <p className="text-sm text-muted-foreground">رقم الطلب بتاعك</p>
+              <p className="font-mono font-bold text-xl text-primary">{orderSuccess.slice(0, 8)}</p>
+            </div>
           </div>
-          <p className="text-sm" style={{ color: '#6c757d' }}>سيتم التواصل معك قريباً لتأكيد التفاصيل</p>
-          <div className="flex gap-3 justify-center">
-            <button onClick={() => setOrderSuccess(null)} className="px-5 py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors hover:bg-gray-50" style={{ borderColor: '#dee2e6', color: '#495057' }}>
-              العودة للمتجر
-            </button>
+          <p className="text-muted-foreground">استنى شوية وهنكلمك على الواتساب أو التليفون عشان نأكد الطلب 📞</p>
+          <div className="flex gap-2 justify-center">
+            <Button onClick={() => setOrderSuccess(null)} className="rounded-xl">يلا ارجع للمتجر 🛍️</Button>
             {store.whatsapp_number && (
-              <a href={`https://wa.me/${store.whatsapp_number}?text=${encodeURIComponent(`مرحباً، طلبي رقم ${orderSuccess.slice(0, 8)}`)}`} target="_blank">
-                <button className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90" style={{ backgroundColor: '#25D366' }}>
-                  تواصل واتساب
-                </button>
+              <a href={`https://wa.me/${store.whatsapp_number}?text=${encodeURIComponent(`ازيك يسطا! أنا عملت طلب رقم ${orderSuccess.slice(0, 8)} 🎉`)}`} target="_blank">
+                <Button variant="outline" className="rounded-xl"><MessageCircle className="h-4 w-4 ml-1" />كلمنا واتساب</Button>
               </a>
             )}
           </div>
@@ -276,346 +293,232 @@ export default function StoreFront() {
     );
   }
 
+  const storeStyle = {
+    "--store-primary": store.primary_color || "#D97706",
+    "--store-secondary": store.secondary_color || "#F59E0B",
+  } as React.CSSProperties;
+
+  const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
+
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#f8f9fa' }}>
-      
-      {/* ===== HERO HEADER ===== */}
-      <header className="relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${pc}, ${sc})` }}>
-        {/* Pattern overlay */}
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 25% 25%, white 1px, transparent 1px), radial-gradient(circle at 75% 75%, white 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
-        
-        <div className="relative max-w-lg mx-auto px-5 pt-5 pb-8">
-          {/* Top bar */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              {store.logo_url ? (
-                <img src={store.logo_url} alt={store.store_name} className="h-11 w-11 rounded-xl object-cover border-2 border-white/30 shadow-lg" />
-              ) : (
-                <div className="h-11 w-11 rounded-xl flex items-center justify-center text-sm font-bold bg-white/20 text-white border-2 border-white/30">
-                  {store.store_name?.charAt(0)}
-                </div>
+    <div className="min-h-screen flex flex-col bg-muted/30" style={storeStyle}>
+      {/* Hero Header */}
+      <header className="relative overflow-hidden">
+        <div className="absolute inset-0" style={{ 
+          background: `linear-gradient(135deg, ${store.primary_color || '#D97706'}, ${store.secondary_color || '#F59E0B'}, ${store.primary_color || '#D97706'})`,
+          backgroundSize: '200% 200%',
+        }} />
+        <div className="absolute inset-0 bg-black/10" />
+        <div className="relative container py-8 text-white">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex gap-2">
+              <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/20 rounded-full" onClick={shareStore}>
+                <Share2 className="h-5 w-5" />
+              </Button>
+              {store.whatsapp_number && (
+                <a href={`https://wa.me/${store.whatsapp_number}`} target="_blank">
+                  <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/20 rounded-full">
+                    <MessageCircle className="h-5 w-5" />
+                  </Button>
+                </a>
               )}
-              <div>
-                <h1 className="font-bold text-lg text-white leading-tight">{store.store_name}</h1>
+            </div>
+            <Button 
+              className="relative rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 text-white"
+              onClick={() => setShowCart(true)}
+            >
+              <ShoppingCart className="h-5 w-5 ml-1" />
+              السلة
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white text-xs flex items-center justify-center font-bold" style={{ color: store.primary_color || '#D97706' }}>
+                  {cartCount}
+                </span>
+              )}
+            </Button>
+          </div>
+          <div className="flex items-center gap-4">
+            {store.logo_url ? (
+              <img src={store.logo_url} alt={store.store_name} className="h-20 w-20 rounded-2xl object-cover ring-4 ring-white/30 shadow-lg" />
+            ) : (
+              <div className="h-20 w-20 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center ring-4 ring-white/30">
+                <Store className="h-9 w-9" />
+              </div>
+            )}
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">{store.store_name}</h1>
+              <p className="text-white/70 mt-1">أهلاً بيك يا حبيبي! نورتنا 😍</p>
+              <div className="flex items-center gap-2 mt-2">
+                <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm text-xs">
+                  {products.length} منتج
+                </Badge>
+                <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm text-xs">
+                  🚚 توصيل لكل مصر
+                </Badge>
               </div>
             </div>
-            <div className="flex items-center gap-1">
-              <button onClick={shareStore} className="h-10 w-10 rounded-xl flex items-center justify-center bg-white/15 hover:bg-white/25 transition-colors text-white">
-                <Share2 className="h-4.5 w-4.5" />
-              </button>
-              <button onClick={() => setShowCart(true)} className="h-10 w-10 rounded-xl flex items-center justify-center bg-white/15 hover:bg-white/25 transition-colors text-white relative">
-                <ShoppingCart className="h-4.5 w-4.5" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-white text-[10px] flex items-center justify-center font-bold" style={{ color: pc }}>
-                    {cartCount}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Welcome text */}
-          <div className="mb-5">
-            <p className="text-white/80 text-sm">مرحباً بك في</p>
-            <h2 className="text-2xl font-bold text-white mt-1">{store.store_name}</h2>
-            <p className="text-white/70 text-sm mt-1">اختر من منتجاتنا المميزة</p>
-          </div>
-
-          {/* Search bar */}
-          <div className="relative">
-            <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="ابحث عن منتج..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pr-11 pl-4 py-3.5 text-sm rounded-2xl border-0 outline-none shadow-lg placeholder:text-gray-400"
-              style={{ backgroundColor: 'white', color: '#212529' }}
-            />
           </div>
         </div>
       </header>
 
-      {/* ===== BANNER ===== */}
-      {(store as any).banner_url && (
-        <div className="max-w-lg mx-auto w-full px-4 -mt-2 relative z-10">
-          <div className="rounded-2xl overflow-hidden shadow-md">
-            <img src={(store as any).banner_url} alt="" className="w-full h-40 object-cover" />
+      {/* Search */}
+      <div className="container -mt-5 relative z-10">
+        <div className="bg-card rounded-2xl shadow-lg border border-border p-3">
+          <div className="relative">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="دوّر على اللي عايزه... 🔍" 
+              value={searchQuery} 
+              onChange={(e) => setSearchQuery(e.target.value)} 
+              className="pr-10 border-0 bg-muted/50 rounded-xl h-11" 
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Categories */}
+      {categories.length > 0 && (
+        <div className="container mt-4">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <Button 
+              size="sm" 
+              variant={!selectedCategory ? "default" : "outline"} 
+              onClick={() => setSelectedCategory(null)}
+              className="rounded-full whitespace-nowrap shrink-0"
+            >
+              الكل 🔥
+            </Button>
+            {categories.map(c => (
+              <Button 
+                key={c.id} 
+                size="sm" 
+                variant={selectedCategory === c.id ? "default" : "outline"} 
+                onClick={() => setSelectedCategory(c.id)}
+                className="rounded-full whitespace-nowrap shrink-0"
+              >
+                {c.name}
+              </Button>
+            ))}
           </div>
         </div>
       )}
 
-      <div className="max-w-lg mx-auto w-full flex-1 flex flex-col">
-
-        {/* ===== CATEGORIES ===== */}
-        {categories.length > 0 && (
-          <div className="px-4 pt-5">
-            <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-hide">
-              <button
-                onClick={() => setSelectedCategory(null)}
-                className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
-                style={!selectedCategory
-                  ? { backgroundColor: pc, color: 'white', boxShadow: `0 4px 14px ${pc}40` }
-                  : { backgroundColor: 'white', color: '#495057', border: '1.5px solid #e9ecef' }
-                }
-              >
-                الكل
-              </button>
-              {categories.map(c => (
-                <button
-                  key={c.id}
-                  onClick={() => setSelectedCategory(c.id)}
-                  className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
-                  style={selectedCategory === c.id
-                    ? { backgroundColor: pc, color: 'white', boxShadow: `0 4px 14px ${pc}40` }
-                    : { backgroundColor: 'white', color: '#495057', border: '1.5px solid #e9ecef' }
-                  }
-                >
-                  {c.name}
-                </button>
-              ))}
+      {/* Featured */}
+      {featuredProducts.length > 0 && !searchQuery && !selectedCategory && (
+        <section className="container mt-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${store.primary_color}20` }}>
+              <Sparkles className="h-4 w-4" style={{ color: store.primary_color }} />
             </div>
+            <h2 className="text-lg font-bold">الحاجات المميزة 🌟</h2>
           </div>
-        )}
-
-        {/* ===== FEATURED PRODUCTS (Horizontal scroll) ===== */}
-        {featuredProducts.length > 0 && !searchQuery && !selectedCategory && (
-          <section className="px-4 pt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold" style={{ color: '#212529' }}>منتجات مميزة ⭐</h2>
-            </div>
-            <div className="flex gap-3.5 overflow-x-auto pb-3 scrollbar-hide">
-              {featuredProducts.map(p => {
-                const hasDiscount = p.discount_price && p.discount_price < p.price;
-                return (
-                  <div key={p.id} className="w-44 shrink-0 cursor-pointer group" onClick={() => onProductClick(p.id)}>
-                    <div className="relative aspect-square rounded-2xl overflow-hidden mb-2.5 bg-white shadow-sm">
-                      {p.main_image_url ? (
-                        <img src={p.main_image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: '#f1f3f5' }}>
-                          <Package className="h-8 w-8" style={{ color: '#ced4da' }} />
-                        </div>
-                      )}
-                      {hasDiscount && (
-                        <span className="absolute top-2.5 right-2.5 text-[11px] font-bold px-2 py-1 rounded-lg text-white" style={{ backgroundColor: '#dc3545' }}>
-                          -{Math.round((1 - p.discount_price / p.price) * 100)}%
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="text-sm font-semibold truncate" style={{ color: '#212529' }}>{p.name}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-sm font-bold" style={{ color: pc }}>{p.discount_price || p.price} جنيه</span>
-                      {hasDiscount && <span className="text-xs line-through" style={{ color: '#adb5bd' }}>{p.price}</span>}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* ===== ALL PRODUCTS GRID ===== */}
-        <main className="flex-1 px-4 py-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold" style={{ color: '#212529' }}>
-              {selectedCategory ? categories.find(c => c.id === selectedCategory)?.name : "جميع المنتجات"}
-            </h2>
-            <span className="text-xs font-medium px-2.5 py-1 rounded-lg" style={{ backgroundColor: '#e9ecef', color: '#495057' }}>
-              {filteredProducts.length} منتج
-            </span>
-          </div>
-
-          {filteredProducts.length === 0 ? (
-            <div className="text-center py-20">
-              <Search className="h-12 w-12 mx-auto mb-3" style={{ color: '#dee2e6' }} />
-              <p className="text-sm font-medium" style={{ color: '#6c757d' }}>لا توجد منتجات</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3.5">
-              {filteredProducts.map(p => {
-                const hasDiscount = p.discount_price && p.discount_price < p.price;
-                const discountPercent = hasDiscount ? Math.round((1 - p.discount_price / p.price) * 100) : 0;
-                const rating = getAvgRating(p.id);
-                return (
-                  <div key={p.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer group" onClick={() => onProductClick(p.id)}>
-                    <div className="relative aspect-square overflow-hidden">
-                      {p.main_image_url ? (
-                        <img src={p.main_image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: '#f1f3f5' }}>
-                          <Package className="h-10 w-10" style={{ color: '#dee2e6' }} />
-                        </div>
-                      )}
-                      {hasDiscount && (
-                        <span className="absolute top-2.5 right-2.5 text-[11px] font-bold px-2 py-1 rounded-lg text-white" style={{ backgroundColor: '#dc3545' }}>
-                          -{discountPercent}%
-                        </span>
-                      )}
-                      {p.stock !== null && p.stock <= 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-white/70">
-                          <span className="text-sm font-semibold px-3 py-1.5 rounded-lg" style={{ backgroundColor: '#f8d7da', color: '#842029' }}>نفذت الكمية</span>
-                        </div>
-                      )}
-                      {/* Quick add */}
-                      <button
-                        onClick={(e) => { e.stopPropagation(); addToCart(p); }}
-                        className="absolute bottom-2.5 left-2.5 h-9 w-9 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg text-white"
-                        style={{ backgroundColor: pc }}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <div className="p-3">
-                      <h3 className="text-sm font-semibold line-clamp-2 leading-snug mb-1.5" style={{ color: '#212529' }}>{p.name}</h3>
-                      {rating && (
-                        <div className="flex items-center gap-1 mb-1.5">
-                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                          <span className="text-xs font-medium" style={{ color: '#495057' }}>{rating}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold" style={{ color: pc }}>{p.discount_price || p.price} جنيه</span>
-                        {hasDiscount && <span className="text-xs line-through" style={{ color: '#adb5bd' }}>{p.price}</span>}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </main>
-
-        {/* ===== FOOTER SECTION ===== */}
-        <section className="px-4 pb-4 space-y-3">
-          {/* Policies */}
-          {storePolicies && (storePolicies.return_policy || storePolicies.shipping_policy || storePolicies.privacy_policy) && (
-            <details className="bg-white rounded-2xl p-4 shadow-sm">
-              <summary className="text-sm font-semibold cursor-pointer flex items-center gap-2" style={{ color: '#495057' }}>
-                <FileText className="h-4 w-4" style={{ color: pc }} />
-                سياسات المتجر
-              </summary>
-              <div className="mt-3 space-y-3 text-sm" style={{ color: '#6c757d' }}>
-                {storePolicies.return_policy && (
-                  <div><h4 className="font-semibold mb-1" style={{ color: '#343a40' }}>سياسة الاسترجاع</h4><p className="whitespace-pre-line leading-relaxed">{storePolicies.return_policy}</p></div>
-                )}
-                {storePolicies.shipping_policy && (
-                  <div><h4 className="font-semibold mb-1" style={{ color: '#343a40' }}>سياسة الشحن</h4><p className="whitespace-pre-line leading-relaxed">{storePolicies.shipping_policy}</p></div>
-                )}
-                {storePolicies.privacy_policy && (
-                  <div><h4 className="font-semibold mb-1" style={{ color: '#343a40' }}>سياسة الخصوصية</h4><p className="whitespace-pre-line leading-relaxed">{storePolicies.privacy_policy}</p></div>
-                )}
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            {featuredProducts.map(p => (
+              <div key={p.id} className="w-44 shrink-0">
+                <ProductCard product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} storeColor={store.primary_color} />
               </div>
-            </details>
-          )}
-
-          {/* Track order + Contact */}
-          <div className="flex gap-3">
-            <Link to="/track" className="flex-1">
-              <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3 hover:shadow-md transition-shadow cursor-pointer">
-                <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: pcLight }}>
-                  <Truck className="h-5 w-5" style={{ color: pc }} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold" style={{ color: '#212529' }}>تتبع طلبك</p>
-                  <p className="text-xs" style={{ color: '#6c757d' }}>تابع حالة طلبك</p>
-                </div>
-              </div>
-            </Link>
-            {store.whatsapp_number && (
-              <a href={`https://wa.me/${store.whatsapp_number}`} target="_blank" className="flex-1">
-                <div className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3 hover:shadow-md transition-shadow cursor-pointer">
-                  <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#d4edda' }}>
-                    <MessageCircle className="h-5 w-5" style={{ color: '#28a745' }} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold" style={{ color: '#212529' }}>تواصل معنا</p>
-                    <p className="text-xs" style={{ color: '#6c757d' }}>واتساب</p>
-                  </div>
-                </div>
-              </a>
-            )}
+            ))}
           </div>
         </section>
+      )}
 
-        {/* Complaint */}
-        <section className="px-4 pb-6">
-          <details className="bg-white rounded-2xl p-4 shadow-sm">
-            <summary className="text-sm font-semibold cursor-pointer flex items-center gap-2" style={{ color: '#495057' }}>
-              <MessageCircle className="h-4 w-4" style={{ color: pc }} />
-              شكوى أو استفسار
-            </summary>
-            <ComplaintForm storeId={store.id} storeName={store.store_name} whatsappNumber={store.whatsapp_number} pc={pc} />
-          </details>
+      {/* Best sellers */}
+      {bestSellers.length > 0 && bestSellers[0].sales_count > 0 && !searchQuery && !selectedCategory && (
+        <section className="container mt-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-8 w-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-destructive" />
+            </div>
+            <h2 className="text-lg font-bold">الناس بتحب دول 🔥</h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {bestSellers.map(p => (
+              <ProductCard key={p.id} product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} storeColor={store.primary_color} />
+            ))}
+          </div>
         </section>
-      </div>
+      )}
 
-      {/* ===== CART SHEET ===== */}
+      {/* All Products */}
+      <main className="flex-1 container py-6 pb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold">
+            {selectedCategory ? categories.find(c => c.id === selectedCategory)?.name : "كل المنتجات 🛍️"}
+          </h2>
+          <Badge variant="secondary" className="rounded-full">{filteredProducts.length} منتج</Badge>
+        </div>
+        {filteredProducts.length === 0 ? (
+          <div className="text-center py-16 bg-card rounded-2xl border border-border">
+            <ShoppingCart className="h-14 w-14 text-muted-foreground mx-auto mb-4" />
+            <h2 className="text-lg font-semibold mb-1">مفيش حاجة هنا 😅</h2>
+            <p className="text-sm text-muted-foreground">جرب تدور بكلمة تانية يسطا</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {filteredProducts.map(p => (
+              <ProductCard key={p.id} product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} storeColor={store.primary_color} />
+            ))}
+          </div>
+        )}
+      </main>
+
+      {/* Cart Sheet */}
       <Sheet open={showCart} onOpenChange={setShowCart}>
-        <SheetContent side="left" className="w-full sm:max-w-md overflow-y-auto p-0" style={{ backgroundColor: '#f8f9fa' }}>
-          <div className="bg-white p-5 border-b" style={{ borderColor: '#e9ecef' }}>
-            <SheetTitle className="text-lg font-bold" style={{ color: '#212529' }}>سلة المشتريات ({cartCount})</SheetTitle>
-          </div>
-          <div className="p-4 space-y-3">
+        <SheetContent side="left" className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader><SheetTitle>السلة بتاعتك 🛒 ({cartCount})</SheetTitle></SheetHeader>
+          <div className="mt-4 space-y-3">
             {cart.length === 0 ? (
-              <div className="text-center py-20">
-                <div className="h-16 w-16 rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: '#e9ecef' }}>
-                  <ShoppingCart className="h-7 w-7" style={{ color: '#adb5bd' }} />
-                </div>
-                <p className="text-sm font-medium" style={{ color: '#6c757d' }}>السلة فارغة</p>
-                <p className="text-xs mt-1" style={{ color: '#adb5bd' }}>أضف منتجات للبدء</p>
+              <div className="text-center py-12">
+                <ShoppingCart className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground font-semibold">السلة فاضية يسطا 😅</p>
+                <p className="text-sm text-muted-foreground mt-1">يلا اختار حاجة حلوة من المتجر!</p>
               </div>
             ) : (
               <>
                 {cart.map((item, idx) => (
-                  <div key={idx} className="bg-white rounded-2xl p-3.5 shadow-sm flex items-center gap-3">
+                  <div key={idx} className="flex items-center gap-3 bg-muted/50 rounded-xl p-3">
                     {item.product.main_image_url ? (
-                      <img src={item.product.main_image_url} alt="" className="h-20 w-20 rounded-xl object-cover" />
+                      <img src={item.product.main_image_url} alt="" className="h-16 w-16 rounded-xl object-cover" />
                     ) : (
-                      <div className="h-20 w-20 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#f1f3f5' }}>
-                        <Package className="h-6 w-6" style={{ color: '#ced4da' }} />
+                      <div className="h-16 w-16 rounded-xl bg-muted flex items-center justify-center">
+                        <ShoppingCart className="h-5 w-5 text-muted-foreground" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-semibold truncate" style={{ color: '#212529' }}>{item.product.name}</h4>
-                      {item.selectedSize && <p className="text-xs mt-0.5" style={{ color: '#6c757d' }}>المقاس: {item.selectedSize}</p>}
-                      {item.selectedColor && <p className="text-xs" style={{ color: '#6c757d' }}>اللون: {item.selectedColor}</p>}
-                      <p className="text-sm font-bold mt-1" style={{ color: pc }}>{item.product.discount_price || item.product.price} جنيه</p>
-                      <div className="flex items-center gap-2.5 mt-2">
-                        <button className="h-7 w-7 rounded-lg flex items-center justify-center border" style={{ borderColor: '#dee2e6' }} onClick={() => updateCartQuantity(idx, -1)}>
-                          <Minus className="h-3 w-3" style={{ color: '#495057' }} />
-                        </button>
-                        <span className="text-sm font-bold" style={{ color: '#212529' }}>{item.quantity}</span>
-                        <button className="h-7 w-7 rounded-lg flex items-center justify-center text-white" style={{ backgroundColor: pc }} onClick={() => updateCartQuantity(idx, 1)}>
+                      <h4 className="font-semibold text-sm truncate">{item.product.name}</h4>
+                      {item.selectedSize && <p className="text-xs text-muted-foreground">المقاس: {item.selectedSize}</p>}
+                      {item.selectedColor && <p className="text-xs text-muted-foreground">اللون: {item.selectedColor}</p>}
+                      <p className="text-sm font-bold mt-0.5" style={{ color: store.primary_color }}>{item.product.discount_price || item.product.price} جنيه</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Button size="icon" variant="outline" className="h-6 w-6 rounded-full" onClick={() => updateCartQuantity(idx, -1)}>
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="text-sm font-semibold">{item.quantity}</span>
+                        <Button size="icon" variant="outline" className="h-6 w-6 rounded-full" onClick={() => updateCartQuantity(idx, 1)}>
                           <Plus className="h-3 w-3" />
-                        </button>
+                        </Button>
                       </div>
                     </div>
-                    <button onClick={() => removeFromCart(idx)} className="p-2 rounded-lg hover:bg-red-50 transition-colors">
-                      <Trash2 className="h-4 w-4" style={{ color: '#dc3545' }} />
-                    </button>
+                    <Button size="icon" variant="ghost" className="shrink-0" onClick={() => removeFromCart(idx)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
                   </div>
                 ))}
-                <div className="bg-white rounded-2xl p-4 shadow-sm space-y-2.5 mt-2">
+                <div className="bg-muted/50 rounded-xl p-4 space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span style={{ color: '#6c757d' }}>المجموع</span>
-                    <span className="font-semibold" style={{ color: '#212529' }}>{cartSubtotal} جنيه</span>
+                    <span className="text-muted-foreground">المنتجات</span>
+                    <span>{cartSubtotal} جنيه</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span style={{ color: '#6c757d' }}>التوصيل</span>
-                    <span className="font-semibold" style={{ color: '#212529' }}>{shippingCost} جنيه</span>
+                    <span className="text-muted-foreground">التوصيل {selectedGovernorate && `(${selectedGovernorate})`}</span>
+                    <span>{shippingCost} جنيه</span>
                   </div>
-                  <div className="flex justify-between text-base font-bold border-t pt-2.5" style={{ borderColor: '#e9ecef', color: '#212529' }}>
+                  <div className="flex justify-between font-bold text-lg border-t border-border pt-2">
                     <span>الإجمالي</span>
-                    <span>{cartTotal} جنيه</span>
+                    <span style={{ color: store.primary_color }}>{cartTotal} جنيه</span>
                   </div>
-                  <button
-                    className="w-full py-3.5 rounded-xl text-sm font-bold mt-3 transition-opacity hover:opacity-90 text-white shadow-lg"
-                    style={{ backgroundColor: pc, boxShadow: `0 4px 14px ${pc}40` }}
-                    onClick={() => { setShowCart(false); setShowCheckout(true); }}
-                  >
-                    إتمام الطلب
-                  </button>
+                  <Button className="w-full mt-2 rounded-xl h-11" onClick={() => { setShowCart(false); setShowCheckout(true); }}>
+                    يلا نكمل الطلب! 🚀
+                  </Button>
                 </div>
               </>
             )}
@@ -623,94 +526,99 @@ export default function StoreFront() {
         </SheetContent>
       </Sheet>
 
-      {/* ===== CHECKOUT DIALOG ===== */}
+      {/* Checkout Dialog */}
       <Dialog open={showCheckout} onOpenChange={setShowCheckout}>
-        <DialogContent className="rounded-2xl max-h-[90vh] overflow-y-auto sm:max-w-md p-0">
-          <div className="p-5 border-b" style={{ borderColor: '#e9ecef' }}>
-            <DialogTitle className="text-lg font-bold" style={{ color: '#212529' }}>إتمام الطلب</DialogTitle>
-          </div>
-          <div className="p-5 space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold" style={{ color: '#343a40' }}>الاسم الكامل</label>
-              <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="أدخل اسمك" className="w-full px-4 py-3 text-sm rounded-xl border-2 outline-none focus:border-current transition-colors" style={{ borderColor: '#e9ecef', color: '#212529' }} />
+        <DialogContent className="rounded-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>يلا نكمل الطلب! 📦</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>اسمك إيه يا اخويا؟ 😊</Label>
+              <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="محمد أحمد" className="rounded-xl" />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold" style={{ color: '#343a40' }}>رقم الهاتف</label>
-              <input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="01xxxxxxxxx" dir="ltr" className="w-full px-4 py-3 text-sm rounded-xl border-2 outline-none focus:border-current transition-colors" style={{ borderColor: '#e9ecef', color: '#212529' }} />
+            <div className="space-y-2">
+              <Label>رقم موبايلك 📱</Label>
+              <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="01xxxxxxxxx" dir="ltr" className="rounded-xl" />
             </div>
 
+            {/* Governorate Selection */}
             {storeShipping.length > 0 && (
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold" style={{ color: '#343a40' }}>المحافظة</label>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1"><MapPin className="h-3 w-3" />المحافظة بتاعتك 📍</Label>
                 <Select value={selectedGovernorate} onValueChange={setSelectedGovernorate}>
-                  <SelectTrigger className="rounded-xl h-12 border-2" style={{ borderColor: '#e9ecef' }}><SelectValue placeholder="اختر المحافظة" /></SelectTrigger>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue placeholder="اختار محافظتك يسطا..." />
+                  </SelectTrigger>
                   <SelectContent>
                     {storeShipping.map(s => (
-                      <SelectItem key={s.id} value={s.governorate}>{s.governorate} — {s.shipping_cost} جنيه</SelectItem>
+                      <SelectItem key={s.id} value={s.governorate}>
+                        {s.governorate} — {s.shipping_cost} جنيه توصيل
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             )}
 
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold" style={{ color: '#343a40' }}>العنوان بالتفصيل</label>
-              <textarea value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} placeholder="الشارع - المبنى - الشقة" rows={2} className="w-full px-4 py-3 text-sm rounded-xl border-2 outline-none focus:border-current resize-none transition-colors" style={{ borderColor: '#e9ecef', color: '#212529' }} />
+            <div className="space-y-2">
+              <Label>العنوان بالتفصيل 🏠</Label>
+              <Textarea value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} placeholder="الشارع والعمارة والشقة..." className="rounded-xl" />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold" style={{ color: '#343a40' }}>ملاحظات (اختياري)</label>
-              <input value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} placeholder="أي ملاحظات إضافية" className="w-full px-4 py-3 text-sm rounded-xl border-2 outline-none focus:border-current transition-colors" style={{ borderColor: '#e9ecef', color: '#212529' }} />
+            <div className="space-y-2">
+              <Label>عايز تقولنا حاجة؟ (اختياري)</Label>
+              <Input value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} placeholder="مثلاً: عايزه يتلف كويس 🎁" className="rounded-xl" />
             </div>
-
             {/* Coupon */}
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold" style={{ color: '#343a40' }}>كوبون خصم</label>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1"><Tag className="h-3 w-3" />عندك كوبون خصم؟ 🎫</Label>
               <div className="flex gap-2">
-                <input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="أدخل الكود" dir="ltr" className="flex-1 px-4 py-3 text-sm rounded-xl border-2 outline-none focus:border-current transition-colors" style={{ borderColor: '#e9ecef', color: '#212529' }} />
-                <button onClick={applyCoupon} disabled={applyingCoupon} className="px-5 py-3 rounded-xl text-sm font-bold border-2 transition-colors hover:bg-gray-50" style={{ borderColor: '#dee2e6', color: '#495057' }}>
-                  {applyingCoupon ? "..." : "تفعيل"}
-                </button>
+                <Input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="اكتب الكود هنا" dir="ltr" className="flex-1 rounded-xl" />
+                <Button variant="outline" onClick={applyCoupon} disabled={applyingCoupon} className="rounded-xl">
+                  {applyingCoupon ? "..." : "فعّل! ✨"}
+                </Button>
               </div>
               {appliedCoupon && (
-                <p className="text-xs px-3 py-2 rounded-xl font-medium" style={{ color: '#0f5132', backgroundColor: '#d1e7dd' }}>
-                  ✓ كوبون {appliedCoupon.code} — خصم {appliedCoupon.discount_type === 'percentage' ? `${appliedCoupon.discount_value}%` : `${appliedCoupon.discount_value} جنيه`}
-                </p>
+                <p className="text-xs text-green-600 bg-green-50 rounded-lg px-2 py-1">✅ تمام! كوبون {appliedCoupon.code} — خصم {appliedCoupon.discount_type === 'percentage' ? `${appliedCoupon.discount_value}%` : `${appliedCoupon.discount_value} جنيه`}</p>
               )}
             </div>
-
-            {/* Summary */}
-            <div className="rounded-2xl p-4 space-y-2" style={{ backgroundColor: '#f1f3f5' }}>
-              <div className="flex justify-between text-sm"><span style={{ color: '#6c757d' }}>المنتجات</span><span className="font-semibold" style={{ color: '#212529' }}>{cartSubtotal} جنيه</span></div>
+            <div className="bg-muted/50 rounded-xl p-3 space-y-1 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">المنتجات</span><span>{cartSubtotal} جنيه</span></div>
               {discountAmount > 0 && (
-                <div className="flex justify-between text-sm" style={{ color: '#198754' }}><span>الخصم</span><span className="font-semibold">-{discountAmount} جنيه</span></div>
+                <div className="flex justify-between text-green-600"><span>الخصم 🎉</span><span>-{discountAmount} جنيه</span></div>
               )}
-              <div className="flex justify-between text-sm"><span style={{ color: '#6c757d' }}>التوصيل {selectedGovernorate && `(${selectedGovernorate})`}</span><span className="font-semibold" style={{ color: '#212529' }}>{shippingCost} جنيه</span></div>
-              <div className="flex justify-between text-base font-bold border-t pt-2" style={{ borderColor: '#dee2e6', color: '#212529' }}>
-                <span>الإجمالي</span><span>{cartTotal} جنيه</span>
+              <div className="flex justify-between"><span className="text-muted-foreground">التوصيل {selectedGovernorate && `(${selectedGovernorate})`}</span><span>{shippingCost} جنيه</span></div>
+              <div className="flex justify-between font-bold text-base border-t border-border pt-2">
+                <span>الإجمالي</span>
+                <span style={{ color: store.primary_color }}>{cartTotal} جنيه</span>
               </div>
             </div>
-            <button
-              className="w-full py-3.5 rounded-xl text-sm font-bold transition-opacity disabled:opacity-50 hover:opacity-90 text-white shadow-lg"
-              style={{ backgroundColor: pc, boxShadow: `0 4px 14px ${pc}40` }}
-              onClick={submitOrder} disabled={submitting}
-            >
-              {submitting ? "جاري التأكيد..." : "تأكيد الطلب"}
-            </button>
+            <Button className="w-full rounded-xl h-11" onClick={submitOrder} disabled={submitting}>
+              {submitting ? "ثانية يسطا... ⏳" : "أكد الطلب 🎉"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Complaint */}
+      <section className="container pb-6">
+        <details className="bg-card border border-border rounded-2xl p-4 shadow-sm">
+          <summary className="font-semibold cursor-pointer flex items-center gap-2">
+            <MessageCircle className="h-4 w-4 text-muted-foreground" />
+            عندك مشكلة أو عايز تسأل عن حاجة؟ 🤔
+          </summary>
+          <ComplaintForm storeId={store.id} storeName={store.store_name} whatsappNumber={store.whatsapp_number} />
+        </details>
+      </section>
 
       {store.facebook_pixel && (
         <script dangerouslySetInnerHTML={{ __html: `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${store.facebook_pixel}');fbq('track','PageView');` }} />
       )}
 
-      <WhatsAppFloat phone={store.whatsapp_number} />
       <AlshbhWatermark />
     </div>
   );
 }
 
-function ComplaintForm({ storeId, storeName, whatsappNumber, pc }: { storeId: string; storeName: string; whatsappNumber?: string; pc: string }) {
+function ComplaintForm({ storeId, storeName, whatsappNumber }: { storeId: string; storeName: string; whatsappNumber?: string }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
@@ -719,23 +627,84 @@ function ComplaintForm({ storeId, storeName, whatsappNumber, pc }: { storeId: st
   const { toast } = useToast();
 
   const submit = async () => {
-    if (!name || !message) { toast({ title: "اكتب اسمك ورسالتك", variant: "destructive" }); return; }
+    if (!name || !message) return;
     setSending(true);
-    await supabase.from("complaints").insert({ store_id: storeId, store_name: storeName, name, phone: phone || null, message });
-    setSent(true); setSending(false);
-    toast({ title: "تم إرسال رسالتك بنجاح" });
+    const { error } = await supabase.from("complaints").insert({
+      name, phone: phone || null, message,
+      store_id: storeId,
+      store_name: storeName,
+    });
+    if (error) toast({ title: "حصلت مشكلة يسطا 😕", variant: "destructive" });
+    else { setSent(true); toast({ title: "تمام! وصلتنا رسالتك ✅" }); }
+    setSending(false);
   };
 
-  if (sent) return <p className="text-sm py-3" style={{ color: '#198754' }}>✓ تم إرسال رسالتك — سنتواصل معك قريباً</p>;
+  if (sent) return <p className="text-sm text-green-600 mt-3">تمام يا اخويا! وصلتنا رسالتك وهنرد عليك في أقرب وقت 🙏</p>;
 
   return (
-    <div className="mt-3 space-y-3">
-      <input value={name} onChange={e => setName(e.target.value)} placeholder="اسمك" className="w-full px-4 py-3 text-sm rounded-xl border-2 outline-none transition-colors" style={{ borderColor: '#e9ecef', color: '#212529' }} />
-      <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="رقم الهاتف (اختياري)" dir="ltr" className="w-full px-4 py-3 text-sm rounded-xl border-2 outline-none transition-colors" style={{ borderColor: '#e9ecef', color: '#212529' }} />
-      <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="اكتب رسالتك..." rows={3} className="w-full px-4 py-3 text-sm rounded-xl border-2 outline-none resize-none transition-colors" style={{ borderColor: '#e9ecef', color: '#212529' }} />
-      <button onClick={submit} disabled={sending} className="w-full py-3 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: pc }}>
-        {sending ? "جاري الإرسال..." : "إرسال"}
-      </button>
+    <div className="mt-4 space-y-3">
+      <Input value={name} onChange={e => setName(e.target.value)} placeholder="اسمك إيه يسطا؟" className="rounded-xl" />
+      <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="رقم موبايلك (لو عايز نكلمك)" dir="ltr" className="rounded-xl" />
+      <Textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="قولنا إيه اللي حصل يا اخويا..." className="rounded-xl" />
+      <div className="flex gap-2">
+        <Button size="sm" onClick={submit} disabled={sending} className="rounded-xl">{sending ? "بنبعت..." : "ابعت 📩"}</Button>
+        {whatsappNumber && (
+          <a href={`https://wa.me/${whatsappNumber}`} target="_blank">
+            <Button size="sm" variant="outline" className="rounded-xl"><MessageCircle className="h-4 w-4 ml-1" />كلمنا واتساب</Button>
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ProductCard({ product, avgRating, onClick, storeColor }: {
+  product: any; avgRating: string | null; onClick: () => void; storeColor?: string;
+}) {
+  const finalPrice = product.discount_price || product.price;
+  const hasDiscount = product.discount_price && product.discount_price < product.price;
+  const discountPercent = hasDiscount ? Math.round((1 - product.discount_price / product.price) * 100) : 0;
+
+  return (
+    <div className="rounded-2xl border border-border overflow-hidden hover:shadow-xl transition-all duration-300 bg-card cursor-pointer group hover:-translate-y-0.5" onClick={onClick}>
+      <div className="relative overflow-hidden">
+        {product.main_image_url ? (
+          <img src={product.main_image_url} alt={product.name} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+        ) : (
+          <div className="w-full h-48 bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+            <ShoppingCart className="h-8 w-8 text-muted-foreground" />
+          </div>
+        )}
+        {hasDiscount && (
+          <Badge className="absolute top-2 left-2 bg-destructive text-destructive-foreground border-0 rounded-lg text-xs">
+            -{discountPercent}%
+          </Badge>
+        )}
+        {product.is_featured && (
+          <Badge className="absolute top-2 right-2 border-0 rounded-lg text-xs" style={{ backgroundColor: storeColor || '#D97706', color: 'white' }}>
+            ⭐ مميز
+          </Badge>
+        )}
+      </div>
+      <div className="p-3">
+        <h3 className="font-semibold text-sm mb-1 truncate">{product.name}</h3>
+        {product.description && <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{product.description}</p>}
+        {avgRating && (
+          <div className="flex items-center gap-1 mb-2">
+            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+            <span className="text-xs font-semibold">{avgRating}</span>
+          </div>
+        )}
+        {product.stock !== null && product.stock <= 0 && (
+          <Badge variant="destructive" className="text-xs mb-2 rounded-lg">خلص يسطا 😅</Badge>
+        )}
+        <div className="flex items-center gap-2">
+          <span className="text-base font-bold" style={{ color: storeColor || "var(--store-primary)" }}>{finalPrice} جنيه</span>
+          {hasDiscount && (
+            <span className="text-xs text-muted-foreground line-through">{product.price}</span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
