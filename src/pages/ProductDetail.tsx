@@ -74,6 +74,15 @@ export default function ProductDetail() {
     if (!storeData) { setLoading(false); return; }
     setStore(storeData);
 
+    // Track page view
+    const visitorId = localStorage.getItem('visitor_id') || crypto.randomUUID();
+    localStorage.setItem('visitor_id', visitorId);
+    (supabase as any).from("page_views").insert({
+      store_id: storeData.id,
+      page_path: `/store/${slug}/product/${productId}`,
+      visitor_id: visitorId,
+    }).then(() => {});
+
     const { data: productData } = await supabase
       .from("products").select("*").eq("id", productId).eq("store_id", storeData.id).eq("is_active", true).maybeSingle();
     if (!productData) { setLoading(false); return; }

@@ -53,6 +53,15 @@ export default function StoreFront() {
 
       if (storeData) {
         setStore(storeData);
+        // Track page view
+        const visitorId = localStorage.getItem('visitor_id') || crypto.randomUUID();
+        localStorage.setItem('visitor_id', visitorId);
+        (supabase as any).from("page_views").insert({
+          store_id: storeData.id,
+          page_path: `/store/${slug}`,
+          visitor_id: visitorId,
+        }).then(() => {});
+
         const savedCart = localStorage.getItem(`cart_${storeData.id}`);
         if (savedCart) {
           try { setCart(JSON.parse(savedCart)); } catch {}

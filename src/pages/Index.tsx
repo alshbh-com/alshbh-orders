@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Layout from "@/components/Layout";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Store, ShoppingCart, Bell, Palette, Zap, Shield,
   Globe, Smartphone, Search, Star, Package, TrendingUp,
@@ -78,7 +80,16 @@ function ShareButtons({ url, text }: { url: string; text: string }) {
 }
 
 export default function Index() {
-  const whatsappUrl = "https://wa.me/201061067966?text=" + encodeURIComponent("أريد شحن نقاط لمنصة الشبح ميديا Alshbh Mediaبح ميديا Alshbh Mediaبح ميديا Alshbh Media");
+  const whatsappUrl = "https://wa.me/201061067966?text=" + encodeURIComponent("أريد شحن نقاط لمنصة الشبح ميديا Alshbh Media");
+
+  useEffect(() => {
+    const visitorId = localStorage.getItem('visitor_id') || crypto.randomUUID();
+    localStorage.setItem('visitor_id', visitorId);
+    (supabase as any).from("page_views").insert({
+      page_path: "/",
+      visitor_id: visitorId,
+    }).then(() => {});
+  }, []);
 
   return (
     <Layout>
