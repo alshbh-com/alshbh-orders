@@ -30,6 +30,7 @@ export default function StoreFront() {
   const [categories, setCategories] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [storeShipping, setStoreShipping] = useState<any[]>([]);
+  const [storePolicies, setStorePolicies] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
