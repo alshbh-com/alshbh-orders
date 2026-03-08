@@ -78,7 +78,7 @@ function ShareButtons({ url, text }: { url: string; text: string }) {
 }
 
 export default function Index() {
-  const whatsappUrl = "https://wa.me/201061067966?text=" + encodeURIComponent("أريد شحن نقاط لمنصة ALSHBH");
+  const whatsappUrl = "https://wa.me/201061067966?text=" + encodeURIComponent("أريد شحن نقاط لمنصة الشبح ميديا Alshbh Media");
 
   return (
     <Layout>
