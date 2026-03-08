@@ -84,6 +84,13 @@ export default function Dashboard() {
   const [editSnapchatPixel, setEditSnapchatPixel] = useState("");
   const [savingSettings, setSavingSettings] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [pageViews, setPageViews] = useState<any[]>([]);
+  const [viewsDays, setViewsDays] = useState(7);
+  const [storePolicies, setStorePolicies] = useState<any>(null);
+  const [editReturnPolicy, setEditReturnPolicy] = useState("");
+  const [editShippingPolicy, setEditShippingPolicy] = useState("");
+  const [editPrivacyPolicy, setEditPrivacyPolicy] = useState("");
+  const [savingPolicies, setSavingPolicies] = useState(false);
 
   // Order detail
   const [showOrderDetail, setShowOrderDetail] = useState<any>(null);
