@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Layout from "@/components/Layout";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Store, ShoppingCart, Bell, Palette, Zap, Shield,
   Globe, Smartphone, Search, Star, Package, TrendingUp,
