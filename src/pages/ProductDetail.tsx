@@ -396,7 +396,7 @@ export default function ProductDetail() {
                                 ? "ring-2 ring-offset-2 shadow-lg scale-105"
                                 : "border-2 border-border bg-background hover:border-primary/50 hover:scale-105"
                             }`}
-                            style={sel.color === color ? { borderColor: store.primary_color, ringColor: store.primary_color } : {}}>
+                            style={sel.color === color ? { borderColor: store.primary_color } : {}}>
                             <span className="w-5 h-5 rounded-full border-2 border-white shadow-sm shrink-0" style={{ backgroundColor: COLORS[color] || "#888" }} />
                             {color}
                           </button>
