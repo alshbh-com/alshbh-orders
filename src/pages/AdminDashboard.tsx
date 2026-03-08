@@ -59,6 +59,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchAll();
+    fetchPageViews(7);
   }, []);
 
   const fetchAll = async () => {
