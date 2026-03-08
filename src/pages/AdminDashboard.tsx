@@ -50,6 +50,11 @@ export default function AdminDashboard() {
   // Order filter
   const [orderFilter, setOrderFilter] = useState("all");
 
+  // Analytics
+  const [pageViews, setPageViews] = useState<any[]>([]);
+  const [viewsDays, setViewsDays] = useState(7);
+  const [loadingViews, setLoadingViews] = useState(false);
+
   const { user } = useAuth();
 
   useEffect(() => {
