@@ -111,7 +111,7 @@ export default function Index() {
       {/* Features */}
       <section className="py-20 bg-muted/30">
         <div className="container">
-          <h2 classNameالشبح ميديا-3xl md:text-4xl font-bold text-center mb-4">ليه ALSHBH؟</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">ليه الشبح ميديا؟</h2>
           <p className="text-center text-muted-foreground mb-12 max-w-xl mx-auto">كل اللي محتاجه عشان تبدأ تبيع أونلاين</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((f, i) => (
