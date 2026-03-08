@@ -431,16 +431,28 @@ export default function Dashboard() {
   const saveStoreSettings = async () => {
     if (!store) return;
     setSavingSettings(true);
+
+    // Upload banner if selected
+    let bannerUrl = store.banner_url || null;
+    if (bannerImage) {
+      try {
+        bannerUrl = await uploadImage(bannerImage, "banners");
+      } catch (e: any) {
+        toast({ title: "فشل رفع صورة البانر", variant: "destructive" });
+      }
+    }
+
     const { error } = await supabase.from("stores").update({
       store_name: editStoreName, whatsapp_number: editWhatsapp,
       theme: editTheme, primary_color: editPrimaryColor,
       secondary_color: editSecondaryColor, shipping_cost: parseFloat(editShippingCost) || 70,
       facebook_pixel: editFacebookPixel || null, tiktok_pixel: editTiktokPixel || null,
       google_analytics: editGoogleAnalytics || null, snapchat_pixel: editSnapchatPixel || null,
-    }).eq("id", store.id);
+      banner_url: bannerUrl,
+    } as any).eq("id", store.id);
     if (!error) toast({ title: "تم حفظ الإعدادات" });
     else toast({ title: "حصل مشكلة", description: error.message, variant: "destructive" });
-    setSavingSettings(false); fetchData();
+    setSavingSettings(false); setBannerImage(null); fetchData();
   };
 
   const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
