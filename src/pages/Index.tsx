@@ -134,6 +134,15 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Share Section */}
+      <section className="py-12 bg-muted/50">
+        <div className="container text-center">
+          <h2 className="text-2xl font-bold mb-3">شارك ALSHBH مع صحابك 🚀</h2>
+          <p className="text-muted-foreground mb-6">ساعدنا نوصل لناس أكتر — شير الموقع على السوشيال!</p>
+          <ShareButtons url="https://alshbh.store" text="اعرف منصة ALSHBH الشبح — أسهل طريقة تعمل بيها متجرك الإلكتروني في مصر مجاناً! 🔥" />
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="py-20 bg-primary text-primary-foreground">
         <div className="container text-center">
