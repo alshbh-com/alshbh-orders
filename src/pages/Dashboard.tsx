@@ -1269,7 +1269,7 @@ export default function Dashboard() {
                         key={t.slug}
                         onClick={() => setEditTheme(t.slug)}
                         className={`relative rounded-xl border-2 p-3 cursor-pointer transition-all hover:shadow-md ${editTheme === t.slug ? 'ring-2 ring-offset-2' : 'border-border'}`}
-                        style={editTheme === t.slug ? { borderColor: store.primary_color, ringColor: store.primary_color } : {}}
+                        style={editTheme === t.slug ? { borderColor: store.primary_color, '--tw-ring-color': store.primary_color } as React.CSSProperties : {}}
                       >
                         {/* Mini preview */}
                         <div className="rounded-lg overflow-hidden mb-2 h-16" style={{ backgroundColor: t.color }}>
