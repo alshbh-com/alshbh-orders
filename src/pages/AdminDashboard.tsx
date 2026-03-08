@@ -86,7 +86,7 @@ export default function AdminDashboard() {
     setViewsDays(days);
     const since = new Date();
     since.setDate(since.getDate() - days);
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("page_views")
       .select("*, stores(store_name)")
       .gte("created_at", since.toISOString())
