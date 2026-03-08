@@ -274,10 +274,6 @@ export default function StoreFront() {
     );
   }
 
-  const pc = store.primary_color || "#e8c547";
-  const sc = store.secondary_color || "#d4a843";
-  const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
-  const onProductClick = (productId: string) => navigate(`/store/${slug}/product/${productId}`);
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#fafaf8' }}>
