@@ -3,6 +3,10 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AlshbhWatermark from "@/components/AlshbhWatermark";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
+import RestaurantsTheme from "@/components/themes/RestaurantsTheme";
+import ClothesTheme from "@/components/themes/ClothesTheme";
+import PerfumesTheme from "@/components/themes/PerfumesTheme";
+import SupermarketTheme from "@/components/themes/SupermarketTheme";
 import { Store, ShoppingCart, Search, Star, Plus, Minus, Trash2, MessageCircle, Share2, X, AlertTriangle, Tag, Sparkles, TrendingUp, MapPin, FileText, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -313,166 +317,26 @@ export default function StoreFront() {
 
   const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
 
+  const themeProps = {
+    store, products, categories, filteredProducts, featuredProducts, bestSellers,
+    searchQuery, setSearchQuery, selectedCategory, setSelectedCategory,
+    getAvgRating, onProductClick: (productId: string) => navigate(`/store/${slug}/product/${productId}`),
+    cartCount, onCartOpen: () => setShowCart(true), onShare: shareStore,
+  };
+
+  const renderTheme = () => {
+    switch (store.theme) {
+      case 'clothes': return <ClothesTheme {...themeProps} />;
+      case 'perfumes': return <PerfumesTheme {...themeProps} />;
+      case 'supermarket': return <SupermarketTheme {...themeProps} />;
+      case 'restaurants':
+      default: return <RestaurantsTheme {...themeProps} />;
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-muted/30" style={storeStyle}>
-      {/* Hero Header */}
-      <header className="relative overflow-hidden">
-        <div className="absolute inset-0" style={{ 
-          background: `linear-gradient(135deg, ${store.primary_color || '#D97706'}, ${store.secondary_color || '#F59E0B'}, ${store.primary_color || '#D97706'})`,
-          backgroundSize: '200% 200%',
-        }} />
-        <div className="absolute inset-0 bg-black/10" />
-        <div className="relative container py-8 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex gap-2">
-              <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/20 rounded-full" onClick={shareStore}>
-                <Share2 className="h-5 w-5" />
-              </Button>
-              {store.whatsapp_number && (
-                <a href={`https://wa.me/${store.whatsapp_number}`} target="_blank">
-                  <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/20 rounded-full">
-                    <MessageCircle className="h-5 w-5" />
-                  </Button>
-                </a>
-              )}
-            </div>
-            <Button 
-              className="relative rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 text-white"
-              onClick={() => setShowCart(true)}
-            >
-              <ShoppingCart className="h-5 w-5 ml-1" />
-              السلة
-              {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-white text-xs flex items-center justify-center font-bold" style={{ color: store.primary_color || '#D97706' }}>
-                  {cartCount}
-                </span>
-              )}
-            </Button>
-          </div>
-          <div className="flex items-center gap-4">
-            {store.logo_url ? (
-              <img src={store.logo_url} alt={store.store_name} className="h-20 w-20 rounded-2xl object-cover ring-4 ring-white/30 shadow-lg" />
-            ) : (
-              <div className="h-20 w-20 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center ring-4 ring-white/30">
-                <Store className="h-9 w-9" />
-              </div>
-            )}
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">{store.store_name}</h1>
-              <p className="text-white/70 mt-1">أهلاً بيك يا حبيبي! نورتنا 😍</p>
-              <div className="flex items-center gap-2 mt-2">
-                <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm text-xs">
-                  {products.length} منتج
-                </Badge>
-                <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm text-xs">
-                  🚚 توصيل لكل مصر
-                </Badge>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Search */}
-      <div className="container -mt-5 relative z-10">
-        <div className="bg-card rounded-2xl shadow-lg border border-border p-3">
-          <div className="relative">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="دوّر على اللي عايزه... 🔍" 
-              value={searchQuery} 
-              onChange={(e) => setSearchQuery(e.target.value)} 
-              className="pr-10 border-0 bg-muted/50 rounded-xl h-11" 
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Categories */}
-      {categories.length > 0 && (
-        <div className="container mt-4">
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            <Button 
-              size="sm" 
-              variant={!selectedCategory ? "default" : "outline"} 
-              onClick={() => setSelectedCategory(null)}
-              className="rounded-full whitespace-nowrap shrink-0"
-            >
-              الكل 🔥
-            </Button>
-            {categories.map(c => (
-              <Button 
-                key={c.id} 
-                size="sm" 
-                variant={selectedCategory === c.id ? "default" : "outline"} 
-                onClick={() => setSelectedCategory(c.id)}
-                className="rounded-full whitespace-nowrap shrink-0"
-              >
-                {c.name}
-              </Button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Featured */}
-      {featuredProducts.length > 0 && !searchQuery && !selectedCategory && (
-        <section className="container mt-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${store.primary_color}20` }}>
-              <Sparkles className="h-4 w-4" style={{ color: store.primary_color }} />
-            </div>
-            <h2 className="text-lg font-bold">الحاجات المميزة 🌟</h2>
-          </div>
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-            {featuredProducts.map(p => (
-              <div key={p.id} className="w-44 shrink-0">
-                <ProductCard product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} storeColor={store.primary_color} />
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Best sellers */}
-      {bestSellers.length > 0 && bestSellers[0].sales_count > 0 && !searchQuery && !selectedCategory && (
-        <section className="container mt-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="h-8 w-8 rounded-lg bg-destructive/10 flex items-center justify-center">
-              <TrendingUp className="h-4 w-4 text-destructive" />
-            </div>
-            <h2 className="text-lg font-bold">الناس بتحب دول 🔥</h2>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {bestSellers.map(p => (
-              <ProductCard key={p.id} product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} storeColor={store.primary_color} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* All Products */}
-      <main className="flex-1 container py-6 pb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold">
-            {selectedCategory ? categories.find(c => c.id === selectedCategory)?.name : "كل المنتجات 🛍️"}
-          </h2>
-          <Badge variant="secondary" className="rounded-full">{filteredProducts.length} منتج</Badge>
-        </div>
-        {filteredProducts.length === 0 ? (
-          <div className="text-center py-16 bg-card rounded-2xl border border-border">
-            <ShoppingCart className="h-14 w-14 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-lg font-semibold mb-1">مفيش حاجة هنا 😅</h2>
-            <p className="text-sm text-muted-foreground">جرب تدور بكلمة تانية يسطا</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {filteredProducts.map(p => (
-              <ProductCard key={p.id} product={p} avgRating={getAvgRating(p.id)} onClick={() => navigate(`/store/${slug}/product/${p.id}`)} storeColor={store.primary_color} />
-            ))}
-          </div>
-        )}
-      </main>
+      {renderTheme()}
 
       {/* Cart Sheet */}
       <Sheet open={showCart} onOpenChange={setShowCart}>
@@ -713,53 +577,3 @@ function ComplaintForm({ storeId, storeName, whatsappNumber }: { storeId: string
   );
 }
 
-function ProductCard({ product, avgRating, onClick, storeColor }: {
-  product: any; avgRating: string | null; onClick: () => void; storeColor?: string;
-}) {
-  const finalPrice = product.discount_price || product.price;
-  const hasDiscount = product.discount_price && product.discount_price < product.price;
-  const discountPercent = hasDiscount ? Math.round((1 - product.discount_price / product.price) * 100) : 0;
-
-  return (
-    <div className="rounded-2xl border border-border overflow-hidden hover:shadow-xl transition-all duration-300 bg-card cursor-pointer group hover:-translate-y-0.5" onClick={onClick}>
-      <div className="relative overflow-hidden">
-        {product.main_image_url ? (
-          <img src={product.main_image_url} alt={product.name} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-        ) : (
-          <div className="w-full h-48 bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-            <ShoppingCart className="h-8 w-8 text-muted-foreground" />
-          </div>
-        )}
-        {hasDiscount && (
-          <Badge className="absolute top-2 left-2 bg-destructive text-destructive-foreground border-0 rounded-lg text-xs">
-            -{discountPercent}%
-          </Badge>
-        )}
-        {product.is_featured && (
-          <Badge className="absolute top-2 right-2 border-0 rounded-lg text-xs" style={{ backgroundColor: storeColor || '#D97706', color: 'white' }}>
-            ⭐ مميز
-          </Badge>
-        )}
-      </div>
-      <div className="p-3">
-        <h3 className="font-semibold text-sm mb-1 truncate">{product.name}</h3>
-        {product.description && <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{product.description}</p>}
-        {avgRating && (
-          <div className="flex items-center gap-1 mb-2">
-            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-            <span className="text-xs font-semibold">{avgRating}</span>
-          </div>
-        )}
-        {product.stock !== null && product.stock <= 0 && (
-          <Badge variant="destructive" className="text-xs mb-2 rounded-lg">خلص يسطا 😅</Badge>
-        )}
-        <div className="flex items-center gap-2">
-          <span className="text-base font-bold" style={{ color: storeColor || "var(--store-primary)" }}>{finalPrice} جنيه</span>
-          {hasDiscount && (
-            <span className="text-xs text-muted-foreground line-through">{product.price}</span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
