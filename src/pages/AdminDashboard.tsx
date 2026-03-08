@@ -13,6 +13,7 @@ import {
   Store, Users, ShoppingCart, Coins, TrendingUp, Trash2, Ban, CheckCircle,
   Plus, Minus, Eye, Mail, Bell, MessageSquare, BarChart3
 } from "lucide-react";
+import VisitorAnalytics from "@/components/VisitorAnalytics";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle
 } from "@/components/ui/dialog";
