@@ -226,10 +226,27 @@ export default function ProductDetail() {
     fetchProduct();
   };
 
+  const [showShareMenu, setShowShareMenu] = useState(false);
+
   const shareProduct = () => {
+    setShowShareMenu(true);
+  };
+
+  const shareVia = (platform: string) => {
     const url = window.location.href;
-    if (navigator.share) navigator.share({ title: product?.name, url });
-    else { navigator.clipboard.writeText(url); toast({ title: "تم نسخ الرابط يسطا! 📋" }); }
+    const text = encodeURIComponent(`${product?.name} — شوف المنتج ده! 🔥`);
+    const encodedUrl = encodeURIComponent(url);
+    switch (platform) {
+      case 'whatsapp': window.open(`https://wa.me/?text=${text}%20${encodedUrl}`, '_blank'); break;
+      case 'facebook': window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`, '_blank'); break;
+      case 'twitter': window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodedUrl}`, '_blank'); break;
+      case 'telegram': window.open(`https://t.me/share/url?url=${encodedUrl}&text=${text}`, '_blank'); break;
+      case 'copy':
+        navigator.clipboard.writeText(url);
+        toast({ title: "تم نسخ الرابط يسطا! 📋" });
+        break;
+    }
+    setShowShareMenu(false);
   };
 
   if (loading) return <div className="flex min-h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
