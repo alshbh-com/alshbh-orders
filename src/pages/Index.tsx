@@ -4,8 +4,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import Layout from "@/components/Layout";
 import {
   Store, ShoppingCart, Bell, Palette, Zap, Shield,
-  Globe, Smartphone, Search, Star, Package, TrendingUp
+  Globe, Smartphone, Search, Star, Package, TrendingUp,
+  Share2, Copy, Check
 } from "lucide-react";
+import { useState } from "react";
 
 const features = [
   { icon: Zap, title: "اعمل متجرك في دقايق", desc: "سجل واختار قالب وابدأ بيع منتجاتك فورًا" },
