@@ -598,6 +598,11 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics">
+            <VisitorAnalytics title="إحصائيات زوار المنصة" />
+          </TabsContent>
         </Tabs>
 
         {/* Points Dialog */}
