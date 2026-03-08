@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import {
   Store, Users, ShoppingCart, Coins, TrendingUp, Trash2, Ban, CheckCircle,
-  Plus, Minus, Eye, Mail, Bell, MessageSquare, BarChart3
+  Plus, Minus, Eye, Mail, Bell, MessageSquare, BarChart3, Activity
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle
