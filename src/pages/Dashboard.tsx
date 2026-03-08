@@ -210,6 +210,10 @@ export default function Dashboard() {
 
   const createStore = async () => {
     if (!storeName || !storeSlug) return;
+    if (storeSlug.length < 2) {
+      toast({ title: "الرابط قصير!", description: "لازم يكون على الأقل حرفين", variant: "destructive" });
+      return;
+    }
     if (slugTaken) {
       toast({ title: "الاسم محجوز!", description: "جرب تزود حرف أو رقم لأن الاسم دا متاخد", variant: "destructive" });
       return;
