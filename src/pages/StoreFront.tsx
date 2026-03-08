@@ -699,7 +699,8 @@ function ProductCard({ product, avgRating, onClick, storeColor }: {
           <Badge variant="destructive" className="text-xs mb-2 rounded-lg">خلص يسطا 😅</Badge>
         )}
         <div className="flex items-center gap-2">
-          <span className="text-base font-bold text-foreground"{hasDiscount && (
+          <span className="text-base font-bold text-foreground">{finalPrice} جنيه</span>
+          {hasDiscount && (
             <span className="text-xs text-muted-foreground line-through">{product.price}</span>
           )}
         </div>
