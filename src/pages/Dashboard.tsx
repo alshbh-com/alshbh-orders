@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import VisitorAnalytics from "@/components/VisitorAnalytics";
 
 const SIZES = ["S", "M", "L", "XL", "XXL"];
 const COLORS = ["أسود", "أبيض", "أحمر", "أزرق", "أخضر", "رمادي"];
@@ -657,6 +658,7 @@ export default function Dashboard() {
             <TabsTrigger value="coupons">الكوبونات</TabsTrigger>
             <TabsTrigger value="notifications">الإشعارات</TabsTrigger>
             <TabsTrigger value="shipping">المحافظات 📍</TabsTrigger>
+            <TabsTrigger value="analytics">📊 الزوار</TabsTrigger>
             <TabsTrigger value="settings">الإعدادات</TabsTrigger>
           </TabsList>
 
@@ -1080,6 +1082,11 @@ export default function Dashboard() {
           {/* Shipping / Governorates Tab */}
           <TabsContent value="shipping" className="space-y-4">
             <ShippingManager storeId={store.id} storeShipping={storeShipping} onSaved={fetchData} defaultCost={store.shipping_cost || 70} />
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics">
+            <VisitorAnalytics storeId={store.id} title="إحصائيات زوار متجرك" />
           </TabsContent>
 
           {/* Settings Tab */}

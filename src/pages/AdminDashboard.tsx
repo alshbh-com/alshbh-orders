@@ -13,6 +13,7 @@ import {
   Store, Users, ShoppingCart, Coins, TrendingUp, Trash2, Ban, CheckCircle,
   Plus, Minus, Eye, Mail, Bell, MessageSquare, BarChart3
 } from "lucide-react";
+import VisitorAnalytics from "@/components/VisitorAnalytics";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle
 } from "@/components/ui/dialog";
@@ -234,6 +235,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="complaints">الشكاوى</TabsTrigger>
             <TabsTrigger value="referrals">الإحالات 🎁</TabsTrigger>
             <TabsTrigger value="notifications">الإشعارات</TabsTrigger>
+            <TabsTrigger value="analytics">📊 الزوار</TabsTrigger>
           </TabsList>
 
           {/* Stores Tab */}
@@ -595,6 +597,11 @@ export default function AdminDashboard() {
                 <p className="text-muted-foreground text-sm">اختار مستخدم من تبويب المستخدمين أو اضغط "إرسال إشعار" لإرسال إشعار لكل التجار</p>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics">
+            <VisitorAnalytics title="إحصائيات زوار المنصة" />
           </TabsContent>
         </Tabs>
 

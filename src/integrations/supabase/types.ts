@@ -268,6 +268,41 @@ export type Database = {
           },
         ]
       }
+      page_views: {
+        Row: {
+          created_at: string
+          id: string
+          page_path: string
+          store_id: string | null
+          user_agent: string | null
+          visitor_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          page_path: string
+          store_id?: string | null
+          user_agent?: string | null
+          visitor_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          page_path?: string
+          store_id?: string | null
+          user_agent?: string | null
+          visitor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_views_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pages: {
         Row: {
           content: string | null
@@ -519,6 +554,44 @@ export type Database = {
           },
         ]
       }
+      store_policies: {
+        Row: {
+          created_at: string
+          id: string
+          privacy_policy: string | null
+          return_policy: string | null
+          shipping_policy: string | null
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          privacy_policy?: string | null
+          return_policy?: string | null
+          shipping_policy?: string | null
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          privacy_policy?: string | null
+          return_policy?: string | null
+          shipping_policy?: string | null
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_policies_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: true
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_shipping: {
         Row: {
           governorate: string
@@ -553,6 +626,7 @@ export type Database = {
       }
       stores: {
         Row: {
+          banner_url: string | null
           created_at: string
           facebook_pixel: string | null
           google_analytics: string | null
@@ -573,6 +647,7 @@ export type Database = {
           whatsapp_number: string | null
         }
         Insert: {
+          banner_url?: string | null
           created_at?: string
           facebook_pixel?: string | null
           google_analytics?: string | null
@@ -593,6 +668,7 @@ export type Database = {
           whatsapp_number?: string | null
         }
         Update: {
+          banner_url?: string | null
           created_at?: string
           facebook_pixel?: string | null
           google_analytics?: string | null
