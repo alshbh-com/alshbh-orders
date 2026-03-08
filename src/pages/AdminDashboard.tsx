@@ -246,8 +246,9 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        <Tabs defaultValue="stores" className="space-y-4">
+        <Tabs defaultValue="analytics" className="space-y-4">
           <TabsList className="w-full justify-start flex-wrap h-auto gap-1">
+            <TabsTrigger value="analytics">📊 الزوار</TabsTrigger>
             <TabsTrigger value="stores">المتاجر</TabsTrigger>
             <TabsTrigger value="users">المستخدمين</TabsTrigger>
             <TabsTrigger value="orders">الطلبات</TabsTrigger>
@@ -256,6 +257,136 @@ export default function AdminDashboard() {
             <TabsTrigger value="referrals">الإحالات 🎁</TabsTrigger>
             <TabsTrigger value="notifications">الإشعارات</TabsTrigger>
           </TabsList>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5" />
+                    إحصائيات الزوار
+                  </CardTitle>
+                  <div className="flex gap-2 flex-wrap">
+                    {[
+                      { label: "يومين", days: 2 },
+                      { label: "7 أيام", days: 7 },
+                      { label: "90 يوم", days: 90 },
+                      { label: "12 شهر", days: 365 },
+                    ].map(f => (
+                      <Button
+                        key={f.days}
+                        size="sm"
+                        variant={viewsDays === f.days ? "default" : "outline"}
+                        onClick={() => fetchPageViews(f.days)}
+                      >
+                        {f.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loadingViews ? (
+                  <div className="flex justify-center py-8">
+                    <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div className="bg-muted/50 rounded-xl p-4 text-center">
+                        <p className="text-3xl font-bold text-primary">{pageViews.length}</p>
+                        <p className="text-sm text-muted-foreground">إجمالي الزيارات</p>
+                      </div>
+                      <div className="bg-muted/50 rounded-xl p-4 text-center">
+                        <p className="text-3xl font-bold text-primary">
+                          {new Set(pageViews.map(v => v.visitor_id)).size}
+                        </p>
+                        <p className="text-sm text-muted-foreground">زوار فريدين</p>
+                      </div>
+                      <div className="bg-muted/50 rounded-xl p-4 text-center">
+                        <p className="text-3xl font-bold text-primary">
+                          {new Set(pageViews.map(v => v.store_id).filter(Boolean)).size}
+                        </p>
+                        <p className="text-sm text-muted-foreground">متاجر زارها ناس</p>
+                      </div>
+                      <div className="bg-muted/50 rounded-xl p-4 text-center">
+                        <p className="text-3xl font-bold text-primary">
+                          {pageViews.length > 0 ? Math.round(pageViews.length / Math.max(viewsDays, 1)) : 0}
+                        </p>
+                        <p className="text-sm text-muted-foreground">متوسط يومي</p>
+                      </div>
+                    </div>
+
+                    {/* Per Store breakdown */}
+                    <div>
+                      <h3 className="font-semibold mb-3">زيارات كل متجر</h3>
+                      <div className="space-y-2">
+                        {(() => {
+                          const storeMap: Record<string, { name: string; count: number; unique: Set<string> }> = {};
+                          pageViews.forEach(v => {
+                            if (!v.store_id) return;
+                            if (!storeMap[v.store_id]) {
+                              storeMap[v.store_id] = {
+                                name: (v.stores as any)?.store_name || v.store_id.slice(0, 8),
+                                count: 0,
+                                unique: new Set(),
+                              };
+                            }
+                            storeMap[v.store_id].count++;
+                            if (v.visitor_id) storeMap[v.store_id].unique.add(v.visitor_id);
+                          });
+                          const sorted = Object.entries(storeMap).sort((a, b) => b[1].count - a[1].count);
+                          if (sorted.length === 0) return <p className="text-sm text-muted-foreground">مفيش زيارات في الفترة دي</p>;
+                          const maxCount = sorted[0]?.[1].count || 1;
+                          return sorted.map(([id, data]) => (
+                            <div key={id} className="flex items-center gap-3">
+                              <span className="text-sm font-semibold w-32 truncate">{data.name}</span>
+                              <div className="flex-1 bg-muted rounded-full h-6 overflow-hidden">
+                                <div
+                                  className="h-full bg-primary/80 rounded-full flex items-center justify-end px-2"
+                                  style={{ width: `${Math.max((data.count / maxCount) * 100, 8)}%` }}
+                                >
+                                  <span className="text-xs font-bold text-primary-foreground">{data.count}</span>
+                                </div>
+                              </div>
+                              <span className="text-xs text-muted-foreground w-20 text-left">{data.unique.size} فريد</span>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* Recent visits */}
+                    <div>
+                      <h3 className="font-semibold mb-3">آخر الزيارات</h3>
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>المتجر</TableHead>
+                              <TableHead>الصفحة</TableHead>
+                              <TableHead>الوقت</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {pageViews.slice(0, 20).map(v => (
+                              <TableRow key={v.id}>
+                                <TableCell className="text-sm font-semibold">{(v.stores as any)?.store_name || "—"}</TableCell>
+                                <TableCell className="text-xs" dir="ltr">{v.page_path}</TableCell>
+                                <TableCell className="text-xs">{new Date(v.created_at).toLocaleString("ar-EG")}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Stores Tab */}
           <TabsContent value="stores">
