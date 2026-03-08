@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AlshbhWatermark from "@/components/AlshbhWatermark";
-import { Store, ShoppingCart, Star, Share2, MessageCircle, Minus, Plus, ArrowRight, MapPin, Trash2 } from "lucide-react";
+import { Store, ShoppingCart, Star, Share2, MessageCircle, Minus, Plus, ArrowRight, MapPin, Trash2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
