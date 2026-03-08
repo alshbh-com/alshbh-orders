@@ -327,11 +327,12 @@ export default function StoreFront() {
 
   const renderTheme = () => {
     switch (store.theme) {
-      case 'clothes': return <ClothesTheme {...themeProps} />;
-      case 'perfumes': return <PerfumesTheme {...themeProps} />;
-      case 'supermarket': return <SupermarketTheme {...themeProps} />;
-      case 'restaurants':
-      default: return <RestaurantsTheme {...themeProps} />;
+      case 'modern': return <ModernTheme {...themeProps} />;
+      case 'classic': return <ClassicTheme {...themeProps} />;
+      case 'minimal': return <MinimalTheme {...themeProps} />;
+      case 'bold': return <BoldTheme {...themeProps} />;
+      case 'elegant':
+      default: return <ElegantTheme {...themeProps} />;
     }
   };
 
