@@ -1084,6 +1084,11 @@ export default function Dashboard() {
             <ShippingManager storeId={store.id} storeShipping={storeShipping} onSaved={fetchData} defaultCost={store.shipping_cost || 70} />
           </TabsContent>
 
+          {/* Analytics Tab */}
+          <TabsContent value="analytics">
+            <VisitorAnalytics storeId={store.id} title="إحصائيات زوار متجرك" />
+          </TabsContent>
+
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-4">
             <Card>
