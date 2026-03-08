@@ -138,16 +138,30 @@ export default function AdminDashboard() {
 
   const sendNotification = async () => {
     if (!notifyUserId || !notifyTitle || !notifyMessage) return;
+    
+    let targetUserIds: string[] = [];
+    
     if (notifyUserId === "all") {
-      // Send to all store owners
       const ownerIds = [...new Set(stores.map(s => s.owner_id))];
+      targetUserIds = ownerIds;
       await Promise.all(ownerIds.map(id =>
         supabase.from("notifications").insert({ user_id: id, title: notifyTitle, message: notifyMessage })
       ));
     } else {
+      targetUserIds = [notifyUserId];
       await supabase.from("notifications").insert({ user_id: notifyUserId, title: notifyTitle, message: notifyMessage });
     }
-    toast({ title: "تم إرسال الإشعار" });
+
+    // Also send push notification via OneSignal
+    try {
+      await supabase.functions.invoke("send-push-notification", {
+        body: { user_ids: targetUserIds, title: notifyTitle, message: notifyMessage },
+      });
+    } catch (e) {
+      console.log("Push notification error (non-critical):", e);
+    }
+
+    toast({ title: "تم إرسال الإشعار 🔔" });
     setShowNotifyDialog(false);
     setNotifyTitle("");
     setNotifyMessage("");
