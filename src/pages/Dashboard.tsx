@@ -83,6 +83,8 @@ export default function Dashboard() {
   const [editGoogleAnalytics, setEditGoogleAnalytics] = useState("");
   const [editSnapchatPixel, setEditSnapchatPixel] = useState("");
   const [savingSettings, setSavingSettings] = useState(false);
+  const [bannerImage, setBannerImage] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState("");
   const [notifications, setNotifications] = useState<any[]>([]);
   const [pageViews, setPageViews] = useState<any[]>([]);
   const [viewsDays, setViewsDays] = useState(7);
