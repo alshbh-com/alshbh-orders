@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.notify-new-order]
 verify_jwt = false
+
+[functions.notify-admin-new-user]
+verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = false

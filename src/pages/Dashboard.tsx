@@ -119,7 +119,25 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    if (user) registerOneSignal();
+    if (user) {
+      registerOneSignal();
+      // Save pending whatsapp phone from registration
+      const pendingPhone = localStorage.getItem("pending_whatsapp_phone");
+      if (pendingPhone) {
+        supabase.from("profiles").update({ phone: pendingPhone }).eq("id", user.id).then(() => {
+          localStorage.removeItem("pending_whatsapp_phone");
+        });
+      }
+      // Check if notification permission needs to be requested
+      if (typeof window !== 'undefined' && (window as any).OneSignalDeferred) {
+        (window as any).OneSignalDeferred.push(async function(OneSignal: any) {
+          const permission = await OneSignal.Notifications.permission;
+          if (!permission) {
+            setShowNotifPrompt(true);
+          }
+        });
+      }
+    }
   }, [user]);
 
   useEffect(() => { if (user) fetchData(); }, [user]);
@@ -174,8 +192,14 @@ export default function Dashboard() {
   const [slugTaken, setSlugTaken] = useState(false);
   const [checkingSlug, setCheckingSlug] = useState(false);
 
-  const checkSlugAvailability = async (value: string) => {
-    const slug = value.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+  const handleSlugChange = (value: string) => {
+    // Only allow English letters, numbers, and hyphens
+    const cleaned = value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+    setStoreSlug(cleaned);
+    checkSlugAvailability(cleaned);
+  };
+
+  const checkSlugAvailability = async (slug: string) => {
     if (!slug || slug.length < 2) { setSlugTaken(false); return; }
     setCheckingSlug(true);
     const { data } = await supabase.from("stores").select("id").eq("store_slug", slug).maybeSingle();
@@ -429,9 +453,9 @@ export default function Dashboard() {
         <Label>اسم المتجر بتاعك</Label>
         <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="مثال: مطعم الشبح 🍔" />
       </div>
-      <div className="space-y-2">
-        <Label>رابط المتجر (بالإنجليزي)</Label>
-        <Input value={storeSlug} onChange={(e) => { setStoreSlug(e.target.value); checkSlugAvailability(e.target.value); }} placeholder="مثال: alshbh-restaurant" dir="ltr" className={slugTaken ? "border-destructive" : ""} />
+       <div className="space-y-2">
+        <Label>رابط المتجر (إنجليزي بس — حروف وأرقام)</Label>
+        <Input value={storeSlug} onChange={(e) => handleSlugChange(e.target.value)} placeholder="مثال: alshbh-restaurant" dir="ltr" className={slugTaken ? "border-destructive" : ""} />
         {checkingSlug && <p className="text-xs text-muted-foreground">جاري التحقق...</p>}
         {slugTaken && <p className="text-xs text-destructive font-semibold">⚠️ الاسم دا متاخد! جرب تزود أي حرف أو رقم</p>}
         {!slugTaken && storeSlug && !checkingSlug && <p className="text-xs text-green-600 font-semibold">✅ الاسم متاح</p>}
