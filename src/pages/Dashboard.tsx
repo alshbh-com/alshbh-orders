@@ -175,7 +175,9 @@ export default function Dashboard() {
       setEditGoogleAnalytics(storeData.google_analytics || "");
       setEditSnapchatPixel(storeData.snapchat_pixel || "");
 
-      const [productsRes, ordersRes, categoriesRes, transRes, templatesRes, notifRes, couponsRes, shippingRes] = await Promise.all([
+      const since = new Date();
+      since.setDate(since.getDate() - 7);
+      const [productsRes, ordersRes, categoriesRes, transRes, templatesRes, notifRes, couponsRes, shippingRes, viewsRes, policiesRes] = await Promise.all([
         supabase.from("products").select("*").eq("store_id", storeData.id).order("created_at", { ascending: false }),
         supabase.from("orders").select("*, order_items(*, products(name))").eq("store_id", storeData.id).order("created_at", { ascending: false }),
         supabase.from("categories").select("*").eq("store_id", storeData.id).order("sort_order"),
@@ -184,6 +186,8 @@ export default function Dashboard() {
         supabase.from("notifications").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(20),
         supabase.from("coupons").select("*").eq("store_id", storeData.id).order("created_at", { ascending: false }),
         supabase.from("store_shipping").select("*").eq("store_id", storeData.id).order("governorate"),
+        (supabase as any).from("page_views").select("*").eq("store_id", storeData.id).gte("created_at", since.toISOString()),
+        (supabase as any).from("store_policies").select("*").eq("store_id", storeData.id).maybeSingle(),
       ]);
       setProducts(productsRes.data || []);
       setOrders(ordersRes.data || []);
@@ -193,6 +197,12 @@ export default function Dashboard() {
       setNotifications(notifRes.data || []);
       setCoupons(couponsRes.data || []);
       setStoreShipping(shippingRes.data || []);
+      setPageViews(viewsRes.data || []);
+      const pol = policiesRes.data;
+      setStorePolicies(pol);
+      setEditReturnPolicy(pol?.return_policy || "");
+      setEditShippingPolicy(pol?.shipping_policy || "");
+      setEditPrivacyPolicy(pol?.privacy_policy || "");
     }
     setLoading(false);
   };
