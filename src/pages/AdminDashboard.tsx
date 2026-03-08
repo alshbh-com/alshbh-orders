@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 
-export default function AdminDashboard() {
+export default function AdminDashboard() { 
   const { toast } = useToast();
   const [stores, setStores] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
@@ -93,7 +93,6 @@ export default function AdminDashboard() {
       .order("created_at", { ascending: false });
     setPageViews(data || []);
     setLoadingViews(false);
-  };
   };
 
   const toggleStore = async (storeId: string, isActive: boolean) => {
@@ -826,3 +825,4 @@ export default function AdminDashboard() {
     </Layout>
   );
 }
+
