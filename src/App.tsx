@@ -36,6 +36,7 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/store/:slug" element={<StoreFront />} />
             <Route path="/store/:slug/product/:productId" element={<ProductDetail />} />
+            <Route path="/track" element={<TrackOrder />} />
             <Route path="/dashboard" element={
               <ProtectedRoute><Dashboard /></ProtectedRoute>
             } />
