@@ -78,7 +78,7 @@ function ShareButtons({ url, text }: { url: string; text: string }) {
 }
 
 export default function Index() {
-  const whatsappUrl = "https://wa.me/201061067966?text=" + encodeURIComponent("أريد شحن نقاط لمنصة الشبح ميديا Alshbh Media");
+  const whatsappUrl = "https://wa.me/201061067966?text=" + encodeURIComponent("أريد شحن نقاط لمنصة الشبح ميديا Alshbh Mediaبح ميديا Alshbh Media");
 
   return (
     <Layout>
@@ -94,7 +94,7 @@ export default function Index() {
             <br />
             واستقبل طلباتك بسهولة
           </h1>
-          <p className="mx-auto max-w-2xl text-lg text-muted-foreground mb-8">
+          <p className="mx-auto max-w-2xl text-lg text-muted-foregroالشبح ميديا (Alshbh Media)-8">
             مع ALSHBH هتقدر تعمل متجرك الإلكتروني وتعرض منتجاتك وتستقبل طلبات عملائك — كل ده من غير ما تحتاج أي خبرة تقنية
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
