@@ -235,6 +235,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="complaints">الشكاوى</TabsTrigger>
             <TabsTrigger value="referrals">الإحالات 🎁</TabsTrigger>
             <TabsTrigger value="notifications">الإشعارات</TabsTrigger>
+            <TabsTrigger value="analytics">📊 الزوار</TabsTrigger>
           </TabsList>
 
           {/* Stores Tab */}
