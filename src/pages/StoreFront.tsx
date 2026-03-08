@@ -69,18 +69,20 @@ export default function StoreFront() {
           try { setCart(JSON.parse(savedCart)); } catch {}
         }
 
-        const [productsRes, categoriesRes, reviewsRes, shippingRes] = await Promise.all([
+        const [productsRes, categoriesRes, reviewsRes, shippingRes, policiesRes] = await Promise.all([
           supabase.from("products").select("*").eq("store_id", storeData.id).eq("is_active", true),
           supabase.from("categories").select("*").eq("store_id", storeData.id).order("sort_order"),
           supabase.from("reviews").select("*").in("product_id",
             (await supabase.from("products").select("id").eq("store_id", storeData.id)).data?.map(p => p.id) || []
           ),
           supabase.from("store_shipping").select("*").eq("store_id", storeData.id).eq("is_active", true),
+          (supabase as any).from("store_policies").select("*").eq("store_id", storeData.id).maybeSingle(),
         ]);
         setProducts(productsRes.data || []);
         setCategories(categoriesRes.data || []);
         setReviews(reviewsRes.data || []);
         setStoreShipping(shippingRes.data || []);
+        setStorePolicies(policiesRes.data || null);
       }
       setLoading(false);
     };
