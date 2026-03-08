@@ -6,11 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Store, ArrowRight } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Store, ArrowRight, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
-
-// Save referral code from URL to localStorage
 
 export default function Auth() {
   const [searchParams] = useSearchParams();
@@ -20,9 +19,14 @@ export default function Auth() {
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // WhatsApp phone prompt after signup
+  const [showPhonePrompt, setShowPhonePrompt] = useState(false);
+  const [whatsappPhone, setWhatsappPhone] = useState("");
+  const [savingPhone, setSavingPhone] = useState(false);
 
   // Capture referral param on mount
   useEffect(() => {
@@ -49,6 +53,8 @@ export default function Auth() {
       } else {
         await signUp(email, password, fullName);
         toast({ title: "تمام يا بطل! 🎉", description: "روح شيك على الإيميل بتاعك عشان تأكد الحساب وبعدها ادخل عادي" });
+        // Show phone prompt after successful registration
+        setShowPhonePrompt(true);
       }
     } catch (error: any) {
       let msg = error.message;
@@ -76,6 +82,23 @@ export default function Auth() {
     }
   };
 
+  const saveWhatsappPhone = async () => {
+    if (!whatsappPhone.trim()) {
+      setShowPhonePrompt(false);
+      return;
+    }
+    setSavingPhone(true);
+    try {
+      // We need to wait for user to confirm email first, so store in localStorage
+      localStorage.setItem("pending_whatsapp_phone", whatsappPhone.trim());
+      toast({ title: "تمام! 📱", description: "هنحفظ الرقم بعد ما تأكد الإيميل وتسجل دخول" });
+    } catch (e: any) {
+      toast({ title: "حصلت مشكلة", description: e.message, variant: "destructive" });
+    }
+    setSavingPhone(false);
+    setShowPhonePrompt(false);
+  };
+
   return (
     <Layout>
       <div className="flex min-h-[80vh] items-center justify-center p-4">
@@ -98,7 +121,6 @@ export default function Auth() {
           <CardContent className="space-y-4">
             {mode !== "forgot" && (
               <>
-                {/* Google Sign-In Button */}
                 <Button
                   type="button"
                   variant="outline"
@@ -173,6 +195,34 @@ export default function Auth() {
           </CardContent>
         </Card>
       </div>
+
+      {/* WhatsApp Phone Prompt After Registration */}
+      <Dialog open={showPhonePrompt} onOpenChange={setShowPhonePrompt}>
+        <DialogContent className="max-w-sm text-center">
+          <DialogHeader>
+            <DialogTitle className="text-xl">📱 رقم الواتساب بتاعك</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="mx-auto h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <Phone className="h-8 w-8 text-primary" />
+            </div>
+            <p className="text-muted-foreground">اكتب رقم الواتساب بتاعك عشان نقدر نتواصل معاك لو حصل أي حاجة 💬</p>
+            <Input
+              value={whatsappPhone}
+              onChange={(e) => setWhatsappPhone(e.target.value)}
+              placeholder="201xxxxxxxxx"
+              dir="ltr"
+              className="text-center text-lg"
+            />
+            <Button className="w-full" onClick={saveWhatsappPhone} disabled={savingPhone}>
+              {savingPhone ? "جاري الحفظ..." : "احفظ الرقم 💾"}
+            </Button>
+            <button type="button" onClick={() => setShowPhonePrompt(false)} className="text-xs text-muted-foreground hover:underline">
+              مش دلوقتي — بعدين
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }

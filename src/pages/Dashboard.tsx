@@ -435,9 +435,9 @@ export default function Dashboard() {
         <Label>اسم المتجر بتاعك</Label>
         <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="مثال: مطعم الشبح 🍔" />
       </div>
-      <div className="space-y-2">
-        <Label>رابط المتجر (بالإنجليزي)</Label>
-        <Input value={storeSlug} onChange={(e) => { setStoreSlug(e.target.value); checkSlugAvailability(e.target.value); }} placeholder="مثال: alshbh-restaurant" dir="ltr" className={slugTaken ? "border-destructive" : ""} />
+       <div className="space-y-2">
+        <Label>رابط المتجر (إنجليزي بس — حروف وأرقام)</Label>
+        <Input value={storeSlug} onChange={(e) => handleSlugChange(e.target.value)} placeholder="مثال: alshbh-restaurant" dir="ltr" className={slugTaken ? "border-destructive" : ""} />
         {checkingSlug && <p className="text-xs text-muted-foreground">جاري التحقق...</p>}
         {slugTaken && <p className="text-xs text-destructive font-semibold">⚠️ الاسم دا متاخد! جرب تزود أي حرف أو رقم</p>}
         {!slugTaken && storeSlug && !checkingSlug && <p className="text-xs text-green-600 font-semibold">✅ الاسم متاح</p>}
