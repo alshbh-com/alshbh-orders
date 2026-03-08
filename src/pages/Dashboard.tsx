@@ -201,6 +201,7 @@ export default function Dashboard() {
 
   const checkSlugAvailability = async (slug: string) => {
     if (!slug || slug.length < 2) { setSlugTaken(false); return; }
+
     setCheckingSlug(true);
     const { data } = await supabase.from("stores").select("id").eq("store_slug", slug).maybeSingle();
     setSlugTaken(!!data);
@@ -209,6 +210,10 @@ export default function Dashboard() {
 
   const createStore = async () => {
     if (!storeName || !storeSlug) return;
+    if (storeSlug.length < 2) {
+      toast({ title: "الرابط قصير!", description: "لازم يكون على الأقل حرفين", variant: "destructive" });
+      return;
+    }
     if (slugTaken) {
       toast({ title: "الاسم محجوز!", description: "جرب تزود حرف أو رقم لأن الاسم دا متاخد", variant: "destructive" });
       return;
@@ -454,11 +459,12 @@ export default function Dashboard() {
         <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="مثال: مطعم الشبح 🍔" />
       </div>
        <div className="space-y-2">
-        <Label>رابط المتجر (إنجليزي بس — حروف وأرقام)</Label>
-        <Input value={storeSlug} onChange={(e) => handleSlugChange(e.target.value)} placeholder="مثال: alshbh-restaurant" dir="ltr" className={slugTaken ? "border-destructive" : ""} />
+        <Label>رابط المتجر (إنجليزي بس — حروف وأرقام، على الأقل حرفين)</Label>
+        <Input value={storeSlug} onChange={(e) => handleSlugChange(e.target.value)} placeholder="مثال: alshbh-restaurant" dir="ltr" className={(slugTaken || (storeSlug && storeSlug.length < 2)) ? "border-destructive" : ""} />
         {checkingSlug && <p className="text-xs text-muted-foreground">جاري التحقق...</p>}
-        {slugTaken && <p className="text-xs text-destructive font-semibold">⚠️ الاسم دا متاخد! جرب تزود أي حرف أو رقم</p>}
-        {!slugTaken && storeSlug && !checkingSlug && <p className="text-xs text-green-600 font-semibold">✅ الاسم متاح</p>}
+        {storeSlug && storeSlug.length < 2 && <p className="text-xs text-destructive font-semibold">⚠️ لازم على الأقل حرفين</p>}
+        {slugTaken && storeSlug.length >= 2 && <p className="text-xs text-destructive font-semibold">⚠️ الاسم دا متاخد! جرب تزود أي حرف أو رقم</p>}
+        {!slugTaken && storeSlug && storeSlug.length >= 2 && !checkingSlug && <p className="text-xs text-green-600 font-semibold">✅ الاسم متاح</p>}
         <p className="text-xs text-muted-foreground">هيبقى الرابط: alshbh.store/store/{storeSlug || "اسم-متجرك"}</p>
       </div>
       <div className="space-y-2">
