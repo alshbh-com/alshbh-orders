@@ -554,6 +554,44 @@ export type Database = {
           },
         ]
       }
+      store_policies: {
+        Row: {
+          created_at: string
+          id: string
+          privacy_policy: string | null
+          return_policy: string | null
+          shipping_policy: string | null
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          privacy_policy?: string | null
+          return_policy?: string | null
+          shipping_policy?: string | null
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          privacy_policy?: string | null
+          return_policy?: string | null
+          shipping_policy?: string | null
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_policies_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: true
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_shipping: {
         Row: {
           governorate: string
