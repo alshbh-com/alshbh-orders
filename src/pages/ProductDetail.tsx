@@ -344,41 +344,39 @@ export default function ProductDetail() {
           <p className="text-sm text-muted-foreground">🚚 التوصيل لكل محافظات مصر — السعر حسب محافظتك</p>
         </div>
 
-        {/* ===== VARIANT SELECTION - Super Simple ===== */}
+        {/* ===== VARIANT SELECTION - Improved ===== */}
         <div className="mb-6 space-y-3">
           {hasVariants && (
             <div className="bg-card border border-border rounded-2xl p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-base">اختار اللي عايزه 👇</h3>
-                {selections.length > 0 && (
-                  <Badge variant="secondary" className="text-xs">{totalQuantity} قطعة</Badge>
-                )}
+                <h3 className="font-bold text-lg">اختار اللي عايزه 👇</h3>
+                <Badge variant="secondary" className="text-sm px-3 py-1">{totalQuantity} قطعة</Badge>
               </div>
 
               {selections.map((sel, idx) => (
-                <div key={idx} className="relative bg-muted/50 rounded-xl p-3 space-y-3">
+                <div key={idx} className="relative bg-muted/40 rounded-2xl p-4 space-y-4 border border-border/50">
                   {selections.length > 1 && (
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-semibold text-muted-foreground">اختيار {idx + 1}</span>
-                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-destructive" onClick={() => removeSelection(idx)}>
-                        <Trash2 className="h-3 w-3" />
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="text-xs font-bold">اختيار {idx + 1}</Badge>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10 rounded-full" onClick={() => removeSelection(idx)}>
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   )}
 
-                  {/* Size chips */}
+                  {/* Size chips - bigger & clearer */}
                   {availableSizes.length > 0 && (
                     <div>
-                      <p className="text-xs text-muted-foreground mb-1.5">👕 المقاس</p>
-                      <div className="flex gap-1.5 flex-wrap">
+                      <p className="text-sm font-semibold mb-2">👕 المقاس</p>
+                      <div className="flex gap-2 flex-wrap">
                         {availableSizes.map(size => (
                           <button key={size} onClick={() => updateSelection(idx, 'size', size)}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                            className={`min-w-[3rem] px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
                               sel.size === size
-                                ? "text-white shadow-md"
-                                : "border border-border bg-background hover:border-primary/50"
+                                ? "text-white shadow-lg scale-105"
+                                : "border-2 border-border bg-background hover:border-primary/50 hover:scale-105"
                             }`}
-                            style={sel.size === size ? { backgroundColor: store.primary_color || '#D97706' } : {}}>
+                            style={sel.size === size ? { backgroundColor: store.primary_color || '#D97706', borderColor: store.primary_color || '#D97706' } : {}}>
                             {size}
                           </button>
                         ))}
@@ -386,18 +384,20 @@ export default function ProductDetail() {
                     </div>
                   )}
 
-                  {/* Color chips */}
+                  {/* Color chips - bigger with color preview */}
                   {availableColors.length > 0 && (
                     <div>
-                      <p className="text-xs text-muted-foreground mb-1.5">🎨 اللون</p>
+                      <p className="text-sm font-semibold mb-2">🎨 اللون</p>
                       <div className="flex gap-2 flex-wrap">
                         {availableColors.map(color => (
                           <button key={color} onClick={() => updateSelection(idx, 'color', color)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
-                              sel.color === color ? "ring-2 ring-offset-1 border-primary" : "border border-border bg-background hover:border-primary/50"
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                              sel.color === color
+                                ? "ring-2 ring-offset-2 shadow-lg scale-105"
+                                : "border-2 border-border bg-background hover:border-primary/50 hover:scale-105"
                             }`}
-                            style={sel.color === color ? { borderColor: store.primary_color } : {}}>
-                            <span className="w-4 h-4 rounded-full border border-border shrink-0" style={{ backgroundColor: COLORS[color] || "#888" }} />
+                            style={sel.color === color ? { borderColor: store.primary_color, ringColor: store.primary_color } : {}}>
+                            <span className="w-5 h-5 rounded-full border-2 border-white shadow-sm shrink-0" style={{ backgroundColor: COLORS[color] || "#888" }} />
                             {color}
                           </button>
                         ))}
@@ -405,16 +405,16 @@ export default function ProductDetail() {
                     </div>
                   )}
 
-                  {/* Quantity */}
+                  {/* Quantity - improved */}
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1.5">🔢 الكمية</p>
-                    <div className="flex items-center gap-2">
-                      <Button size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={() => updateSelection(idx, 'quantity', Math.max(1, sel.quantity - 1))}>
-                        <Minus className="h-3 w-3" />
+                    <p className="text-sm font-semibold mb-2">🔢 الكمية</p>
+                    <div className="flex items-center gap-3 bg-background rounded-xl p-2 w-fit border border-border">
+                      <Button size="icon" variant="ghost" className="h-9 w-9 rounded-full hover:bg-destructive/10" onClick={() => updateSelection(idx, 'quantity', Math.max(1, sel.quantity - 1))}>
+                        <Minus className="h-4 w-4" />
                       </Button>
-                      <span className="text-lg font-bold w-8 text-center">{sel.quantity}</span>
-                      <Button size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={() => updateSelection(idx, 'quantity', sel.quantity + 1)}>
-                        <Plus className="h-3 w-3" />
+                      <span className="text-xl font-bold w-10 text-center">{sel.quantity}</span>
+                      <Button size="icon" variant="ghost" className="h-9 w-9 rounded-full hover:bg-primary/10" onClick={() => updateSelection(idx, 'quantity', sel.quantity + 1)}>
+                        <Plus className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -422,7 +422,7 @@ export default function ProductDetail() {
               ))}
 
               {/* Add another variant button */}
-              <Button variant="outline" size="sm" className="w-full rounded-xl border-dashed" onClick={addSelection}>
+              <Button variant="outline" size="sm" className="w-full rounded-xl border-dashed border-2 h-11 text-sm font-semibold" onClick={addSelection}>
                 <Plus className="h-4 w-4 ml-1" />
                 عايز مقاس/لون تاني؟ ضيف كمان! ➕
               </Button>
@@ -432,13 +432,13 @@ export default function ProductDetail() {
           {/* No variants - just quantity */}
           {!hasVariants && (
             <div className="bg-card border border-border rounded-2xl p-4">
-              <h3 className="font-bold text-base mb-3">كام قطعة عايز؟ 🔢</h3>
-              <div className="flex items-center gap-3">
-                <Button size="icon" variant="outline" className="rounded-full" onClick={() => updateSelection(0, 'quantity', Math.max(1, selections[0].quantity - 1))}>
+              <h3 className="font-bold text-lg mb-3">كام قطعة عايز؟ 🔢</h3>
+              <div className="flex items-center gap-3 bg-muted/40 rounded-xl p-2 w-fit border border-border">
+                <Button size="icon" variant="ghost" className="h-9 w-9 rounded-full hover:bg-destructive/10" onClick={() => updateSelection(0, 'quantity', Math.max(1, selections[0].quantity - 1))}>
                   <Minus className="h-4 w-4" />
                 </Button>
                 <span className="text-xl font-bold w-12 text-center">{selections[0].quantity}</span>
-                <Button size="icon" variant="outline" className="rounded-full" onClick={() => updateSelection(0, 'quantity', selections[0].quantity + 1)}>
+                <Button size="icon" variant="ghost" className="h-9 w-9 rounded-full hover:bg-primary/10" onClick={() => updateSelection(0, 'quantity', selections[0].quantity + 1)}>
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
