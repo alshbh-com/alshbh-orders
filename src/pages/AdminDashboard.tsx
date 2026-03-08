@@ -81,6 +81,21 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
+  const fetchPageViews = async (days: number) => {
+    setLoadingViews(true);
+    setViewsDays(days);
+    const since = new Date();
+    since.setDate(since.getDate() - days);
+    const { data } = await supabase
+      .from("page_views")
+      .select("*, stores(store_name)")
+      .gte("created_at", since.toISOString())
+      .order("created_at", { ascending: false });
+    setPageViews(data || []);
+    setLoadingViews(false);
+  };
+  };
+
   const toggleStore = async (storeId: string, isActive: boolean) => {
     await supabase.from("stores").update({ is_active: !isActive }).eq("id", storeId);
     toast({ title: isActive ? "تم إيقاف المتجر" : "تم تفعيل المتجر" });
