@@ -328,7 +328,7 @@ export default function ProductDetail() {
         <div className="space-y-4 mb-6">
           <h1 className="text-2xl font-bold">{product.name}</h1>
           <div className="flex items-center gap-3">
-            <span className="text-2xl font-bold" style={{ color: "var(--store-primary)" }}>{finalPrice} جنيه</span>
+            <span className="text-2xl font-bold text-foreground">{finalPrice} جنيه</span>
             {hasDiscount && <span className="text-lg text-muted-foreground line-through">{product.price} جنيه</span>}
             {hasDiscount && <Badge variant="destructive" className="text-xs">خصم {Math.round((1 - product.discount_price / product.price) * 100)}% 🔥</Badge>}
           </div>
