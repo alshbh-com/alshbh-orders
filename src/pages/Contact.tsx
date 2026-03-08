@@ -30,7 +30,7 @@ export default function Contact() {
     setLoading(false);
   };
 
-  const whatsappUrl = "https://wa.me/201061067966?text=" + encodeURIComponent("عايز أستفسر عن منصة ALSHBH");
+  const whatsappUrl = "https://wa.me/201061067966?text=" + encodeURIComponent("عايز أستفسر عن منصة الشبح ميديا Alshbh Media");
 
   return (
     <Layout>
