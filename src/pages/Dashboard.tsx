@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   Package, ShoppingCart, Coins, Store, Plus, Trash2, Edit, Eye,
-  X, Check, Clock, Truck, XCircle, Image as ImageIcon, Search, Megaphone, Bell
+  X, Check, Clock, Truck, XCircle, Image as ImageIcon, Search, Megaphone, Bell,
+  BarChart3, FileText
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
