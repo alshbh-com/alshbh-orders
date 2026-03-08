@@ -77,7 +77,7 @@ export default function ProductDetail() {
     // Track page view
     const visitorId = localStorage.getItem('visitor_id') || crypto.randomUUID();
     localStorage.setItem('visitor_id', visitorId);
-    supabase.from("page_views").insert({
+    (supabase as any).from("page_views").insert({
       store_id: storeData.id,
       page_path: `/store/${slug}/product/${productId}`,
       visitor_id: visitorId,

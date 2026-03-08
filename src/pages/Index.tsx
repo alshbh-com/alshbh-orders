@@ -85,7 +85,7 @@ export default function Index() {
   useEffect(() => {
     const visitorId = localStorage.getItem('visitor_id') || crypto.randomUUID();
     localStorage.setItem('visitor_id', visitorId);
-    supabase.from("page_views").insert({
+    (supabase as any).from("page_views").insert({
       page_path: "/",
       visitor_id: visitorId,
     }).then(() => {});
