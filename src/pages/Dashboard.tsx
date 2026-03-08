@@ -1096,6 +1096,111 @@ export default function Dashboard() {
             </Card>
           </TabsContent>
 
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2"><BarChart3 className="h-5 w-5 text-primary" />إحصائيات متجرك</CardTitle>
+                  <div className="flex gap-1">
+                    {[{d:2,l:"يومين"},{d:7,l:"أسبوع"},{d:30,l:"شهر"},{d:90,l:"3 شهور"}].map(f => (
+                      <Button key={f.d} size="sm" variant={viewsDays === f.d ? "default" : "outline"} onClick={async () => {
+                        setViewsDays(f.d);
+                        const since = new Date(); since.setDate(since.getDate() - f.d);
+                        const { data } = await (supabase as any).from("page_views").select("*").eq("store_id", store.id).gte("created_at", since.toISOString());
+                        setPageViews(data || []);
+                      }}>{f.l}</Button>
+                    ))}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                  <div className="bg-muted rounded-xl p-4 text-center">
+                    <p className="text-2xl font-bold text-primary">{pageViews.length}</p>
+                    <p className="text-xs text-muted-foreground">إجمالي الزيارات</p>
+                  </div>
+                  <div className="bg-muted rounded-xl p-4 text-center">
+                    <p className="text-2xl font-bold text-primary">{new Set(pageViews.map(v => v.visitor_id)).size}</p>
+                    <p className="text-xs text-muted-foreground">زوار فريدين</p>
+                  </div>
+                  <div className="bg-muted rounded-xl p-4 text-center">
+                    <p className="text-2xl font-bold text-primary">{orders.filter(o => o.status === "delivered").length}</p>
+                    <p className="text-xs text-muted-foreground">طلبات مكتملة</p>
+                  </div>
+                  <div className="bg-muted rounded-xl p-4 text-center">
+                    <p className="text-2xl font-bold text-primary">{orders.filter(o => o.status === "delivered").reduce((s, o) => s + Number(o.total_price), 0)} ج</p>
+                    <p className="text-xs text-muted-foreground">إجمالي المبيعات</p>
+                  </div>
+                </div>
+                
+                {/* Top Products */}
+                <h4 className="font-semibold mb-3">🔥 أكتر المنتجات مبيعاً</h4>
+                <div className="space-y-2">
+                  {[...products].sort((a, b) => (b.sales_count || 0) - (a.sales_count || 0)).slice(0, 5).map((p, i) => (
+                    <div key={p.id} className="flex items-center gap-3 bg-muted/50 rounded-xl p-3">
+                      <span className="text-lg font-bold text-muted-foreground w-6">#{i+1}</span>
+                      {p.main_image_url ? (
+                        <img src={p.main_image_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center"><Package className="h-4 w-4 text-muted-foreground" /></div>
+                      )}
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm">{p.name}</p>
+                        <p className="text-xs text-muted-foreground">{p.sales_count || 0} مبيعات — {p.price} جنيه</p>
+                      </div>
+                    </div>
+                  ))}
+                  {products.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">مفيش منتجات لسه</p>}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Policies Tab */}
+          <TabsContent value="policies" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5 text-primary" />سياسات المتجر</CardTitle>
+                <p className="text-sm text-muted-foreground">اكتب سياسات متجرك عشان العملاء يعرفوها — هتظهر في صفحة المتجر تلقائياً</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>🔄 سياسة الاسترجاع</Label>
+                  <Textarea value={editReturnPolicy} onChange={e => setEditReturnPolicy(e.target.value)} placeholder="مثال: يمكن الاسترجاع خلال 14 يوم من الاستلام..." rows={4} />
+                </div>
+                <div className="space-y-2">
+                  <Label>🚚 سياسة الشحن والتوصيل</Label>
+                  <Textarea value={editShippingPolicy} onChange={e => setEditShippingPolicy(e.target.value)} placeholder="مثال: التوصيل خلال 3-5 أيام عمل..." rows={4} />
+                </div>
+                <div className="space-y-2">
+                  <Label>🔒 سياسة الخصوصية</Label>
+                  <Textarea value={editPrivacyPolicy} onChange={e => setEditPrivacyPolicy(e.target.value)} placeholder="مثال: نحافظ على بياناتك ومش بنشاركها مع حد..." rows={4} />
+                </div>
+                <Button className="w-full" disabled={savingPolicies} onClick={async () => {
+                  setSavingPolicies(true);
+                  const data = {
+                    store_id: store.id,
+                    return_policy: editReturnPolicy,
+                    shipping_policy: editShippingPolicy,
+                    privacy_policy: editPrivacyPolicy,
+                    updated_at: new Date().toISOString(),
+                  };
+                  if (storePolicies?.id) {
+                    await (supabase as any).from("store_policies").update(data).eq("id", storePolicies.id);
+                  } else {
+                    await (supabase as any).from("store_policies").insert(data);
+                  }
+                  toast({ title: "تم حفظ السياسات ✅" });
+                  setSavingPolicies(false);
+                  fetchData();
+                }}>
+                  {savingPolicies ? "جاري الحفظ..." : "حفظ السياسات"}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
 
           {/* Shipping / Governorates Tab */}
           <TabsContent value="shipping" className="space-y-4">
