@@ -487,7 +487,7 @@ export default function StoreFront() {
                       <h4 className="font-semibold text-sm truncate">{item.product.name}</h4>
                       {item.selectedSize && <p className="text-xs text-muted-foreground">المقاس: {item.selectedSize}</p>}
                       {item.selectedColor && <p className="text-xs text-muted-foreground">اللون: {item.selectedColor}</p>}
-                      <p className="text-sm font-bold mt-0.5" style={{ color: store.primary_color }}>{item.product.discount_price || item.product.price} جنيه</p>
+                      <p className="text-sm font-bold mt-0.5 text-foreground">{item.product.discount_price || item.product.price} جنيه</p>
                       <div className="flex items-center gap-2 mt-1">
                         <Button size="icon" variant="outline" className="h-6 w-6 rounded-full" onClick={() => updateCartQuantity(idx, -1)}>
                           <Minus className="h-3 w-3" />
@@ -514,7 +514,7 @@ export default function StoreFront() {
                   </div>
                   <div className="flex justify-between font-bold text-lg border-t border-border pt-2">
                     <span>الإجمالي</span>
-                    <span style={{ color: store.primary_color }}>{cartTotal} جنيه</span>
+                    <span className="text-foreground">{cartTotal} جنيه</span>
                   </div>
                   <Button className="w-full mt-2 rounded-xl h-11" onClick={() => { setShowCart(false); setShowCheckout(true); }}>
                     يلا نكمل الطلب! 🚀
@@ -588,7 +588,7 @@ export default function StoreFront() {
               <div className="flex justify-between"><span className="text-muted-foreground">التوصيل {selectedGovernorate && `(${selectedGovernorate})`}</span><span>{shippingCost} جنيه</span></div>
               <div className="flex justify-between font-bold text-base border-t border-border pt-2">
                 <span>الإجمالي</span>
-                <span style={{ color: store.primary_color }}>{cartTotal} جنيه</span>
+                <span className="text-foreground">{cartTotal} جنيه</span>
               </div>
             </div>
             <Button className="w-full rounded-xl h-11" onClick={submitOrder} disabled={submitting}>
@@ -699,7 +699,7 @@ function ProductCard({ product, avgRating, onClick, storeColor }: {
           <Badge variant="destructive" className="text-xs mb-2 rounded-lg">خلص يسطا 😅</Badge>
         )}
         <div className="flex items-center gap-2">
-          <span className="text-base font-bold" style={{ color: storeColor || "var(--store-primary)" }}>{finalPrice} جنيه</span>
+          <span className="text-base font-bold text-foreground">{finalPrice} جنيه</span>
           {hasDiscount && (
             <span className="text-xs text-muted-foreground line-through">{product.price}</span>
           )}
