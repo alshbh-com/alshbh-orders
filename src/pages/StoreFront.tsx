@@ -588,7 +588,7 @@ export default function StoreFront() {
               <div className="flex justify-between"><span className="text-muted-foreground">التوصيل {selectedGovernorate && `(${selectedGovernorate})`}</span><span>{shippingCost} جنيه</span></div>
               <div className="flex justify-between font-bold text-base border-t border-border pt-2">
                 <span>الإجمالي</span>
-                <span style={{ color: store.primary_color }}>{cartTotal} جنيه</span>
+                <span className="text-foreground">{cartTotal} جنيه</span>
               </div>
             </div>
             <Button className="w-full rounded-xl h-11" onClick={submitOrder} disabled={submitting}>
