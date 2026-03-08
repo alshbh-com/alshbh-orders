@@ -514,7 +514,7 @@ export default function StoreFront() {
                   </div>
                   <div className="flex justify-between font-bold text-lg border-t border-border pt-2">
                     <span>الإجمالي</span>
-                    <span style={{ color: store.primary_color }}>{cartTotal} جنيه</span>
+                    <span className="text-foreground">{cartTotal} جنيه</span>
                   </div>
                   <Button className="w-full mt-2 rounded-xl h-11" onClick={() => { setShowCart(false); setShowCheckout(true); }}>
                     يلا نكمل الطلب! 🚀
