@@ -201,6 +201,7 @@ export default function Dashboard() {
 
   const checkSlugAvailability = async (slug: string) => {
     if (!slug || slug.length < 2) { setSlugTaken(false); return; }
+
     setCheckingSlug(true);
     const { data } = await supabase.from("stores").select("id").eq("store_slug", slug).maybeSingle();
     setSlugTaken(!!data);
