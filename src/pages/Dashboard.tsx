@@ -174,8 +174,14 @@ export default function Dashboard() {
   const [slugTaken, setSlugTaken] = useState(false);
   const [checkingSlug, setCheckingSlug] = useState(false);
 
-  const checkSlugAvailability = async (value: string) => {
-    const slug = value.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+  const handleSlugChange = (value: string) => {
+    // Only allow English letters, numbers, and hyphens
+    const cleaned = value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+    setStoreSlug(cleaned);
+    checkSlugAvailability(cleaned);
+  };
+
+  const checkSlugAvailability = async (slug: string) => {
     if (!slug || slug.length < 2) { setSlugTaken(false); return; }
     setCheckingSlug(true);
     const { data } = await supabase.from("stores").select("id").eq("store_slug", slug).maybeSingle();
