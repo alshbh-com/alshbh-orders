@@ -5,9 +5,9 @@ export default function About() {
   return (
     <Layout>
       <div className="container py-16 max-w-3xl">
-        <h1 className="text-4xl font-bold mb-6">عن منصة ALSHBH</h1>
+        <h1 className="text-4xl font-bold mb-6">عن منصة الشبح ميديا - Alshbh Media</h1>
         <p className="text-lg text-muted-foreground mb-8">
-          ALSHBH هي منصة متاجر إلكترونية مصرية بالكامل، بنيناها عشان نساعد أي تاجر يعمل متجره الخاص ويبدأ يبيع أونلاين من غير ما يحتاج أي خبرة تقنية أو يدفع مبالغ كبيرة.
+          الشبح ميديا (Alshbh Media) هي منصة متاجر إلكترونية مصرية بالكامل، بنيناها عشان نساعد أي تاجر يعمل متجره الخاص ويبدأ يبيع أونلاين من غير ما يحتاج أي خبرة تقنية أو يدفع مبالغ كبيرة.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-12">

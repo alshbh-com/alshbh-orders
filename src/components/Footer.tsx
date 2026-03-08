@@ -9,10 +9,10 @@ export default function Footer() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Store className="h-6 w-6 text-primary" />
-              <span className="text-lg font-bold text-primary">ALSHBH</span>
+              <span className="text-lg font-bold text-primary">Alshbh Media</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              منصة متاجر إلكترونية مصرية - اعمل متجرك في دقايق واستقبل طلباتك بسهولة
+              الشبح ميديا — منصة متاجر إلكترونية مصرية - اعمل متجرك في دقايق واستقبل طلباتك بسهولة
             </p>
           </div>
           <div>
@@ -32,7 +32,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-8 pt-6 border-t border-border text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} ALSHBH - جميع الحقوق محفوظة
+          © {new Date().getFullYear()} Alshbh Media - الشبح ميديا - جميع الحقوق محفوظة
         </div>
       </div>
     </footer>

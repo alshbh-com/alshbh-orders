@@ -8,7 +8,7 @@ export default function Terms() {
         <div className="prose prose-lg max-w-none text-muted-foreground space-y-6">
           <section>
             <h2 className="text-xl font-semibold text-foreground">1. مقدمة</h2>
-            <p>باستخدامك لمنصة ALSHBH أنت بتوافق على الشروط والأحكام دي. لو مش موافق يبقى مينفعش تستخدم المنصة.</p>
+            <p>باستخدامك لمنصة الشبح ميديا (Alshbh Media) أنت بتوافق على الشروط والأحكام دي. لو مش موافق يبقى مينفعش تستخدم المنصة.</p>
           </section>
           <section>
             <h2 className="text-xl font-semibold text-foreground">2. الحسابات</h2>

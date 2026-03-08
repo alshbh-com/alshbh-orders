@@ -8,7 +8,7 @@ export default function AlshbhWatermark() {
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
       >
         صُنع بواسطة
-        <span className="font-bold text-primary">ALSHBH</span>
+        <span className="font-bold text-primary">Alshbh Media</span>
       </Link>
     </div>
   );

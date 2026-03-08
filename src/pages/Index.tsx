@@ -78,7 +78,7 @@ function ShareButtons({ url, text }: { url: string; text: string }) {
 }
 
 export default function Index() {
-  const whatsappUrl = "https://wa.me/201061067966?text=" + encodeURIComponent("أريد شحن نقاط لمنصة ALSHBH");
+  const whatsappUrl = "https://wa.me/201061067966?text=" + encodeURIComponent("أريد شحن نقاط لمنصة الشبح ميديا Alshbh Mediaبح ميديا Alshbh Mediaبح ميديا Alshbh Media");
 
   return (
     <Layout>
@@ -94,7 +94,7 @@ export default function Index() {
             <br />
             واستقبل طلباتك بسهولة
           </h1>
-          <p className="mx-auto max-w-2xl text-lg text-muted-foreground mb-8">
+          <p className="mx-auto max-w-2xالشبح ميديا (Alshbh Media)-lg text-muted-foregroالشبح ميديا (Alshbh Media)-8">
             مع ALSHBH هتقدر تعمل متجرك الإلكتروني وتعرض منتجاتك وتستقبل طلبات عملائك — كل ده من غير ما تحتاج أي خبرة تقنية
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -111,7 +111,7 @@ export default function Index() {
       {/* Features */}
       <section className="py-20 bg-muted/30">
         <div className="container">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">ليه ALSHBH؟</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">ليه الشبح ميديا؟</h2>
           <p className="text-center text-muted-foreground mb-12 max-w-xl mx-auto">كل اللي محتاجه عشان تبدأ تبيع أونلاين</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((f, i) => (
@@ -158,14 +158,14 @@ export default function Index() {
       {/* FAQ Section for SEO */}
       <section className="py-20 bg-muted/30">
         <div className="container max-w-3xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">أسئلة شائعة عن منصة ALSHBH الشبح</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">أسئلة شائعة عن منصة الشبح ميديا Alshbh Media</h2>
           <div className="space-y-6">
             {[
-              { q: "إيه هي منصة ALSHBH الشبح؟", a: "ALSHBH الشبح هي منصة مصرية لإنشاء المتاجر الإلكترونية. تقدر تعمل متجرك الخاص في دقايق وتبدأ تبيع أونلاين من غير ما تحتاج أي خبرة تقنية. بديل سلة وزد المصري." },
-              { q: "كم تكلفة إنشاء متجر إلكتروني على الشبح ALSHBH؟", a: "إنشاء المتجر مجاني تماماً! بتدفع بس لما تستقبل طلبات من خلال نظام النقاط - كل طلب = نقطة واحدة = جنيه واحد. مفيش اشتراكات شهرية أو رسوم خفية." },
-              { q: "إزاي أعمل متجر إلكتروني على منصة الشبح؟", a: "سجل حساب جديد بجوجل أو بالإيميل، اختار قالب متجرك (مطاعم، ملابس، عطور، سوبر ماركت)، ضيف منتجاتك بالصور والأسعار، وشارك رابط متجرك. الموضوع مش بياخد أكتر من 5 دقايق." },
-              { q: "هل منصة ALSHBH بتدعم إيزي أوردر Easy Order؟", a: "أيوا! منصة الشبح ALSHBH بتوفرلك نظام طلبات سهل وبسيط. العملاء يقدروا يطلبوا من متجرك بسهولة، وانت تستقبل الطلبات وتتابعها من لوحة التحكم." },
-              { q: "إيه المميزات اللي بتقدمها منصة الشبح؟", a: "قوالب جاهزة، نظام طلبات متكامل، كوبونات خصم، تقييمات المنتجات، إحصائيات المبيعات، رابط خاص لمتجرك على alshbh.store، ودعم كامل للموبايل." },
+              { q: "إيه هي منصة الشبح ميديا Alshbh Media؟", a: "الشبح ميديا (Alshbh Media) هي منصة مصرية لإنشاء المتاجر الإلكترونية. تقدر تعمل متجرك الخاص في دقايق وتبدأ تبيع أونلاين من غير ما تحتاج أي خبرة تقنية. بديل سلة وزد المصري." },
+              { q: "كم تكلفة إنشاء متجر إلكتروني على الشبح ميديا؟", a: "إنشاء المتجر مجاني تماماً! بتدفع بس لما تستقبل طلبات من خلال نظام النقاط - كل طلب = نقطة واحدة = جنيه واحد. مفيش اشتراكات شهرية أو رسوم خفية." },
+              { q: "إزاي أعمل متجر إلكتروني على الشبح ميديا؟", a: "سجل حساب جديد بجوجل أو بالإيميل، اختار قالب متجرك (مطاعم، ملابس، عطور، سوبر ماركت)، ضيف منتجاتك بالصور والأسعار، وشارك رابط متجرك. الموضوع مش بياخد أكتر من 5 دقايق." },
+              { q: "هل منصة Alshbh Media بتدعم إيزي أوردر Easy Order؟", a: "أيوا! الشبح ميديا بتوفرلك نظام طلبات سهل وبسيط. العملاء يقدروا يطلبوا من متجرك بسهولة، وانت تستقبل الطلبات وتتابعها من لوحة التحكم." },
+              { q: "إيه المميزات اللي بتقدمها الشبح ميديا؟", a: "قوالب جاهزة، نظام طلبات متكامل، كوبونات خصم، تقييمات المنتجات، إحصائيات المبيعات، رابط خاص لمتجرك على alshbh.store، ودعم كامل للموبايل." },
             ].map((faq, i) => (
               <details key={i} className="group rounded-xl border border-border bg-card p-5 cursor-pointer">
                 <summary className="font-bold text-lg list-none flex justify-between items-center">
@@ -182,9 +182,9 @@ export default function Index() {
       {/* Share Section */}
       <section className="py-12 bg-muted/50">
         <div className="container text-center">
-          <h2 className="text-2xl font-bold mb-3">شارك ALSHBH مع صحابك 🚀</h2>
+          <h2 className="text-2xl font-bold mb-3">شارك الشبح ميديا مع صحابك 🚀</h2>
           <p className="text-muted-foreground mb-6">ساعدنا نوصل لناس أكتر — شير الموقع على السوشيال!</p>
-          <ShareButtons url="https://alshbh.store" text="اعرف منصة ALSHBH الشبح — أسهل طريقة تعمل بيها متجرك الإلكتروني في مصر مجاناً! 🔥" />
+          <ShareButtons url="https://alshbh.store" text="اعرف منصة الشبح ميديا Alshbh Media — أسهل طريقة تعمل بيها متجرك الإلكتروني في مصر مجاناً! 🔥" />
         </div>
       </section>
 
@@ -192,7 +192,7 @@ export default function Index() {
       <section className="py-20 bg-primary text-primary-foreground">
         <div className="container text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">جاهز تبدأ متجرك الإلكتروني؟</h2>
-          <p className="text-lg opacity-90 mb-8 max-w-xl mx-auto">سجل دلوقتي واعمل متجرك الإلكتروني في أقل من 5 دقايق - مجاناً مع ALSHBH الشبح</p>
+          <p className="text-lg opacity-90 mb-8 max-w-xl mx-auto">سجل دلوقتي واعمل متجرك الإلكتروني في أقل من 5 دقايق - مجاناً مع الشبح ميديا Alshbh Media</p>
           <Link to="/dashboard">
             <Button size="lg" variant="secondary" className="text-lg px-8 py-6">يلا ابدأ مجاناً! 💪</Button>
           </Link>

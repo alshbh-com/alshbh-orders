@@ -13,7 +13,7 @@ export default function Navbar() {
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <Store className="h-7 w-7 text-primary" />
-          <span className="text-xl font-bold text-primary">ALSHBH</span>
+          <span className="text-xl font-bold text-primary">Alshbh Media</span>
         </Link>
 
         {/* Desktop */}
