@@ -611,6 +611,45 @@ export default function StoreFront() {
         </DialogContent>
       </Dialog>
 
+      {/* Policies & Track Order */}
+      <section className="container pb-4">
+        <div className="flex flex-wrap gap-2 justify-center">
+          {storePolicies && (storePolicies.return_policy || storePolicies.shipping_policy || storePolicies.privacy_policy) && (
+            <details className="w-full bg-card border border-border rounded-2xl p-4 shadow-sm">
+              <summary className="font-semibold cursor-pointer flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                سياسات المتجر 📋
+              </summary>
+              <div className="mt-3 space-y-4 text-sm">
+                {storePolicies.return_policy && (
+                  <div>
+                    <h4 className="font-bold mb-1">🔄 سياسة الاسترجاع</h4>
+                    <p className="text-muted-foreground whitespace-pre-line">{storePolicies.return_policy}</p>
+                  </div>
+                )}
+                {storePolicies.shipping_policy && (
+                  <div>
+                    <h4 className="font-bold mb-1">🚚 سياسة الشحن</h4>
+                    <p className="text-muted-foreground whitespace-pre-line">{storePolicies.shipping_policy}</p>
+                  </div>
+                )}
+                {storePolicies.privacy_policy && (
+                  <div>
+                    <h4 className="font-bold mb-1">🔒 سياسة الخصوصية</h4>
+                    <p className="text-muted-foreground whitespace-pre-line">{storePolicies.privacy_policy}</p>
+                  </div>
+                )}
+              </div>
+            </details>
+          )}
+          <Link to="/track">
+            <Button variant="outline" size="sm" className="rounded-full">
+              <Truck className="h-4 w-4 ml-1" />تتبع طلبك
+            </Button>
+          </Link>
+        </div>
+      </section>
+
       {/* Complaint */}
       <section className="container pb-6">
         <details className="bg-card border border-border rounded-2xl p-4 shadow-sm">
@@ -625,6 +664,9 @@ export default function StoreFront() {
       {store.facebook_pixel && (
         <script dangerouslySetInnerHTML={{ __html: `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${store.facebook_pixel}');fbq('track','PageView');` }} />
       )}
+
+      {/* WhatsApp Float */}
+      <WhatsAppFloat phone={store.whatsapp_number} />
 
       <AlshbhWatermark />
     </div>
