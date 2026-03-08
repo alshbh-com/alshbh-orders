@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AlshbhWatermark from "@/components/AlshbhWatermark";
-import { Store, ShoppingCart, Star, Share2, MessageCircle, Minus, Plus, ArrowRight, MapPin, Trash2 } from "lucide-react";
+import { Store, ShoppingCart, Star, Share2, MessageCircle, Minus, Plus, ArrowRight, MapPin, Trash2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -226,10 +226,27 @@ export default function ProductDetail() {
     fetchProduct();
   };
 
+  const [showShareMenu, setShowShareMenu] = useState(false);
+
   const shareProduct = () => {
+    setShowShareMenu(true);
+  };
+
+  const shareVia = (platform: string) => {
     const url = window.location.href;
-    if (navigator.share) navigator.share({ title: product?.name, url });
-    else { navigator.clipboard.writeText(url); toast({ title: "تم نسخ الرابط يسطا! 📋" }); }
+    const text = encodeURIComponent(`${product?.name} — شوف المنتج ده! 🔥`);
+    const encodedUrl = encodeURIComponent(url);
+    switch (platform) {
+      case 'whatsapp': window.open(`https://wa.me/?text=${text}%20${encodedUrl}`, '_blank'); break;
+      case 'facebook': window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`, '_blank'); break;
+      case 'twitter': window.open(`https://twitter.com/intent/tweet?text=${text}&url=${encodedUrl}`, '_blank'); break;
+      case 'telegram': window.open(`https://t.me/share/url?url=${encodedUrl}&text=${text}`, '_blank'); break;
+      case 'copy':
+        navigator.clipboard.writeText(url);
+        toast({ title: "تم نسخ الرابط يسطا! 📋" });
+        break;
+    }
+    setShowShareMenu(false);
   };
 
   if (loading) return <div className="flex min-h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
@@ -327,41 +344,39 @@ export default function ProductDetail() {
           <p className="text-sm text-muted-foreground">🚚 التوصيل لكل محافظات مصر — السعر حسب محافظتك</p>
         </div>
 
-        {/* ===== VARIANT SELECTION - Super Simple ===== */}
+        {/* ===== VARIANT SELECTION - Improved ===== */}
         <div className="mb-6 space-y-3">
           {hasVariants && (
             <div className="bg-card border border-border rounded-2xl p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-base">اختار اللي عايزه 👇</h3>
-                {selections.length > 0 && (
-                  <Badge variant="secondary" className="text-xs">{totalQuantity} قطعة</Badge>
-                )}
+                <h3 className="font-bold text-lg">اختار اللي عايزه 👇</h3>
+                <Badge variant="secondary" className="text-sm px-3 py-1">{totalQuantity} قطعة</Badge>
               </div>
 
               {selections.map((sel, idx) => (
-                <div key={idx} className="relative bg-muted/50 rounded-xl p-3 space-y-3">
+                <div key={idx} className="relative bg-muted/40 rounded-2xl p-4 space-y-4 border border-border/50">
                   {selections.length > 1 && (
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-semibold text-muted-foreground">اختيار {idx + 1}</span>
-                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-destructive" onClick={() => removeSelection(idx)}>
-                        <Trash2 className="h-3 w-3" />
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="text-xs font-bold">اختيار {idx + 1}</Badge>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10 rounded-full" onClick={() => removeSelection(idx)}>
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   )}
 
-                  {/* Size chips */}
+                  {/* Size chips - bigger & clearer */}
                   {availableSizes.length > 0 && (
                     <div>
-                      <p className="text-xs text-muted-foreground mb-1.5">👕 المقاس</p>
-                      <div className="flex gap-1.5 flex-wrap">
+                      <p className="text-sm font-semibold mb-2">👕 المقاس</p>
+                      <div className="flex gap-2 flex-wrap">
                         {availableSizes.map(size => (
                           <button key={size} onClick={() => updateSelection(idx, 'size', size)}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                            className={`min-w-[3rem] px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
                               sel.size === size
-                                ? "text-white shadow-md"
-                                : "border border-border bg-background hover:border-primary/50"
+                                ? "text-white shadow-lg scale-105"
+                                : "border-2 border-border bg-background hover:border-primary/50 hover:scale-105"
                             }`}
-                            style={sel.size === size ? { backgroundColor: store.primary_color || '#D97706' } : {}}>
+                            style={sel.size === size ? { backgroundColor: store.primary_color || '#D97706', borderColor: store.primary_color || '#D97706' } : {}}>
                             {size}
                           </button>
                         ))}
@@ -369,18 +384,20 @@ export default function ProductDetail() {
                     </div>
                   )}
 
-                  {/* Color chips */}
+                  {/* Color chips - bigger with color preview */}
                   {availableColors.length > 0 && (
                     <div>
-                      <p className="text-xs text-muted-foreground mb-1.5">🎨 اللون</p>
+                      <p className="text-sm font-semibold mb-2">🎨 اللون</p>
                       <div className="flex gap-2 flex-wrap">
                         {availableColors.map(color => (
                           <button key={color} onClick={() => updateSelection(idx, 'color', color)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
-                              sel.color === color ? "ring-2 ring-offset-1 border-primary" : "border border-border bg-background hover:border-primary/50"
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                              sel.color === color
+                                ? "ring-2 ring-offset-2 shadow-lg scale-105"
+                                : "border-2 border-border bg-background hover:border-primary/50 hover:scale-105"
                             }`}
                             style={sel.color === color ? { borderColor: store.primary_color } : {}}>
-                            <span className="w-4 h-4 rounded-full border border-border shrink-0" style={{ backgroundColor: COLORS[color] || "#888" }} />
+                            <span className="w-5 h-5 rounded-full border-2 border-white shadow-sm shrink-0" style={{ backgroundColor: COLORS[color] || "#888" }} />
                             {color}
                           </button>
                         ))}
@@ -388,16 +405,16 @@ export default function ProductDetail() {
                     </div>
                   )}
 
-                  {/* Quantity */}
+                  {/* Quantity - improved */}
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1.5">🔢 الكمية</p>
-                    <div className="flex items-center gap-2">
-                      <Button size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={() => updateSelection(idx, 'quantity', Math.max(1, sel.quantity - 1))}>
-                        <Minus className="h-3 w-3" />
+                    <p className="text-sm font-semibold mb-2">🔢 الكمية</p>
+                    <div className="flex items-center gap-3 bg-background rounded-xl p-2 w-fit border border-border">
+                      <Button size="icon" variant="ghost" className="h-9 w-9 rounded-full hover:bg-destructive/10" onClick={() => updateSelection(idx, 'quantity', Math.max(1, sel.quantity - 1))}>
+                        <Minus className="h-4 w-4" />
                       </Button>
-                      <span className="text-lg font-bold w-8 text-center">{sel.quantity}</span>
-                      <Button size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={() => updateSelection(idx, 'quantity', sel.quantity + 1)}>
-                        <Plus className="h-3 w-3" />
+                      <span className="text-xl font-bold w-10 text-center">{sel.quantity}</span>
+                      <Button size="icon" variant="ghost" className="h-9 w-9 rounded-full hover:bg-primary/10" onClick={() => updateSelection(idx, 'quantity', sel.quantity + 1)}>
+                        <Plus className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -405,7 +422,7 @@ export default function ProductDetail() {
               ))}
 
               {/* Add another variant button */}
-              <Button variant="outline" size="sm" className="w-full rounded-xl border-dashed" onClick={addSelection}>
+              <Button variant="outline" size="sm" className="w-full rounded-xl border-dashed border-2 h-11 text-sm font-semibold" onClick={addSelection}>
                 <Plus className="h-4 w-4 ml-1" />
                 عايز مقاس/لون تاني؟ ضيف كمان! ➕
               </Button>
@@ -415,13 +432,13 @@ export default function ProductDetail() {
           {/* No variants - just quantity */}
           {!hasVariants && (
             <div className="bg-card border border-border rounded-2xl p-4">
-              <h3 className="font-bold text-base mb-3">كام قطعة عايز؟ 🔢</h3>
-              <div className="flex items-center gap-3">
-                <Button size="icon" variant="outline" className="rounded-full" onClick={() => updateSelection(0, 'quantity', Math.max(1, selections[0].quantity - 1))}>
+              <h3 className="font-bold text-lg mb-3">كام قطعة عايز؟ 🔢</h3>
+              <div className="flex items-center gap-3 bg-muted/40 rounded-xl p-2 w-fit border border-border">
+                <Button size="icon" variant="ghost" className="h-9 w-9 rounded-full hover:bg-destructive/10" onClick={() => updateSelection(0, 'quantity', Math.max(1, selections[0].quantity - 1))}>
                   <Minus className="h-4 w-4" />
                 </Button>
                 <span className="text-xl font-bold w-12 text-center">{selections[0].quantity}</span>
-                <Button size="icon" variant="outline" className="rounded-full" onClick={() => updateSelection(0, 'quantity', selections[0].quantity + 1)}>
+                <Button size="icon" variant="ghost" className="h-9 w-9 rounded-full hover:bg-primary/10" onClick={() => updateSelection(0, 'quantity', selections[0].quantity + 1)}>
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -555,6 +572,35 @@ export default function ProductDetail() {
             <div className="space-y-2"><Label>عايز تقول حاجة تانية؟ (اختياري)</Label><Textarea value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} placeholder="رأيك في المنتج يسطا..." /></div>
             <Button className="w-full" onClick={submitReview}>ابعت التقييم ⭐</Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Share Menu Dialog */}
+      <Dialog open={showShareMenu} onOpenChange={setShowShareMenu}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>شارك المنتج 📤</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-2 gap-3">
+            <Button variant="outline" className="gap-2 h-12 hover:bg-green-500/10 hover:border-green-500" onClick={() => shareVia('whatsapp')}>
+              <svg className="h-5 w-5 text-green-600" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              واتساب
+            </Button>
+            <Button variant="outline" className="gap-2 h-12 hover:bg-blue-500/10 hover:border-blue-500" onClick={() => shareVia('facebook')}>
+              <svg className="h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+              فيسبوك
+            </Button>
+            <Button variant="outline" className="gap-2 h-12 hover:bg-sky-500/10 hover:border-sky-500" onClick={() => shareVia('twitter')}>
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              تويتر / X
+            </Button>
+            <Button variant="outline" className="gap-2 h-12 hover:bg-blue-400/10 hover:border-blue-400" onClick={() => shareVia('telegram')}>
+              <svg className="h-5 w-5 text-blue-500" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+              تليجرام
+            </Button>
+          </div>
+          <Button variant="outline" className="w-full gap-2 mt-1" onClick={() => shareVia('copy')}>
+            <Copy className="h-4 w-4" />
+            انسخ الرابط 📋
+          </Button>
         </DialogContent>
       </Dialog>
 
