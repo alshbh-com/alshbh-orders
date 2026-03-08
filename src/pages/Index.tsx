@@ -78,7 +78,7 @@ function ShareButtons({ url, text }: { url: string; text: string }) {
 }
 
 export default function Index() {
-  const whatsappUrl = "https://wa.me/201061067966?text=" + encodeURIComponent("أريد شحن نقاط لمنصة الشبح ميديا Alshbh Mediaبح ميديا Alshbh Media");
+  const whatsappUrl = "https://wa.me/201061067966?text=" + encodeURIComponent("أريد شحن نقاط لمنصة الشبح ميديا Alshbh Mediaبح ميديا Alshbh Mediaبح ميديا Alshbh Media");
 
   return (
     <Layout>
@@ -94,7 +94,7 @@ export default function Index() {
             <br />
             واستقبل طلباتك بسهولة
           </h1>
-          <p className="mx-auto max-w-2xl text-lg text-muted-foregroالشبح ميديا (Alshbh Media)-8">
+          <p className="mx-auto max-w-2xالشبح ميديا (Alshbh Media)-lg text-muted-foregroالشبح ميديا (Alshbh Media)-8">
             مع ALSHBH هتقدر تعمل متجرك الإلكتروني وتعرض منتجاتك وتستقبل طلبات عملائك — كل ده من غير ما تحتاج أي خبرة تقنية
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -111,7 +111,7 @@ export default function Index() {
       {/* Features */}
       <section className="py-20 bg-muted/30">
         <div className="container">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">ليه ALSHBH؟</h2>
+          <h2 classNameالشبح ميديا-3xl md:text-4xl font-bold text-center mb-4">ليه ALSHBH؟</h2>
           <p className="text-center text-muted-foreground mb-12 max-w-xl mx-auto">كل اللي محتاجه عشان تبدأ تبيع أونلاين</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((f, i) => (
