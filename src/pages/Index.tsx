@@ -192,7 +192,7 @@ export default function Index() {
       <section className="py-20 bg-primary text-primary-foreground">
         <div className="container text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">جاهز تبدأ متجرك الإلكتروني؟</h2>
-          <p className="text-lg opacity-90 mb-8 max-w-xl mx-auto">سجل دلوقتي واعمل متجرك الإلكتروني في أقل من 5 دقايق - مجاناً مع ALSHBH الشبح</p>
+          <p className="text-lg opacity-90 mb-8 max-w-xl mx-auto">سجل دلوقتي واعمل متجرك الإلكتروني في أقل من 5 دقايق - مجاناً مع الشبح ميديا Alshbh Media</p>
           <Link to="/dashboard">
             <Button size="lg" variant="secondary" className="text-lg px-8 py-6">يلا ابدأ مجاناً! 💪</Button>
           </Link>
